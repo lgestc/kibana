@@ -22,6 +22,8 @@ import {
   tableDefaults,
   TableId,
 } from '@kbn/securitysolution-data-table';
+import type { QueryDslQueryContainer } from '@kbn/data-views-plugin/common/types';
+import type { RunTimeMappings } from '../../../../common/api/search_strategy';
 import { useGlobalTime } from '../../../common/containers/use_global_time';
 import { useLicense } from '../../../common/hooks/use_license';
 import { VIEW_SELECTION } from '../../../../common/constants';
@@ -255,6 +257,68 @@ export const AlertsTableComponent: FC<DetectionEngineAlertTableProps> = ({
     [dispatch, tableId, alertTableRefreshHandlerRef, setQuery]
   );
 
+  const extendedRuntimeMappings = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function flattenObject(obj: any, prefix: string = ''): Record<string, unknown> {
+      const flattened: Record<string, unknown> = {};
+
+      for (const key in obj) {
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          const nestedFlattened = flattenObject(obj[key], `${prefix}${key}.`);
+          Object.assign(flattened, nestedFlattened);
+        } else {
+          flattened[`${prefix}${key}`] = obj[key];
+        }
+      }
+
+      return flattened;
+    }
+
+    const buildRuntimeMappings = (
+      sourcererRuntimeMappings: RunTimeMappings,
+      query: Pick<QueryDslQueryContainer, 'bool' | 'ids'>
+    ) => {
+      const flattenedQuery = flattenObject(query);
+
+      const extraMappings: RunTimeMappings = {};
+
+      Object.keys(flattenedQuery).forEach((key) => {
+        if (key.includes('kibana')) {
+          return;
+        }
+
+        const filterName = 'match_phrase';
+        const matchPhraseStart = key.lastIndexOf(filterName);
+        if (matchPhraseStart === -1) {
+          return;
+        }
+
+        const fieldNameStart = matchPhraseStart + filterName.length + 1;
+
+        const fieldName = key.slice(fieldNameStart).replace('.query', '');
+
+        extraMappings[fieldName] = {
+          type: 'keyword',
+          script: {
+            source: `
+              try {
+                if (params._source.containsKey('abusech')) {
+                    emit(params._source.${fieldName});
+                }
+              } catch (Exception e) {
+                emit('')
+              }
+            `,
+          },
+        };
+      });
+
+      return { ...extraMappings, ...sourcererRuntimeMappings };
+    };
+
+    return buildRuntimeMappings(runtimeMappings, finalBoolQuery);
+  }, [runtimeMappings, finalBoolQuery]);
+
   const alertStateProps: AlertsTableStateProps = useMemo(
     () => ({
       alertsTableConfigurationRegistry: triggersActionsUi.alertsTableConfigurationRegistry,
@@ -269,7 +333,7 @@ export const AlertsTableComponent: FC<DetectionEngineAlertTableProps> = ({
       columns: finalColumns,
       browserFields: finalBrowserFields,
       onUpdate: onAlertTableUpdate,
-      runtimeMappings,
+      runtimeMappings: extendedRuntimeMappings,
       toolbarVisibility: {
         showColumnSelector: !isEventRenderedView,
         showSortSelector: !isEventRenderedView,
@@ -286,7 +350,7 @@ export const AlertsTableComponent: FC<DetectionEngineAlertTableProps> = ({
       finalColumns,
       finalBrowserFields,
       onAlertTableUpdate,
-      runtimeMappings,
+      extendedRuntimeMappings,
       isEventRenderedView,
     ]
   );
