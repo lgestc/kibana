@@ -99,6 +99,49 @@ interface DetectionEngineAlertTableProps {
   onRuleChange?: () => void;
 }
 
+const useFieldsDataForAlertsPatterns = () => {
+  const pattern = '.alerts-security.alerts-default';
+
+  const [fields, setFields] = useState(undefined);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    fetch(`/internal/data_views/fields?pattern=${pattern}`, {
+      signal: abortController.signal,
+      headers: {
+        'elastic-api-version': 1,
+      } as HeaderOptions,
+    }).then(async (fieldsResponse) => {
+      if (fieldsResponse.status !== 200) {
+        throw new Error('Could not fetch alert fields');
+      }
+
+      const { fields: fieldsData } = await fieldsResponse.json();
+
+      const remappedFields: Record<string, unknown> = {};
+
+      fieldsData.forEach((field) => {
+        const category = field.name.split('.')[0];
+
+        if (!remappedFields[category]) {
+          remappedFields[category] = { fields: {} };
+        }
+
+        remappedFields[category].fields[field.name] = field;
+      });
+
+      setFields(remappedFields);
+    });
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+
+  return fields;
+};
+
 export const AlertsTableComponent: FC<DetectionEngineAlertTableProps> = ({
   configId,
   inputFilters,
@@ -217,10 +260,19 @@ export const AlertsTableComponent: FC<DetectionEngineAlertTableProps> = ({
     [columns, license]
   );
 
-  const finalBrowserFields = useMemo(
-    () => (isEventRenderedView ? {} : browserFields),
-    [isEventRenderedView, browserFields]
-  );
+  const alertsTableBrowserFields = useFieldsDataForAlertsPatterns();
+
+  const finalBrowserFields = useMemo(() => {
+    if (isEventRenderedView) {
+      return {};
+    }
+
+    if (!alertsTableBrowserFields) {
+      return {};
+    }
+
+    return isEventRenderedView ? {} : alertsTableBrowserFields;
+  }, [isEventRenderedView, alertsTableBrowserFields]);
 
   const finalColumns = useMemo(
     () => (isEventRenderedView ? eventRenderedViewColumns : alertColumns),
