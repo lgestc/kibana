@@ -1,0 +1,491 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Network unique private ips KPI renders correctly 1`] = `
+Array [
+  Object {
+    "areaChartLensAttributes": Object {
+      "description": "",
+      "references": Array [
+        Object {
+          "id": "{dataViewId}",
+          "name": "indexpattern-datasource-current-indexpattern",
+          "type": "index-pattern",
+        },
+        Object {
+          "id": "{dataViewId}",
+          "name": "indexpattern-datasource-layer-38aa6532-6bf9-4c8f-b2a6-da8d32f7d0d7",
+          "type": "index-pattern",
+        },
+        Object {
+          "id": "{dataViewId}",
+          "name": "indexpattern-datasource-layer-72dc4b99-b07d-4dc9-958b-081d259e11fa",
+          "type": "index-pattern",
+        },
+      ],
+      "state": Object {
+        "datasourceStates": Object {
+          "formBased": Object {
+            "layers": Object {
+              "38aa6532-6bf9-4c8f-b2a6-da8d32f7d0d7": Object {
+                "columnOrder": Array [
+                  "662cd5e5-82bf-4325-a703-273f84b97e09",
+                  "5f317308-cfbb-4ee5-bfb9-07653184fabf",
+                ],
+                "columns": Object {
+                  "5f317308-cfbb-4ee5-bfb9-07653184fabf": Object {
+                    "customLabel": true,
+                    "dataType": "number",
+                    "filter": Object {
+                      "language": "kuery",
+                      "query": "\\"source.ip\\": \\"10.0.0.0/8\\" or \\"source.ip\\": \\"192.168.0.0/16\\" or \\"source.ip\\": \\"172.16.0.0/12\\" or \\"source.ip\\": \\"fd00::/8\\"",
+                    },
+                    "isBucketed": false,
+                    "label": "Src.",
+                    "operationType": "unique_count",
+                    "scale": "ratio",
+                    "sourceField": "source.ip",
+                  },
+                  "662cd5e5-82bf-4325-a703-273f84b97e09": Object {
+                    "dataType": "date",
+                    "isBucketed": true,
+                    "label": "@timestamp",
+                    "operationType": "date_histogram",
+                    "params": Object {
+                      "interval": "auto",
+                    },
+                    "scale": "interval",
+                    "sourceField": "@timestamp",
+                  },
+                },
+                "incompleteColumns": Object {},
+              },
+              "72dc4b99-b07d-4dc9-958b-081d259e11fa": Object {
+                "columnOrder": Array [
+                  "36444b8c-7e10-4069-8298-6c1b46912be2",
+                  "ac1eb80c-ddde-46c4-a90c-400261926762",
+                ],
+                "columns": Object {
+                  "36444b8c-7e10-4069-8298-6c1b46912be2": Object {
+                    "dataType": "date",
+                    "isBucketed": true,
+                    "label": "@timestamp",
+                    "operationType": "date_histogram",
+                    "params": Object {
+                      "interval": "auto",
+                    },
+                    "scale": "interval",
+                    "sourceField": "@timestamp",
+                  },
+                  "ac1eb80c-ddde-46c4-a90c-400261926762": Object {
+                    "dataType": "number",
+                    "filter": Object {
+                      "language": "kuery",
+                      "query": "\\"destination.ip\\": \\"10.0.0.0/8\\" or \\"destination.ip\\": \\"192.168.0.0/16\\" or \\"destination.ip\\": \\"172.16.0.0/12\\" or \\"destination.ip\\": \\"fd00::/8\\"",
+                    },
+                    "isBucketed": false,
+                    "label": "Dest.",
+                    "operationType": "unique_count",
+                    "scale": "ratio",
+                    "sourceField": "destination.ip",
+                  },
+                },
+                "incompleteColumns": Object {},
+              },
+            },
+          },
+        },
+        "filters": Array [],
+        "query": Object {
+          "language": "kuery",
+          "query": "",
+        },
+        "visualization": Object {
+          "axisTitlesVisibilitySettings": Object {
+            "x": false,
+            "yLeft": false,
+            "yRight": true,
+          },
+          "fittingFunction": "None",
+          "gridlinesVisibilitySettings": Object {
+            "x": true,
+            "yLeft": true,
+            "yRight": true,
+          },
+          "labelsOrientation": Object {
+            "x": 0,
+            "yLeft": 0,
+            "yRight": 0,
+          },
+          "layers": Array [
+            Object {
+              "accessors": Array [
+                "5f317308-cfbb-4ee5-bfb9-07653184fabf",
+              ],
+              "layerId": "38aa6532-6bf9-4c8f-b2a6-da8d32f7d0d7",
+              "layerType": "data",
+              "seriesType": "area",
+              "xAccessor": "662cd5e5-82bf-4325-a703-273f84b97e09",
+              "yConfig": Array [
+                Object {
+                  "color": "#d36186",
+                  "forAccessor": "5f317308-cfbb-4ee5-bfb9-07653184fabf",
+                },
+              ],
+            },
+            Object {
+              "accessors": Array [
+                "ac1eb80c-ddde-46c4-a90c-400261926762",
+              ],
+              "layerId": "72dc4b99-b07d-4dc9-958b-081d259e11fa",
+              "layerType": "data",
+              "seriesType": "area",
+              "xAccessor": "36444b8c-7e10-4069-8298-6c1b46912be2",
+              "yConfig": Array [
+                Object {
+                  "color": "#9170b8",
+                  "forAccessor": "ac1eb80c-ddde-46c4-a90c-400261926762",
+                },
+              ],
+            },
+          ],
+          "legend": Object {
+            "isVisible": false,
+            "position": "right",
+            "showSingleSeries": false,
+          },
+          "preferredSeriesType": "area",
+          "tickLabelsVisibilitySettings": Object {
+            "x": true,
+            "yLeft": true,
+            "yRight": true,
+          },
+          "valueLabels": "hide",
+          "yLeftExtent": Object {
+            "mode": "full",
+          },
+          "yRightExtent": Object {
+            "mode": "full",
+          },
+        },
+      },
+      "title": "[Network] Unique private IPs - area chart",
+      "visualizationType": "lnsXY",
+    },
+    "barChartLensAttributes": Object {
+      "description": "",
+      "references": Array [
+        Object {
+          "id": "{dataViewId}",
+          "name": "indexpattern-datasource-current-indexpattern",
+          "type": "index-pattern",
+        },
+        Object {
+          "id": "{dataViewId}",
+          "name": "indexpattern-datasource-layer-e406bf4f-942b-41ac-b516-edb5cef06ec8",
+          "type": "index-pattern",
+        },
+        Object {
+          "id": "{dataViewId}",
+          "name": "indexpattern-datasource-layer-38aa6532-6bf9-4c8f-b2a6-da8d32f7d0d7",
+          "type": "index-pattern",
+        },
+      ],
+      "state": Object {
+        "datasourceStates": Object {
+          "formBased": Object {
+            "layers": Object {
+              "38aa6532-6bf9-4c8f-b2a6-da8d32f7d0d7": Object {
+                "columnOrder": Array [
+                  "4607c585-3af3-43b9-804f-e49b27796d79",
+                  "d27e0966-daf9-41f4-9033-230cf1e76dc9",
+                ],
+                "columns": Object {
+                  "4607c585-3af3-43b9-804f-e49b27796d79": Object {
+                    "dataType": "string",
+                    "isBucketed": true,
+                    "label": "Filters",
+                    "operationType": "filters",
+                    "params": Object {
+                      "filters": Array [
+                        Object {
+                          "input": Object {
+                            "language": "kuery",
+                            "query": "destination.ip: *",
+                          },
+                          "label": "Dest.",
+                        },
+                      ],
+                    },
+                    "scale": "ordinal",
+                  },
+                  "d27e0966-daf9-41f4-9033-230cf1e76dc9": Object {
+                    "dataType": "number",
+                    "filter": Object {
+                      "language": "kuery",
+                      "query": "\\"destination.ip\\": \\"10.0.0.0/8\\" or \\"destination.ip\\": \\"192.168.0.0/16\\" or \\"destination.ip\\": \\"172.16.0.0/12\\" or \\"destination.ip\\": \\"fd00::/8\\"",
+                    },
+                    "isBucketed": false,
+                    "label": "Unique count of destination.ip",
+                    "operationType": "unique_count",
+                    "scale": "ratio",
+                    "sourceField": "destination.ip",
+                  },
+                },
+                "incompleteColumns": Object {},
+              },
+              "e406bf4f-942b-41ac-b516-edb5cef06ec8": Object {
+                "columnOrder": Array [
+                  "d9c438c5-f776-4436-9d20-d62dc8c03be8",
+                  "5acd4c9d-dc3b-4b21-9632-e4407944c36d",
+                ],
+                "columns": Object {
+                  "5acd4c9d-dc3b-4b21-9632-e4407944c36d": Object {
+                    "dataType": "number",
+                    "filter": Object {
+                      "language": "kuery",
+                      "query": "source.ip: \\"10.0.0.0/8\\" or source.ip: \\"192.168.0.0/16\\" or source.ip: \\"172.16.0.0/12\\" or source.ip: \\"fd00::/8\\"",
+                    },
+                    "isBucketed": false,
+                    "label": "Unique count of source.ip",
+                    "operationType": "unique_count",
+                    "scale": "ratio",
+                    "sourceField": "source.ip",
+                  },
+                  "d9c438c5-f776-4436-9d20-d62dc8c03be8": Object {
+                    "dataType": "string",
+                    "isBucketed": true,
+                    "label": "Filters",
+                    "operationType": "filters",
+                    "params": Object {
+                      "filters": Array [
+                        Object {
+                          "input": Object {
+                            "language": "kuery",
+                            "query": "source.ip: *",
+                          },
+                          "label": "Src.",
+                        },
+                      ],
+                    },
+                    "scale": "ordinal",
+                  },
+                },
+                "incompleteColumns": Object {},
+              },
+            },
+          },
+        },
+        "filters": Array [],
+        "query": Object {
+          "language": "kuery",
+          "query": "",
+        },
+        "visualization": Object {
+          "axisTitlesVisibilitySettings": Object {
+            "x": false,
+            "yLeft": false,
+            "yRight": true,
+          },
+          "fittingFunction": "None",
+          "gridlinesVisibilitySettings": Object {
+            "x": true,
+            "yLeft": true,
+            "yRight": true,
+          },
+          "labelsOrientation": Object {
+            "x": 0,
+            "yLeft": 0,
+            "yRight": 0,
+          },
+          "layers": Array [
+            Object {
+              "accessors": Array [
+                "5acd4c9d-dc3b-4b21-9632-e4407944c36d",
+              ],
+              "layerId": "e406bf4f-942b-41ac-b516-edb5cef06ec8",
+              "layerType": "data",
+              "position": "top",
+              "seriesType": "bar_horizontal_stacked",
+              "showGridlines": false,
+              "xAccessor": "d9c438c5-f776-4436-9d20-d62dc8c03be8",
+              "yConfig": Array [
+                Object {
+                  "color": "#d36186",
+                  "forAccessor": "5acd4c9d-dc3b-4b21-9632-e4407944c36d",
+                },
+              ],
+            },
+            Object {
+              "accessors": Array [
+                "d27e0966-daf9-41f4-9033-230cf1e76dc9",
+              ],
+              "layerId": "38aa6532-6bf9-4c8f-b2a6-da8d32f7d0d7",
+              "layerType": "data",
+              "seriesType": "bar_horizontal_stacked",
+              "xAccessor": "4607c585-3af3-43b9-804f-e49b27796d79",
+              "yConfig": Array [
+                Object {
+                  "color": "#9170b8",
+                  "forAccessor": "d27e0966-daf9-41f4-9033-230cf1e76dc9",
+                },
+              ],
+            },
+          ],
+          "legend": Object {
+            "isVisible": false,
+            "position": "right",
+            "showSingleSeries": false,
+          },
+          "preferredSeriesType": "bar_horizontal_stacked",
+          "tickLabelsVisibilitySettings": Object {
+            "x": true,
+            "yLeft": true,
+            "yRight": true,
+          },
+          "valueLabels": "hide",
+          "yLeftExtent": Object {
+            "mode": "full",
+          },
+          "yRightExtent": Object {
+            "mode": "full",
+          },
+        },
+      },
+      "title": "[Network] Unique private IPs - bar chart",
+      "visualizationType": "lnsXY",
+    },
+    "description": "Unique private IPs",
+    "enableAreaChart": true,
+    "enableBarChart": true,
+    "fields": Array [
+      Object {
+        "color": "#D36086",
+        "description": "source",
+        "icon": "visMapCoordinate",
+        "key": "uniqueSourcePrivateIps",
+        "lensAttributes": Object {
+          "description": "",
+          "references": Array [
+            Object {
+              "id": "{dataViewId}",
+              "name": "indexpattern-datasource-current-indexpattern",
+              "type": "index-pattern",
+            },
+            Object {
+              "id": "{dataViewId}",
+              "name": "indexpattern-datasource-layer-cea37c70-8f91-43bf-b9fe-72d8c049f6a3",
+              "type": "index-pattern",
+            },
+          ],
+          "state": Object {
+            "datasourceStates": Object {
+              "formBased": Object {
+                "layers": Object {
+                  "cea37c70-8f91-43bf-b9fe-72d8c049f6a3": Object {
+                    "columnOrder": Array [
+                      "bd17c23e-4f83-4108-8005-2669170d064b",
+                    ],
+                    "columns": Object {
+                      "bd17c23e-4f83-4108-8005-2669170d064b": Object {
+                        "customLabel": true,
+                        "dataType": "number",
+                        "filter": Object {
+                          "language": "kuery",
+                          "query": "source.ip: \\"10.0.0.0/8\\" or source.ip: \\"192.168.0.0/16\\" or source.ip: \\"172.16.0.0/12\\" or source.ip: \\"fd00::/8\\"",
+                        },
+                        "isBucketed": false,
+                        "label": "",
+                        "operationType": "unique_count",
+                        "scale": "ratio",
+                        "sourceField": "source.ip",
+                      },
+                    },
+                    "incompleteColumns": Object {},
+                  },
+                },
+              },
+            },
+            "filters": Array [],
+            "query": Object {
+              "language": "kuery",
+              "query": "",
+            },
+            "visualization": Object {
+              "accessor": "bd17c23e-4f83-4108-8005-2669170d064b",
+              "layerId": "cea37c70-8f91-43bf-b9fe-72d8c049f6a3",
+              "layerType": "data",
+            },
+          },
+          "title": "[Network] Unique private IPs - source metric",
+          "visualizationType": "lnsLegacyMetric",
+        },
+        "name": "Src.",
+      },
+      Object {
+        "color": "#9170B8",
+        "description": "destination",
+        "icon": "visMapCoordinate",
+        "key": "uniqueDestinationPrivateIps",
+        "lensAttributes": Object {
+          "description": "",
+          "references": Array [
+            Object {
+              "id": "{dataViewId}",
+              "name": "indexpattern-datasource-current-indexpattern",
+              "type": "index-pattern",
+            },
+            Object {
+              "id": "{dataViewId}",
+              "name": "indexpattern-datasource-layer-cea37c70-8f91-43bf-b9fe-72d8c049f6a3",
+              "type": "index-pattern",
+            },
+          ],
+          "state": Object {
+            "datasourceStates": Object {
+              "formBased": Object {
+                "layers": Object {
+                  "cea37c70-8f91-43bf-b9fe-72d8c049f6a3": Object {
+                    "columnOrder": Array [
+                      "bd17c23e-4f83-4108-8005-2669170d064b",
+                    ],
+                    "columns": Object {
+                      "bd17c23e-4f83-4108-8005-2669170d064b": Object {
+                        "customLabel": true,
+                        "dataType": "number",
+                        "filter": Object {
+                          "language": "kuery",
+                          "query": "\\"destination.ip\\": \\"10.0.0.0/8\\" or \\"destination.ip\\": \\"192.168.0.0/16\\" or \\"destination.ip\\": \\"172.16.0.0/12\\" or \\"destination.ip\\": \\"fd00::/8\\"",
+                        },
+                        "isBucketed": false,
+                        "label": "",
+                        "operationType": "unique_count",
+                        "scale": "ratio",
+                        "sourceField": "destination.ip",
+                      },
+                    },
+                    "incompleteColumns": Object {},
+                  },
+                },
+              },
+            },
+            "filters": Array [],
+            "query": Object {
+              "language": "kuery",
+              "query": "",
+            },
+            "visualization": Object {
+              "accessor": "bd17c23e-4f83-4108-8005-2669170d064b",
+              "layerId": "cea37c70-8f91-43bf-b9fe-72d8c049f6a3",
+              "layerType": "data",
+            },
+          },
+          "title": "[Network] Unique private IPs - destination metric",
+          "visualizationType": "lnsLegacyMetric",
+        },
+        "name": "Dest.",
+      },
+    ],
+    "key": "uniqueIps",
+  },
+]
+`;

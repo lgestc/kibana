@@ -1,0 +1,118 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Network events KPI renders correctly 1`] = `
+Array [
+  Object {
+    "description": "Network events",
+    "fields": Array [
+      Object {
+        "color": "#6092C0",
+        "key": "networkEvents",
+        "lensAttributes": Object {
+          "description": "",
+          "references": Array [
+            Object {
+              "id": "{dataViewId}",
+              "name": "indexpattern-datasource-current-indexpattern",
+              "type": "index-pattern",
+            },
+            Object {
+              "id": "{dataViewId}",
+              "name": "indexpattern-datasource-layer-eaadfec7-deaa-4aeb-a403-3b4e516416d2",
+              "type": "index-pattern",
+            },
+            Object {
+              "id": "{dataViewId}",
+              "name": "861af17d-be25-45a3-a82d-d6e697b76e51",
+              "type": "index-pattern",
+            },
+            Object {
+              "id": "{dataViewId}",
+              "name": "09617767-f732-410e-af53-bebcbd0bf4b9",
+              "type": "index-pattern",
+            },
+          ],
+          "state": Object {
+            "datasourceStates": Object {
+              "formBased": Object {
+                "layers": Object {
+                  "eaadfec7-deaa-4aeb-a403-3b4e516416d2": Object {
+                    "columnOrder": Array [
+                      "370ebd07-5ce0-4f46-a847-0e363c50d037",
+                    ],
+                    "columns": Object {
+                      "370ebd07-5ce0-4f46-a847-0e363c50d037": Object {
+                        "customLabel": true,
+                        "dataType": "number",
+                        "isBucketed": false,
+                        "label": " ",
+                        "operationType": "count",
+                        "scale": "ratio",
+                        "sourceField": "___records___",
+                      },
+                    },
+                    "incompleteColumns": Object {},
+                  },
+                },
+              },
+            },
+            "filters": Array [
+              Object {
+                "$state": Object {
+                  "store": "appState",
+                },
+                "meta": Object {
+                  "alias": null,
+                  "disabled": false,
+                  "index": "security-solution-default",
+                  "key": "source.ip",
+                  "negate": false,
+                  "type": "exists",
+                  "value": "exists",
+                },
+                "query": Object {
+                  "exists": Object {
+                    "field": "source.ip",
+                  },
+                },
+              },
+              Object {
+                "$state": Object {
+                  "store": "appState",
+                },
+                "meta": Object {
+                  "alias": null,
+                  "disabled": false,
+                  "index": "security-solution-default",
+                  "key": "destination.ip",
+                  "negate": false,
+                  "type": "exists",
+                  "value": "exists",
+                },
+                "query": Object {
+                  "exists": Object {
+                    "field": "destination.ip",
+                  },
+                },
+              },
+            ],
+            "query": Object {
+              "language": "kuery",
+              "query": "",
+            },
+            "visualization": Object {
+              "accessor": "370ebd07-5ce0-4f46-a847-0e363c50d037",
+              "autoScaleMetricAlignment": "left",
+              "layerId": "eaadfec7-deaa-4aeb-a403-3b4e516416d2",
+              "layerType": "data",
+            },
+          },
+          "title": "[Network] Network events",
+          "visualizationType": "lnsLegacyMetric",
+        },
+      },
+    ],
+    "key": "networkEvents",
+  },
+]
+`;
