@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { euiPaletteColorBlind } from '@elastic/eui';
 
 import type { StatItems } from '../../../../components/stat_items';
@@ -17,41 +17,48 @@ import { kpiUniquePrivateIpsAreaLensAttributes } from '../../../../../common/com
 import { kpiUniquePrivateIpsBarLensAttributes } from '../../../../../common/components/visualization_actions/lens_attributes/network/kpi_unique_private_ips_bar';
 import { KpiBaseComponent } from '../../../../components/kpi';
 
-const euiVisColorPalette = euiPaletteColorBlind();
-const euiColorVis2 = euiVisColorPalette[2];
-const euiColorVis3 = euiVisColorPalette[3];
 export const ID = 'networkKpiUniquePrivateIpsQuery';
 
-export const uniquePrivateIpsStatItems: Readonly<StatItems[]> = [
-  {
-    key: 'uniqueIps',
-    fields: [
-      {
-        key: 'uniqueSourcePrivateIps',
-        name: i18n.SOURCE_CHART_LABEL,
-        description: i18n.SOURCE_UNIT_LABEL,
-        color: euiColorVis2,
-        icon: 'visMapCoordinate',
-        lensAttributes: kpiUniquePrivateIpsSourceMetricLensAttributes,
-      },
-      {
-        key: 'uniqueDestinationPrivateIps',
-        name: i18n.DESTINATION_CHART_LABEL,
-        description: i18n.DESTINATION_UNIT_LABEL,
-        color: euiColorVis3,
-        icon: 'visMapCoordinate',
-        lensAttributes: kpiUniquePrivateIpsDestinationMetricLensAttributes,
-      },
-    ],
-    description: i18n.UNIQUE_PRIVATE_IPS,
-    enableAreaChart: true,
-    enableBarChart: true,
-    areaChartLensAttributes: kpiUniquePrivateIpsAreaLensAttributes,
-    barChartLensAttributes: kpiUniquePrivateIpsBarLensAttributes,
-  },
-];
-
 const NetworkKpiUniquePrivateIpsComponent: React.FC<NetworkKpiProps> = ({ from, to }) => {
+  // NOTE: it's important to have the euiPalette functions called during component render
+  // so that the colors can be sourced from the EuiProvider.
+  // That's why the below variables are moved inside the function component scope.
+
+  const uniquePrivateIpsStatItems: Readonly<StatItems[]> = useMemo(() => {
+    const euiVisColorPalette = euiPaletteColorBlind();
+    const euiColorVis2 = euiVisColorPalette[2];
+    const euiColorVis3 = euiVisColorPalette[3];
+
+    return [
+      {
+        key: 'uniqueIps',
+        fields: [
+          {
+            key: 'uniqueSourcePrivateIps',
+            name: i18n.SOURCE_CHART_LABEL,
+            description: i18n.SOURCE_UNIT_LABEL,
+            color: euiColorVis2,
+            icon: 'visMapCoordinate',
+            lensAttributes: kpiUniquePrivateIpsSourceMetricLensAttributes,
+          },
+          {
+            key: 'uniqueDestinationPrivateIps',
+            name: i18n.DESTINATION_CHART_LABEL,
+            description: i18n.DESTINATION_UNIT_LABEL,
+            color: euiColorVis3,
+            icon: 'visMapCoordinate',
+            lensAttributes: kpiUniquePrivateIpsDestinationMetricLensAttributes,
+          },
+        ],
+        description: i18n.UNIQUE_PRIVATE_IPS,
+        enableAreaChart: true,
+        enableBarChart: true,
+        areaChartLensAttributes: kpiUniquePrivateIpsAreaLensAttributes,
+        barChartLensAttributes: kpiUniquePrivateIpsBarLensAttributes,
+      },
+    ];
+  }, []);
+
   return <KpiBaseComponent id={ID} statItems={uniquePrivateIpsStatItems} from={from} to={to} />;
 };
 
