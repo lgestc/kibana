@@ -6,10 +6,12 @@
  */
 
 import { useMemo } from 'react';
-import type { DataViewManagerScopeName } from '../constants';
+import { DataViewManagerScopeName } from '../constants';
 import { useDataViewSpec } from './use_data_view_spec';
 
-export const useSelectedPatterns = (scope: DataViewManagerScopeName): string[] => {
+export const useSelectedPatterns = (
+  scope: DataViewManagerScopeName = DataViewManagerScopeName.default
+): string[] => {
   const { dataViewSpec } = useDataViewSpec(scope);
 
   return useMemo(() => dataViewSpec?.title?.split(',') ?? [], [dataViewSpec?.title]);
