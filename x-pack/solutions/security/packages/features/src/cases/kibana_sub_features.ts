@@ -173,3 +173,33 @@ export const getCasesAssignUsersCasesSubFeature = ({
     },
   ],
 });
+
+export const getCasesManageTemplatesCasesSubFeature = ({
+  uiCapabilities,
+}: CasesFeatureParams): SubFeatureConfig => ({
+  name: i18n.translate('securitySolutionPackages.features.manageTemplatesSubFeatureName', {
+    defaultMessage: 'Manage templates',
+  }),
+  privilegeGroups: [
+    {
+      groupType: 'independent',
+      privileges: [
+        {
+          id: 'cases_manage_templates',
+          name: i18n.translate('securitySolutionPackages.features.manageTemplatesSubFeatureName', {
+            defaultMessage: 'Manage case templates',
+          }),
+          includeIn: 'all',
+          savedObject: {
+            all: [],
+            read: [],
+          },
+          cases: {
+            manageTemplates: [APP_ID],
+          },
+          ui: uiCapabilities.default.manageTemplates,
+        },
+      ],
+    },
+  ],
+});
