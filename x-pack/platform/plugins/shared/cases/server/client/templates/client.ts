@@ -6,6 +6,7 @@
  */
 
 import type { SavedObject } from '@kbn/core/server';
+import { SavedObjectsUtils } from '@kbn/core/server';
 import type {
   Template,
   CreateTemplateInput,
@@ -16,6 +17,7 @@ import type {
   TemplatesFindResponse,
 } from '../../../common/types/api/template/v1';
 import type { CasesClientArgs } from '../types';
+import { Operations } from '../../authorization';
 
 /**
  * API for interacting with templates.
@@ -37,16 +39,74 @@ export interface TemplatesSubClient {
  */
 export const createTemplatesSubClient = (clientArgs: CasesClientArgs): TemplatesSubClient => {
   const { templatesService } = clientArgs.services;
+  const { authorization, user } = clientArgs;
 
   const templatesSubClient: TemplatesSubClient = {
-    getAllTemplates: (params: TemplatesFindRequest) => templatesService.getAllTemplates(params),
-    getTemplate: (templateId: string, version?: string) =>
-      templatesService.getTemplate(templateId, version),
-    createTemplate: (input: CreateTemplateInput) =>
-      templatesService.createTemplate(input, clientArgs.user.username ?? 'unknown'),
-    updateTemplate: (templateId: string, input: UpdateTemplateInput) =>
-      templatesService.updateTemplate(templateId, input),
-    deleteTemplate: (templateId: string) => templatesService.deleteTemplate(templateId),
+    getAllTemplates: async (params: TemplatesFindRequest) => {
+      const result = await templatesService.getAllTemplates(params);
+
+      if (result.templates.length > 0) {
+        await authorization.ensureAuthorized({
+          operation: Operations.readTemplate,
+          entities: result.templates.map((t) => ({ owner: t.owner, id: t.templateId })),
+        });
+      }
+
+      return result;
+    },
+
+    getTemplate: async (templateId: string, version?: string) => {
+      const template = await templatesService.getTemplate(templateId, version);
+
+      if (template) {
+        await authorization.ensureAuthorized({
+          operation: Operations.readTemplate,
+          entities: [{ owner: template.attributes.owner, id: template.id }],
+        });
+      }
+
+      return template;
+    },
+
+    createTemplate: async (input: CreateTemplateInput) => {
+      const generatedId = SavedObjectsUtils.generateId();
+
+      await authorization.ensureAuthorized({
+        operation: Operations.manageTemplate,
+        entities: [{ owner: input.owner, id: generatedId }],
+      });
+
+      return templatesService.createTemplate(input, user.username ?? 'unknown');
+    },
+
+    updateTemplate: async (templateId: string, input: UpdateTemplateInput) => {
+      const existing = await templatesService.getTemplate(templateId);
+
+      if (existing) {
+        await authorization.ensureAuthorized({
+          operation: Operations.manageTemplate,
+          entities: [{ owner: existing.attributes.owner, id: existing.id }],
+        });
+      }
+
+      return templatesService.updateTemplate(templateId, input);
+    },
+
+    deleteTemplate: async (templateId: string) => {
+      const existing = await templatesService.getTemplate(templateId);
+
+      if (!existing) {
+        return;
+      }
+
+      await authorization.ensureAuthorized({
+        operation: Operations.manageTemplate,
+        entities: [{ owner: existing.attributes.owner, id: existing.id }],
+      });
+
+      return templatesService.deleteTemplate(templateId);
+    },
+
     getTags: () => templatesService.getTags(),
     getAuthors: () => templatesService.getAuthors(),
   };

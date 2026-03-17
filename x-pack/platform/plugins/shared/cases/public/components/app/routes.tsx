@@ -105,25 +105,37 @@ const CasesRoutesComponent: React.FC<CasesRoutesProps> = ({
 
         {isTemplatesEnabled && (
           <Route exact path={getCasesTemplatesPath(basePath)}>
-            <Suspense fallback={<EuiLoadingSpinner />}>
-              <AllCasesTemplatesLazy />
-            </Suspense>
+            {permissions.manageTemplates ? (
+              <Suspense fallback={<EuiLoadingSpinner />}>
+                <AllCasesTemplatesLazy />
+              </Suspense>
+            ) : (
+              <NoPrivilegesPage pageName={i18n.TEMPLATES_PAGE_NAME} />
+            )}
           </Route>
         )}
 
         {isTemplatesEnabled && (
           <Route exact path={getCasesCreateTemplatePath(basePath)}>
-            <Suspense fallback={<EuiLoadingSpinner />}>
-              <CreateTemplateLazy />
-            </Suspense>
+            {permissions.manageTemplates ? (
+              <Suspense fallback={<EuiLoadingSpinner />}>
+                <CreateTemplateLazy />
+              </Suspense>
+            ) : (
+              <NoPrivilegesPage pageName={i18n.TEMPLATES_PAGE_NAME} />
+            )}
           </Route>
         )}
 
         {isTemplatesEnabled && (
           <Route exact path={getCasesEditTemplatePath(basePath)}>
-            <Suspense fallback={<EuiLoadingSpinner />}>
-              <EditTemplateLazy />
-            </Suspense>
+            {permissions.manageTemplates ? (
+              <Suspense fallback={<EuiLoadingSpinner />}>
+                <EditTemplateLazy />
+              </Suspense>
+            ) : (
+              <NoPrivilegesPage pageName={i18n.TEMPLATES_PAGE_NAME} />
+            )}
           </Route>
         )}
 

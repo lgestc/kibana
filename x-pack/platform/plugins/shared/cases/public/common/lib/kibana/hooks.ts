@@ -225,6 +225,7 @@ export const useApplicationCapabilities = (): UseApplicationCapabilities => {
       permissions.reopenCase,
       permissions.createComment,
       permissions.assign,
+      permissions.manageTemplates,
     ]
   );
 };
