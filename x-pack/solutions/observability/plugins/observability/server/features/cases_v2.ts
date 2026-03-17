@@ -235,9 +235,7 @@ export const getCasesFeatureV2 = (
                 manageTemplates: [observabilityFeatureId],
               },
               ui: casesCapabilities.manageTemplates,
-              replacedBy: [
-                { feature: casesFeatureIdV3, privileges: ['cases_manage_templates'] },
-              ],
+              replacedBy: [{ feature: casesFeatureIdV3, privileges: ['cases_manage_templates'] }],
             },
           ],
         },
