@@ -22,9 +22,9 @@ export const UserWithProfileInfoSchema = z.object({
   uid: z.string().optional(),
   avatar: z
     .object({
-      initials: z.string().nullable().optional(),
-      color: z.string().nullable().optional(),
-      imageUrl: z.string().nullable().optional(),
+      initials: z.string().nullable(),
+      color: z.string().nullable(),
+      imageUrl: z.string().nullable(),
     })
     .optional(),
 });

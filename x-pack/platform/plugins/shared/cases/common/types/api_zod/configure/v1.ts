@@ -31,7 +31,7 @@ import {
   ConfigurationBasicWithoutOwnerSchema,
 } from '../../domain_zod/configure/v1';
 import { CaseConnectorSchema } from '../../domain_zod/connector/v1';
-import { CaseBaseOptionalFieldsSchema } from '../../domain_zod/case/v1';
+import { CaseBaseOptionalFieldsRequestSchema } from '../case/v1';
 import {
   CaseCustomFieldTextWithValidationValueSchema,
   CaseCustomFieldNumberWithValidationValueSchema,
@@ -106,7 +106,7 @@ export const TemplateConfigurationSchema = z.object({
     message: `Key must be lower case, a-z, 0-9, '_', and '-' are allowed`,
   }),
   name: limitedStringSchema({ fieldName: 'name', min: 1, max: MAX_TEMPLATE_NAME_LENGTH }),
-  caseFields: CaseBaseOptionalFieldsSchema.nullable(),
+  caseFields: CaseBaseOptionalFieldsRequestSchema.nullable(),
   description: limitedStringSchema({
     fieldName: 'description',
     min: 0,

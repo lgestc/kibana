@@ -107,7 +107,7 @@ export const CaseSchema = CaseAttributesSchema.extend({
   id: z.string(),
   totalComment: z.number(),
   totalAlerts: z.number(),
-  totalEvents: z.union([z.number(), z.undefined()]),
+  totalEvents: z.number().optional(),
   version: z.string(),
   comments: z.array(AttachmentSchema).optional(),
 });

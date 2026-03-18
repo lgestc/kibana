@@ -9,28 +9,24 @@ import { z } from '@kbn/zod/v4';
 import { MAX_USER_ACTIONS_PER_PAGE } from '../../../constants';
 import { paginationSchema } from '../../../schema_zod';
 import { UserActionsSchema } from '../../domain_zod/user_action/v1';
+import { UserActionTypes } from '../../domain/user_action/action/v1';
 
-const UserActionFindRequestTypesValues = [
-  'assignees',
-  'comment',
-  'connector',
-  'description',
-  'pushed',
-  'tags',
-  'title',
-  'status',
-  'settings',
-  'severity',
-  'create_case',
-  'delete_case',
-  'category',
-  'customFields',
-  'observables',
-  'action',
-  'alert',
-  'user',
-  'attachment',
-] as const;
+const UserActionAdditionalFindRequestFilterTypes = {
+  action: 'action',
+  alert: 'alert',
+  user: 'user',
+  attachment: 'attachment',
+} as const;
+
+const UserActionFindRequestTypes = {
+  ...UserActionTypes,
+  ...UserActionAdditionalFindRequestFilterTypes,
+} as const;
+
+const UserActionFindRequestTypesValues = Object.values(UserActionFindRequestTypes) as [
+  string,
+  ...string[]
+];
 
 export const CaseUserActionStatsSchema = z.object({
   total: z.number(),

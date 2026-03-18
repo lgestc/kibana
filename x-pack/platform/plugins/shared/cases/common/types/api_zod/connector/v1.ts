@@ -7,7 +7,7 @@
 
 import { z } from '@kbn/zod/v4';
 import { ExternalServiceSchema } from '../../domain_zod/external_service/v1';
-import { ConnectorMappingsSchema } from '../../domain_zod/connector/v1';
+import { CaseConnectorSchema, ConnectorMappingsSchema } from '../../domain_zod/connector/v1';
 
 const PushDetailsSchema = z.object({
   latestUserActionPushDate: z.string(),
@@ -21,15 +21,10 @@ const CaseConnectorPushInfoSchema = z.object({
   details: PushDetailsSchema.optional(),
 });
 
-const ConnectorWithPushSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.string(),
-  fields: z.unknown(),
-  push: CaseConnectorPushInfoSchema,
-});
-
-export const GetCaseConnectorsResponseSchema = z.record(z.string(), ConnectorWithPushSchema);
+export const GetCaseConnectorsResponseSchema = z.record(
+  z.string(),
+  CaseConnectorSchema.and(z.object({ push: CaseConnectorPushInfoSchema }))
+);
 
 const ActionConnectorResultSchema = z.object({
   id: z.string(),

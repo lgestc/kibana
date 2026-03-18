@@ -43,7 +43,6 @@ export const ResilientFieldsSchema = z.object({
 const ConnectorResilientTypeFieldsSchema = z.object({
   type: z.literal(ConnectorTypes.resilient),
   fields: ResilientFieldsSchema.nullable(),
-  additionalFields: z.string().nullable().optional(),
 });
 
 /**
