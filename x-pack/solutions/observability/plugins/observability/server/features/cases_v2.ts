@@ -223,9 +223,12 @@ export const getCasesFeatureV2 = (
           privileges: [
             {
               id: 'cases_manage_templates',
-              name: i18n.translate('xpack.observability.features.manageTemplatesSubFeatureName', {
-                defaultMessage: 'Manage case templates',
-              }),
+              name: i18n.translate(
+                'xpack.observability.features.manageTemplatesSubFeatureDetails',
+                {
+                  defaultMessage: 'Manage case templates',
+                }
+              ),
               includeIn: 'all',
               savedObject: {
                 all: [],

@@ -141,7 +141,6 @@ describe(`cases`, () => {
             "cases:obs/findConfigurations",
             "cases:obs/updateCase",
             "cases:obs/updateComment",
-            "cases:security/readTemplate",
             "cases:security/manageTemplate",
           ]
         `);
@@ -223,7 +222,6 @@ describe(`cases`, () => {
             "cases:other-obs/getReporters",
             "cases:other-obs/getUserActions",
             "cases:other-obs/findConfigurations",
-            "cases:security/readTemplate",
             "cases:security/manageTemplate",
           ]
         `);

@@ -186,9 +186,12 @@ export const getCasesManageTemplatesCasesSubFeature = ({
       privileges: [
         {
           id: 'cases_manage_templates',
-          name: i18n.translate('securitySolutionPackages.features.manageTemplatesSubFeatureName', {
-            defaultMessage: 'Manage case templates',
-          }),
+          name: i18n.translate(
+            'securitySolutionPackages.features.manageTemplatesSubFeatureDetails',
+            {
+              defaultMessage: 'Manage case templates',
+            }
+          ),
           includeIn: 'all',
           savedObject: {
             all: [],

@@ -198,14 +198,6 @@ const CaseOperations = {
     docType: 'case',
     savedObjectType: CASE_SAVED_OBJECT,
   },
-  [ReadOperations.ReadTemplate]: {
-    ecsType: EVENT_TYPES.access,
-    name: ReadOperations.ReadTemplate as const,
-    action: 'case_template_get',
-    verbs: accessVerbs,
-    docType: 'case template',
-    savedObjectType: CASE_SAVED_OBJECT,
-  },
   [WriteOperations.ManageTemplate]: {
     ecsType: EVENT_TYPES.change,
     name: WriteOperations.ManageTemplate as const,

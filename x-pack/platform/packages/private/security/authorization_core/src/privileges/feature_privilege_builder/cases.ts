@@ -38,7 +38,7 @@ const settingsOperations = ['createConfiguration', 'updateConfiguration'] as con
 const createCommentOperations = ['createComment'] as const;
 const reopenOperations = ['reopenCase'] as const;
 const assignOperations = ['assignCase'] as const;
-const manageTemplatesOperations = ['readTemplate', 'manageTemplate'] as const;
+const manageTemplatesOperations = ['manageTemplate'] as const;
 const allOperations = [
   ...pushOperations,
   ...createOperations,
