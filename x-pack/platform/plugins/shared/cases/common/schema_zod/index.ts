@@ -85,6 +85,39 @@ export const limitedNumberSchema = ({ fieldName, min, max }: LimitedSchemaType) 
     }
   });
 
+export const paginationSchema = ({ maxPerPage }: { maxPerPage: number }) => {
+  const pageCoerce = z.union([z.number(), z.string().transform((s) => Number(s))]);
+  return z.object({
+    page: pageCoerce.optional(),
+    perPage: pageCoerce.optional(),
+  });
+};
+
+export const limitedNumberAsIntegerSchema = ({ fieldName }: { fieldName: string }) =>
+  z.number().superRefine((s, ctx) => {
+    if (!Number.isSafeInteger(s)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `The ${fieldName} field should be an integer between -(2^53 - 1) and 2^53 - 1, inclusive.`,
+      });
+    }
+  });
+
+export const regexStringSchema = ({
+  codec,
+  pattern,
+  message,
+}: {
+  codec: z.ZodType<string, z.ZodTypeDef, unknown>;
+  pattern: string;
+  message: string;
+}) =>
+  codec.superRefine((value, ctx) => {
+    if (!new RegExp(pattern).test(value)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+    }
+  });
+
 export const mimeTypeString = z.string().superRefine((s, ctx) => {
   if (!ALLOWED_MIME_TYPES.includes(s)) {
     ctx.addIssue({
