@@ -43,29 +43,11 @@ export const createTemplatesSubClient = (clientArgs: CasesClientArgs): Templates
 
   const templatesSubClient: TemplatesSubClient = {
     getAllTemplates: async (params: TemplatesFindRequest) => {
-      const result = await templatesService.getAllTemplates(params);
-
-      if (result.templates.length > 0) {
-        await authorization.ensureAuthorized({
-          operation: Operations.readTemplate,
-          entities: result.templates.map((t) => ({ owner: t.owner, id: t.templateId })),
-        });
-      }
-
-      return result;
+      return templatesService.getAllTemplates(params);
     },
 
     getTemplate: async (templateId: string, version?: string) => {
-      const template = await templatesService.getTemplate(templateId, version);
-
-      if (template) {
-        await authorization.ensureAuthorized({
-          operation: Operations.readTemplate,
-          entities: [{ owner: template.attributes.owner, id: template.id }],
-        });
-      }
-
-      return template;
+      return templatesService.getTemplate(templateId, version);
     },
 
     createTemplate: async (input: CreateTemplateInput) => {
