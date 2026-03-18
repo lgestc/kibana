@@ -108,7 +108,7 @@ export const regexStringSchema = ({
   pattern,
   message,
 }: {
-  codec: z.ZodType<string, z.ZodTypeDef, unknown>;
+  codec: z.ZodType<string>;
   pattern: string;
   message: string;
 }) =>
