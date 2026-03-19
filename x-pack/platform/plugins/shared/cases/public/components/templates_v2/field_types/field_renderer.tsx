@@ -18,19 +18,20 @@ import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/do
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { controlRegistry } from './field_types_registry';
 import { evaluateCondition } from './evaluate_conditions';
+import { useYamlFormSync } from './hooks/use_yaml_form_sync';
+import { getYamlDefaultAsString } from '../utils';
 
 type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
 
 export interface TemplateFieldRendererProps {
   parsedTemplate: ParsedTemplateDefinition;
-  values?: Record<string, unknown>;
+  onFieldDefaultChange?: (fieldName: string, value: string, control: string) => void;
 }
 
 const FieldsRenderer: FC<{
   parsedTemplate: ParsedTemplateDefinition;
-  values: Record<string, unknown>;
   form: FormHook<{}>;
-}> = ({ parsedTemplate, values, form }) => {
+}> = ({ parsedTemplate, form }) => {
   const fieldTypeMap = useMemo(
     () => Object.fromEntries(parsedTemplate.fields.map((f) => [f.name, f.type])),
     [parsedTemplate.fields]
@@ -70,7 +71,7 @@ const FieldsRenderer: FC<{
         const Control = controlRegistry[field.control] as unknown as FC<Record<string, unknown>>;
         const controlProps = {
           ...field,
-          value: values[field.name],
+          value: fieldValues[field.name],
           isRequired,
           patternValidation: field.validation?.pattern,
           min: field.validation?.min,
@@ -93,17 +94,35 @@ FieldsRenderer.displayName = 'FieldsRenderer';
  */
 export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
   parsedTemplate,
-  values = {},
+  onFieldDefaultChange,
 }) => {
-  // NOTE: we are using `@kbn/es-ui-shared-plugin` here for compatibility with the current cases code.
+  const templateKey = React.useMemo(
+    () => parsedTemplate.fields.map((f) => `${f.name}:${f.type}`).join('|'),
+    [parsedTemplate.fields]
+  );
+
+  const initialDefaultValues = React.useMemo(() => {
+    const defaults: Record<string, Record<string, string>> = {
+      [CASE_EXTENDED_FIELDS]: {},
+    };
+    for (const field of parsedTemplate.fields) {
+      const yamlDefault = getYamlDefaultAsString(field.metadata?.default);
+      const fieldKey = `${field.name}_as_${field.type}`;
+      defaults[CASE_EXTENDED_FIELDS][fieldKey] = yamlDefault;
+    }
+    return defaults;
+  }, [parsedTemplate.fields]);
+
   const { form } = useForm<{}>({
-    defaultValue: {},
+    defaultValue: initialDefaultValues,
     options: { stripEmptyFields: false },
   });
 
+  useYamlFormSync(form, parsedTemplate.fields, onFieldDefaultChange);
+
   return (
-    <FormProvider form={form}>
-      <FieldsRenderer parsedTemplate={parsedTemplate} values={values} form={form} />
+    <FormProvider key={templateKey} form={form}>
+      <FieldsRenderer parsedTemplate={parsedTemplate} form={form} />
     </FormProvider>
   );
 };
