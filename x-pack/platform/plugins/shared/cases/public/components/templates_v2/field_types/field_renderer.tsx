@@ -69,8 +69,11 @@ export const FieldsRenderer: FC<{
             : false);
 
         const Control = controlRegistry[field.control] as unknown as FC<Record<string, unknown>>;
+        if (!Control) return null;
+
         const controlProps = {
           ...field,
+          label: field.label ?? field.name,
           value: fieldValues[field.name],
           isRequired,
           patternValidation: field.validation?.pattern,
@@ -80,7 +83,11 @@ export const FieldsRenderer: FC<{
           maxLength: field.validation?.max_length,
         };
 
-        return <Control key={field.name} {...controlProps} />;
+        return (
+          <div key={field.name} data-test-subj={`template-field-${field.name}`}>
+            <Control {...controlProps} />
+          </div>
+        );
       })}
     </>
   );

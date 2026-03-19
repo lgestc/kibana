@@ -143,7 +143,7 @@ describe('TemplateFields', () => {
     expect(screen.getByTestId('template-field-priority')).toBeInTheDocument();
   });
 
-  it('shows "Field not defined" for empty extended field values', () => {
+  it('renders fields with empty inputs when extended field values are absent', () => {
     const caseWithNoExtended = {
       ...defaultCaseData,
       extendedFields: {},
@@ -151,6 +151,7 @@ describe('TemplateFields', () => {
 
     renderWithTestingProviders(<TemplateFields {...defaultProps} caseData={caseWithNoExtended} />);
 
-    expect(screen.getAllByText('Field not defined').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Summary')).toBeInTheDocument();
+    expect(screen.getByText('Effort')).toBeInTheDocument();
   });
 });
