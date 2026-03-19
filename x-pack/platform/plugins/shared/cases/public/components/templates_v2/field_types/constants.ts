@@ -84,8 +84,4 @@ fields:
       required: true
       min: 0
       max: 100
-  - name: details
-    control: TEXTAREA
-    label: Details
-    type: keyword
 `.trimStart();

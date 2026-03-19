@@ -28,7 +28,7 @@ export interface TemplateFieldRendererProps {
   onFieldDefaultChange?: (fieldName: string, value: string, control: string) => void;
 }
 
-const FieldsRenderer: FC<{
+export const FieldsRenderer: FC<{
   parsedTemplate: ParsedTemplateDefinition;
   form: FormHook<{}>;
 }> = ({ parsedTemplate, form }) => {
