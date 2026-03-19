@@ -42,6 +42,7 @@ export default function ({ getService }: FtrProviderContext) {
         'cases_settings',
         'create_comment',
         'case_reopen',
+        'cases_manage_templates',
       ],
       generalCasesV3: [
         'all',
@@ -72,6 +73,7 @@ export default function ({ getService }: FtrProviderContext) {
         'cases_settings',
         'create_comment',
         'case_reopen',
+        'cases_manage_templates',
       ],
       observabilityCasesV3: [
         'all',
@@ -330,6 +332,7 @@ export default function ({ getService }: FtrProviderContext) {
         'cases_settings',
         'create_comment',
         'case_reopen',
+        'cases_manage_templates',
       ],
       securitySolutionCasesV3: [
         'all',
