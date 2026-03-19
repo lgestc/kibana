@@ -6,8 +6,9 @@
  */
 
 import type { FC } from 'react';
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { camelCase } from 'lodash';
+import { EuiFlexGroup, EuiFlexItem, EuiButton } from '@elastic/eui';
 import type { z } from '@kbn/zod/v4';
 import { FormProvider, useForm } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import type { CaseUI } from '../../../../common';
@@ -16,6 +17,7 @@ import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/do
 import { useGetTemplate } from '../../templates_v2/hooks/use_get_template';
 import { FieldsRenderer } from '../../templates_v2/field_types/field_renderer';
 import type { OnUpdateFields } from '../types';
+import { SAVE } from '../../../common/translations';
 
 type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
 
@@ -30,7 +32,8 @@ const TemplateFieldsForm: FC<{
   parsedTemplate: ParsedTemplateDefinition;
   extendedFields: Record<string, unknown>;
   onUpdateField: (args: OnUpdateFields) => void;
-}> = ({ parsedTemplate, extendedFields, onUpdateField }) => {
+  isLoading: boolean;
+}> = ({ parsedTemplate, extendedFields, onUpdateField, isLoading }) => {
   const templateKey = parsedTemplate.fields.map((f) => `${f.name}:${f.type}`).join('|');
 
   const initialDefaultValues = useMemo(() => {
@@ -47,60 +50,57 @@ const TemplateFieldsForm: FC<{
     options: { stripEmptyFields: false },
   });
 
-  const onUpdateFieldRef = useRef(onUpdateField);
-  onUpdateFieldRef.current = onUpdateField;
-
-  const extendedFieldsRef = useRef(extendedFields);
-  extendedFieldsRef.current = extendedFields;
-
-  const lastSentValuesRef = useRef<Record<string, unknown>>({});
-
-  useEffect(() => {
-    // Seed lastSentValues so the immediate subscription fire doesn't trigger updates
-    for (const field of parsedTemplate.fields) {
-      const fieldKey = `${field.name}_as_${field.type}`;
-      lastSentValuesRef.current[fieldKey] = extendedFieldsRef.current[camelCase(fieldKey)] ?? '';
-    }
-
-    const subscription = form.subscribe(({ data }) => {
-      const fields = (data.internal as Record<string, Record<string, unknown>>)?.[
-        CASE_EXTENDED_FIELDS
-      ];
-      if (!fields) return;
-      for (const field of parsedTemplate.fields) {
-        const fieldKey = `${field.name}_as_${field.type}`;
-        const value = fields[fieldKey];
-        if (value !== lastSentValuesRef.current[fieldKey]) {
-          lastSentValuesRef.current[fieldKey] = value;
-          onUpdateFieldRef.current({ key: CASE_EXTENDED_FIELDS, value: { [fieldKey]: value } });
-        }
-      }
-    });
-    return subscription.unsubscribe;
-  }, [form, parsedTemplate.fields]); // extendedFields removed — accessed via ref
+  const onSave = async () => {
+    const { isValid, data } = await form.submit();
+    if (!isValid) return;
+    const fields = (data as Record<string, Record<string, unknown>>)?.[CASE_EXTENDED_FIELDS];
+    if (!fields) return;
+    onUpdateField({ key: CASE_EXTENDED_FIELDS, value: fields });
+  };
 
   return (
     <FormProvider key={templateKey} form={form}>
       <FieldsRenderer parsedTemplate={parsedTemplate} form={form} />
+      <EuiFlexGroup alignItems="center" responsive={false}>
+        <EuiFlexItem grow={false}>
+          <EuiButton
+            color="primary"
+            data-test-subj="template-fields-save"
+            fill
+            iconType="save"
+            onClick={onSave}
+            size="s"
+            isLoading={isLoading}
+          >
+            {SAVE}
+          </EuiButton>
+        </EuiFlexItem>
+      </EuiFlexGroup>
     </FormProvider>
   );
 };
 
 TemplateFieldsForm.displayName = 'TemplateFieldsForm';
 
-export const TemplateFields = React.memo<TemplateFieldsProps>(({ caseData, onUpdateField }) => {
-  const { data: templateData } = useGetTemplate(caseData.template?.id, caseData.template?.version);
+export const TemplateFields = React.memo<TemplateFieldsProps>(
+  ({ caseData, onUpdateField, isLoading }) => {
+    const { data: templateData } = useGetTemplate(
+      caseData.template?.id,
+      caseData.template?.version
+    );
 
-  const parsedTemplate = templateData?.definition;
-  if (!parsedTemplate) return null;
+    const parsedTemplate = templateData?.definition;
+    if (!parsedTemplate || parsedTemplate.fields.length === 0) return null;
 
-  return (
-    <TemplateFieldsForm
-      parsedTemplate={parsedTemplate}
-      extendedFields={caseData.extendedFields ?? {}}
-      onUpdateField={onUpdateField}
-    />
-  );
-});
+    return (
+      <TemplateFieldsForm
+        parsedTemplate={parsedTemplate}
+        extendedFields={caseData.extendedFields ?? {}}
+        onUpdateField={onUpdateField}
+        isLoading={isLoading}
+      />
+    );
+  }
+);
 
 TemplateFields.displayName = 'TemplateFields';

@@ -6,7 +6,8 @@
  */
 
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import type { CaseUI } from '../../../../common';
 import type { ParsedTemplate } from '../../../../common/types/domain/template/v1';
@@ -129,9 +130,9 @@ describe('TemplateFields', () => {
     };
     mockUseGetTemplate.mockReturnValue({ data: templateWithUnknown, isLoading: false });
 
-    const { container } = renderWithTestingProviders(<TemplateFields {...defaultProps} />);
+    renderWithTestingProviders(<TemplateFields {...defaultProps} />);
 
-    expect(container.textContent).toBe('');
+    expect(screen.queryByTestId('template-field-unknownField')).not.toBeInTheDocument();
   });
 
   it('uses data-test-subj based on field name', () => {
@@ -153,5 +154,30 @@ describe('TemplateFields', () => {
 
     expect(screen.getByText('Summary')).toBeInTheDocument();
     expect(screen.getByText('Effort')).toBeInTheDocument();
+  });
+
+  it('renders the Save button', () => {
+    renderWithTestingProviders(<TemplateFields {...defaultProps} />);
+
+    expect(screen.getByTestId('template-fields-save')).toBeInTheDocument();
+  });
+
+  it('calls onUpdateField with all field values when Save is clicked', async () => {
+    renderWithTestingProviders(<TemplateFields {...defaultProps} />);
+
+    await userEvent.click(screen.getByTestId('template-fields-save'));
+
+    await waitFor(() => {
+      expect(onUpdateField).toHaveBeenCalledWith(
+        expect.objectContaining({ key: 'extended_fields' })
+      );
+    });
+  });
+
+  it('shows loading state on Save button when isLoading is true', () => {
+    renderWithTestingProviders(<TemplateFields {...defaultProps} isLoading={true} />);
+
+    const saveButton = screen.getByTestId('template-fields-save');
+    expect(saveButton).toBeDisabled();
   });
 });
