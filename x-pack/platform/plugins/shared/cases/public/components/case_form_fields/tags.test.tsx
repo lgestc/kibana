@@ -35,6 +35,31 @@ describe('Tags', () => {
     });
   });
 
+  it('it creates a new tag that does not exist in the options', async () => {
+    const onChange = jest.fn();
+    const TestWrapper = () => {
+      const [value, setValue] = useState<string[]>([]);
+      return (
+        <Tags
+          isLoading={false}
+          value={value}
+          onChange={(v) => {
+            setValue(v);
+            onChange(v);
+          }}
+        />
+      );
+    };
+
+    renderWithTestingProviders(<TestWrapper />);
+
+    await userEvent.type(screen.getByRole('combobox'), 'brand-new-tag{enter}');
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(['brand-new-tag']);
+    });
+  });
+
   it('it changes the tags', async () => {
     const onChange = jest.fn();
     const TestWrapper = () => {

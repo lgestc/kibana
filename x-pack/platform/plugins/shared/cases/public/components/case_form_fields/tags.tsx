@@ -56,6 +56,10 @@ const TagsComponent: React.FC<Props> = ({ value, onChange, isLoading, error }) =
         options={options}
         selectedOptions={selectedOptions}
         onChange={onComboChange}
+        onCreateOption={(searchValue) => {
+          const trimmed = searchValue.trim();
+          if (trimmed) onChange([...value, trimmed]);
+        }}
         noSuggestions={false}
         customOptionText={i18n.ADD_TAG_CUSTOM_OPTION_LABEL_COMBO_BOX}
         isClearable
