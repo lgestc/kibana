@@ -215,7 +215,6 @@ export class TemplatesService {
     ];
 
     const findResult = (await this.dependencies.unsecuredSavedObjectsClient.search({
-      namespaces: ['*'],
       type: CASE_TEMPLATE_SAVED_OBJECT,
       from,
       size: perPage,
@@ -319,13 +318,14 @@ export class TemplatesService {
   /**
    * Returns all unique tags from the latest version of each non-deleted template.
    */
-  async getTags(): Promise<string[]> {
+  async getTags(owner?: string[]): Promise<string[]> {
     const { templates } = await this.searchTemplates({
       page: 1,
       perPage: 10000,
       sortField: 'name',
       sortOrder: 'asc',
       isLatest: true,
+      ...(owner?.length ? { owner } : {}),
     });
     const tags = templates.flatMap((so) => so.attributes.tags ?? []).filter(Boolean);
     return [...new Set(tags)].sort();
@@ -334,13 +334,14 @@ export class TemplatesService {
   /**
    * Returns all unique authors from the latest version of each non-deleted template.
    */
-  async getAuthors(): Promise<string[]> {
+  async getAuthors(owner?: string[]): Promise<string[]> {
     const { templates } = await this.searchTemplates({
       page: 1,
       perPage: 10000,
       sortField: 'name',
       sortOrder: 'asc',
       isLatest: true,
+      ...(owner?.length ? { owner } : {}),
     });
     const authors = templates
       .map((so) => so.attributes.author)

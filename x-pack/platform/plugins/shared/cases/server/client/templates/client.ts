@@ -5,6 +5,7 @@
  * 2.0.
  */
 
+import Boom from '@hapi/boom';
 import type { SavedObject } from '@kbn/core/server';
 import { SavedObjectsUtils } from '@kbn/core/server';
 import type {
@@ -17,7 +18,7 @@ import type {
   TemplatesFindResponse,
 } from '../../../common/types/api/template/v1';
 import type { CasesClientArgs } from '../types';
-import { Operations } from '../../authorization';
+import { Operations, ReadOperations } from '../../authorization';
 
 /**
  * API for interacting with templates.
@@ -43,11 +44,37 @@ export const createTemplatesSubClient = (clientArgs: CasesClientArgs): Templates
 
   const templatesSubClient: TemplatesSubClient = {
     getAllTemplates: async (params: TemplatesFindRequest) => {
-      return templatesService.getAllTemplates(params);
+      const { authorizedOwners, ensureSavedObjectsAreAuthorized } =
+        await authorization.getAuthorizationFilter(Operations[ReadOperations.FindCases]);
+
+      // Scope the query to only owners the caller is authorized to read.
+      // When security is disabled, authorizedOwners is undefined and we use the caller-supplied filter as-is.
+      const effectiveOwner = authorizedOwners
+        ? params.owner?.length
+          ? params.owner.filter((o) => authorizedOwners.includes(o))
+          : authorizedOwners
+        : params.owner;
+
+      const result = await templatesService.getAllTemplates({ ...params, owner: effectiveOwner });
+
+      ensureSavedObjectsAreAuthorized(
+        result.templates.map((t) => ({ owner: t.owner, id: t.templateId }))
+      );
+
+      return result;
     },
 
     getTemplate: async (templateId: string, version?: string) => {
-      return templatesService.getTemplate(templateId, version);
+      const existing = await templatesService.getTemplate(templateId, version);
+
+      if (existing) {
+        const { ensureSavedObjectsAreAuthorized } = await authorization.getAuthorizationFilter(
+          Operations[ReadOperations.FindCases]
+        );
+        ensureSavedObjectsAreAuthorized([{ owner: existing.attributes.owner, id: existing.id }]);
+      }
+
+      return existing;
     },
 
     createTemplate: async (input: CreateTemplateInput) => {
@@ -64,12 +91,14 @@ export const createTemplatesSubClient = (clientArgs: CasesClientArgs): Templates
     updateTemplate: async (templateId: string, input: UpdateTemplateInput) => {
       const existing = await templatesService.getTemplate(templateId);
 
-      if (existing) {
-        await authorization.ensureAuthorized({
-          operation: Operations.manageTemplate,
-          entities: [{ owner: existing.attributes.owner, id: existing.id }],
-        });
+      if (!existing) {
+        throw Boom.notFound(`Template with id ${templateId} not found`);
       }
+
+      await authorization.ensureAuthorized({
+        operation: Operations.manageTemplate,
+        entities: [{ owner: existing.attributes.owner, id: existing.id }],
+      });
 
       return templatesService.updateTemplate(templateId, input);
     },
@@ -89,8 +118,19 @@ export const createTemplatesSubClient = (clientArgs: CasesClientArgs): Templates
       return templatesService.deleteTemplate(templateId);
     },
 
-    getTags: () => templatesService.getTags(),
-    getAuthors: () => templatesService.getAuthors(),
+    getTags: async () => {
+      const { authorizedOwners } = await authorization.getAuthorizationFilter(
+        Operations[ReadOperations.FindCases]
+      );
+      return templatesService.getTags(authorizedOwners);
+    },
+
+    getAuthors: async () => {
+      const { authorizedOwners } = await authorization.getAuthorizationFilter(
+        Operations[ReadOperations.FindCases]
+      );
+      return templatesService.getAuthors(authorizedOwners);
+    },
   };
 
   return Object.freeze(templatesSubClient);
