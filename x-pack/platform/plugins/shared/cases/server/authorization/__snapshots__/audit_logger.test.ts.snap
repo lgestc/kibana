@@ -2781,10 +2781,10 @@ Object {
   "kibana": Object {
     "saved_object": Object {
       "id": "1",
-      "type": "cases",
+      "type": "cases-templates",
     },
   },
-  "message": "Failed attempt to update cases [id=1] as owner \\"awesome\\"",
+  "message": "Failed attempt to update cases-templates [id=1] as owner \\"awesome\\"",
 }
 `;
 
@@ -2806,7 +2806,7 @@ Object {
       "change",
     ],
   },
-  "message": "Failed attempt to update a case template as any owners",
+  "message": "Failed attempt to update a case templates as any owners",
 }
 `;
 
@@ -2827,10 +2827,10 @@ Object {
   "kibana": Object {
     "saved_object": Object {
       "id": "5",
-      "type": "cases",
+      "type": "cases-templates",
     },
   },
-  "message": "User is updating cases [id=5] as owner \\"super\\"",
+  "message": "User is updating cases-templates [id=5] as owner \\"super\\"",
 }
 `;
 
@@ -2848,7 +2848,7 @@ Object {
       "change",
     ],
   },
-  "message": "User is updating a case template as any owners",
+  "message": "User is updating a case templates as any owners",
 }
 `;
 
