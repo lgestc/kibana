@@ -5,17 +5,13 @@
  * 2.0.
  */
 
-import type { FC, PropsWithChildren } from 'react';
-import React from 'react';
+import React, { useState } from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-
-import { useForm, Form } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 
 import { Category } from './category';
 import { useGetCategories } from '../../containers/use_get_categories';
 import { categories } from '../../containers/mock';
-import { EuiButton } from '@elastic/eui';
 import { renderWithTestingProviders } from '../../common/mock';
 
 jest.mock('../../containers/use_get_categories');
@@ -23,18 +19,7 @@ jest.mock('../../containers/use_get_categories');
 const useGetCategoriesMock = useGetCategories as jest.Mock;
 
 describe('Category', () => {
-  const onSubmit = jest.fn();
-
-  const FormComponent: FC<PropsWithChildren<unknown>> = ({ children }) => {
-    const { form } = useForm({ onSubmit });
-
-    return (
-      <Form form={form}>
-        {children}
-        <EuiButton onClick={() => form.submit()}>{'Submit'}</EuiButton>
-      </Form>
-    );
-  };
+  const onChange = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -42,31 +27,19 @@ describe('Category', () => {
   });
 
   it('renders the category field correctly', () => {
-    renderWithTestingProviders(
-      <FormComponent>
-        <Category isLoading={false} />
-      </FormComponent>
-    );
+    renderWithTestingProviders(<Category isLoading={false} value={null} onChange={onChange} />);
 
     expect(screen.getByTestId('categories-list')).toBeInTheDocument();
   });
 
   it('shows the optional label correctly', () => {
-    renderWithTestingProviders(
-      <FormComponent>
-        <Category isLoading={false} />
-      </FormComponent>
-    );
+    renderWithTestingProviders(<Category isLoading={false} value={null} onChange={onChange} />);
 
     expect(screen.getByText('Optional')).toBeInTheDocument();
   });
 
   it('disables the combobox when it is loading', () => {
-    renderWithTestingProviders(
-      <FormComponent>
-        <Category isLoading={true} />
-      </FormComponent>
-    );
+    renderWithTestingProviders(<Category isLoading={true} value={null} onChange={onChange} />);
 
     expect(screen.getByRole('combobox')).toBeDisabled();
   });
@@ -74,34 +47,37 @@ describe('Category', () => {
   it('disables the combobox when is loading categories', async () => {
     useGetCategoriesMock.mockReturnValue({ isLoading: true, data: categories });
 
-    renderWithTestingProviders(
-      <FormComponent>
-        <Category isLoading={false} />
-      </FormComponent>
-    );
+    renderWithTestingProviders(<Category isLoading={false} value={null} onChange={onChange} />);
 
     await waitFor(() => {
       expect(screen.getByRole('combobox')).toBeDisabled();
     });
   });
 
-  it('can set the categories returned from the useGetCategories correctly ', async () => {
+  it('calls onChange when a category is selected', async () => {
     const category = 'test';
+    useGetCategoriesMock.mockReturnValue({ isLoading: false, data: [category] });
 
-    useGetCategoriesMock.mockReturnValue(() => ({ isLoading: true, data: [category] }));
+    const TestWrapper = () => {
+      const [value, setValue] = useState<string | null>(null);
+      return (
+        <Category
+          isLoading={false}
+          value={value}
+          onChange={(v) => {
+            setValue(v ?? null);
+            onChange(v);
+          }}
+        />
+      );
+    };
 
-    renderWithTestingProviders(
-      <FormComponent>
-        <Category isLoading={false} />
-      </FormComponent>
-    );
+    renderWithTestingProviders(<TestWrapper />);
 
     await userEvent.type(screen.getByRole('combobox'), `${category}{enter}`);
-    await userEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({ category }, true);
+      expect(onChange).toHaveBeenCalledWith(category);
     });
   });
 });

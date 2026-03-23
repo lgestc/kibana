@@ -4,7 +4,6 @@
  * 2.0; you may not use this file except in compliance with the Elastic License
  * 2.0.
  */
-import { type FieldHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { renderHook } from '@testing-library/react';
 import { useUploadStart } from './use_upload_start';
 import { type UploadStartState, type UploadIdleState, UploadPhase, ActionType } from './types';
@@ -21,13 +20,8 @@ describe('useUploadStart', () => {
       selectionEnd: 6,
     } as unknown as HTMLTextAreaElement;
 
-    // Stub out the field hook with an initial value and a jest mock for setValue
     const fieldValue = 'hello world';
     const setValue = jest.fn();
-    const field = {
-      value: fieldValue,
-      setValue,
-    } as unknown as FieldHook<string>;
 
     // Build the initial state representing START_UPLOAD
     const state: UploadStartState = {
@@ -39,7 +33,7 @@ describe('useUploadStart', () => {
     // Spy dispatch function
     const dispatch = jest.fn();
 
-    renderHook(() => useUploadStart(state, dispatch, textarea, field));
+    renderHook(() => useUploadStart(state, dispatch, textarea, fieldValue, setValue));
 
     // Expect placeholder inserted between "hello " and "world"
     expect(setValue).toHaveBeenCalledWith(`hello ${placeholder}world`);
@@ -57,15 +51,10 @@ describe('useUploadStart', () => {
     } as unknown as HTMLTextAreaElement;
 
     const setValue = jest.fn();
-    const field = {
-      value: 'text',
-      setValue,
-    } as unknown as FieldHook<string>;
-
     const state: UploadIdleState = { phase: UploadPhase.IDLE };
     const dispatch = jest.fn();
 
-    renderHook(() => useUploadStart(state, dispatch, textarea, field));
+    renderHook(() => useUploadStart(state, dispatch, textarea, 'text', setValue));
 
     expect(setValue).not.toHaveBeenCalled();
     expect(dispatch).not.toHaveBeenCalled();

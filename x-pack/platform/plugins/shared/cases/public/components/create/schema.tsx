@@ -5,34 +5,4 @@
  * 2.0.
  */
 
-import type { FieldConfig, FormSchema } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { fieldValidators } from '@kbn/es-ui-shared-plugin/static/forms/helpers';
-import * as i18n from './translations';
-
-const { emptyField } = fieldValidators;
-import type { CaseFormFieldsSchemaProps } from '../case_form_fields/schema';
-import { schema as caseFormFieldsSchema } from '../case_form_fields/schema';
-
-const caseFormFieldsSchemaTyped = caseFormFieldsSchema as Record<string, FieldConfig<string>>;
-
-export const schema: FormSchema<CaseFormFieldsSchemaProps> = {
-  ...caseFormFieldsSchema,
-  title: {
-    ...caseFormFieldsSchemaTyped.title,
-    validations: [
-      {
-        validator: emptyField(i18n.TITLE_REQUIRED),
-      },
-      ...(caseFormFieldsSchemaTyped.title.validations ?? []),
-    ],
-  },
-  description: {
-    ...caseFormFieldsSchemaTyped.description,
-    validations: [
-      {
-        validator: emptyField(i18n.DESCRIPTION_REQUIRED),
-      },
-      ...(caseFormFieldsSchemaTyped.description.validations ?? []),
-    ],
-  },
-};
+// Schema removed — validation lives in Controller rules in each form component.

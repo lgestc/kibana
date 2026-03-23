@@ -5,38 +5,49 @@
  * 2.0.
  */
 
-import React, { memo, useRef } from 'react';
-import { UseField, useFormData } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import React, { memo } from 'react';
 import { MarkdownEditorForm } from '../markdown_editor';
 import { ID as LensPluginId } from '../markdown_editor/plugins/lens/constants';
+import * as i18n from '../../common/translations';
 
 interface Props {
+  value: string;
+  onChange: (v: string) => void;
   isLoading: boolean;
+  error?: string;
+  caseTitle?: string;
+  caseTags?: string[];
   draftStorageKey?: string;
 }
 
 export const fieldName = 'description';
 
-const DescriptionComponent: React.FC<Props> = ({ isLoading, draftStorageKey }) => {
-  const [{ title, tags }] = useFormData({ watch: ['title', 'tags'] });
-  const editorRef = useRef<Record<string, unknown>>();
+const DescriptionComponent: React.FC<Props> = ({
+  value,
+  onChange,
+  isLoading,
+  error,
+  caseTitle,
+  caseTags,
+  draftStorageKey,
+}) => {
   const disabledUiPlugins = [LensPluginId];
 
   return (
-    <UseField
-      path={fieldName}
-      component={MarkdownEditorForm}
-      componentProps={{
-        id: fieldName,
-        ref: editorRef,
-        dataTestSubj: 'caseDescription',
-        idAria: 'caseDescription',
-        isDisabled: isLoading,
-        caseTitle: title,
-        caseTags: tags,
-        disabledUiPlugins,
-        draftStorageKey,
-      }}
+    <MarkdownEditorForm
+      id={fieldName}
+      aria-labelledby="caseDescription"
+      dataTestSubj="caseDescription"
+      idAria="caseDescription"
+      isDisabled={isLoading}
+      caseTitle={caseTitle}
+      caseTags={caseTags}
+      disabledUiPlugins={disabledUiPlugins}
+      draftStorageKey={draftStorageKey}
+      value={value}
+      onChange={onChange}
+      error={error}
+      label={i18n.DESCRIPTION}
     />
   );
 };

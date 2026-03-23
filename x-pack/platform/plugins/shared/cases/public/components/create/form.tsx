@@ -7,7 +7,7 @@
 
 import React, { useCallback, useState, useMemo } from 'react';
 import { EuiButtonEmpty, EuiFlexGroup, EuiFlexItem, EuiFormRow } from '@elastic/eui';
-import { useFormContext } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { useFormContext } from 'react-hook-form';
 import type { CasePostRequest, ObservablePost } from '../../../common/types/api';
 import { fieldName as descriptionFieldName } from '../case_form_fields/description';
 import * as i18n from './translations';
@@ -16,6 +16,7 @@ import type { CasesTimelineIntegration } from '../timeline_context';
 import { CasesTimelineIntegrationProvider } from '../timeline_context';
 import { InsertTimeline } from '../insert_timeline';
 import { removeItemFromSessionStorage } from '../utils';
+import { createFormDeserializer, getOwnerDefaultValue } from './utils';
 import type { UseCreateAttachments } from '../../containers/use_create_attachments';
 import { getMarkdownEditorStorageKey } from '../markdown_editor/utils';
 import { SubmitCaseButton } from './submit_button';
@@ -32,7 +33,6 @@ import { getConfigurationByOwner } from '../../containers/configure/utils';
 import { CreateCaseOwnerSelector } from './owner_selector';
 import { useAvailableCasesOwners } from '../app/use_available_owners';
 import { getInitialCaseValue } from '../../../common/utils/get_initial_case_value';
-import { getOwnerDefaultValue } from './utils';
 import { useCasesFeatures } from '../../common/use_cases_features';
 import { useSubmitCase } from './use_submit_case';
 
@@ -79,12 +79,16 @@ export const FormFieldsWithFormContext: React.FC<FormFieldsWithFormContextProps>
     const onOwnerChange = useCallback(
       (newOwner: string) => {
         onSelectedOwner(newOwner);
+        const newDefaults = getInitialCaseValue({
+          owner: newOwner,
+          connector: currentConfiguration.connector,
+        });
+        const deserializedDefaults = createFormDeserializer(newDefaults);
         reset({
-          resetValues: true,
-          defaultValue: getInitialCaseValue({
-            owner: newOwner,
-            connector: currentConfiguration.connector,
-          }),
+          ...deserializedDefaults,
+          templateId: '',
+          templateVersion: undefined,
+          extendedFields: {},
         });
       },
       [currentConfiguration.connector, onSelectedOwner, reset]

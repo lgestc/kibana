@@ -7,51 +7,26 @@
 
 import { EuiFormRow } from '@elastic/eui';
 import React, { memo } from 'react';
-import {
-  getFieldValidityAndErrorMessage,
-  UseField,
-} from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { isEmpty } from 'lodash';
 import { CaseSeverity } from '../../../common/types/domain';
 import { SeveritySelector } from '../severity/selector';
 import { SEVERITY_TITLE } from '../severity/translations';
 
 interface Props {
+  value: CaseSeverity;
+  onChange: (v: CaseSeverity) => void;
   isLoading: boolean;
 }
 
-const SeverityComponent: React.FC<Props> = ({ isLoading }) => (
-  <UseField<CaseSeverity>
-    path={'severity'}
-    componentProps={{
-      isLoading,
-    }}
-  >
-    {(field) => {
-      const { isInvalid, errorMessage } = getFieldValidityAndErrorMessage(field);
-
-      const onChange = (newSeverity: CaseSeverity) => {
-        field.setValue(newSeverity);
-      };
-
-      return (
-        <EuiFormRow
-          data-test-subj="caseSeverity"
-          fullWidth
-          label={SEVERITY_TITLE}
-          error={errorMessage}
-          isInvalid={isInvalid}
-        >
-          <SeveritySelector
-            isLoading={isLoading}
-            isDisabled={isLoading}
-            selectedSeverity={isEmpty(field.value) ? CaseSeverity.LOW : field.value}
-            onSeverityChange={onChange}
-          />
-        </EuiFormRow>
-      );
-    }}
-  </UseField>
+const SeverityComponent: React.FC<Props> = ({ value, onChange, isLoading }) => (
+  <EuiFormRow data-test-subj="caseSeverity" fullWidth label={SEVERITY_TITLE}>
+    <SeveritySelector
+      isLoading={isLoading}
+      isDisabled={isLoading}
+      selectedSeverity={isEmpty(value) ? CaseSeverity.LOW : value}
+      onSeverityChange={onChange}
+    />
+  </EuiFormRow>
 );
 
 SeverityComponent.displayName = 'SeverityComponent';

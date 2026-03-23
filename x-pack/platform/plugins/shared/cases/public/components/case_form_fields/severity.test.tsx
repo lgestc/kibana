@@ -5,22 +5,17 @@
  * 2.0.
  */
 
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import React, { useState } from 'react';
+import { render, screen } from '@testing-library/react';
 import { Severity } from './severity';
 import userEvent from '@testing-library/user-event';
 import { waitForEuiPopoverOpen } from '@elastic/eui/lib/test/rtl';
-import { FormTestComponent } from '../../common/test_utils';
-
-const onSubmit = jest.fn();
+import type { CaseSeverity } from '../../../common/types/domain';
 
 describe('Severity form field', () => {
   it('renders', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <Severity isLoading={false} />
-      </FormTestComponent>
-    );
+    const onChange = jest.fn();
+    render(<Severity isLoading={false} value={'low' as CaseSeverity} onChange={onChange} />);
 
     expect(await screen.findByTestId('caseSeverity')).toBeInTheDocument();
     expect(await screen.findByTestId('case-severity-selection')).toBeEnabled();
@@ -28,22 +23,29 @@ describe('Severity form field', () => {
 
   // default to LOW in this test configuration
   it('defaults to the correct value', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <Severity isLoading={false} />
-      </FormTestComponent>
-    );
+    const onChange = jest.fn();
+    render(<Severity isLoading={false} value={'low' as CaseSeverity} onChange={onChange} />);
 
     expect(await screen.findByTestId('caseSeverity')).toBeInTheDocument();
     expect(await screen.findByTestId('case-severity-selection-low')).toBeInTheDocument();
   });
 
-  it('selects the correct value when changed', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <Severity isLoading={false} />
-      </FormTestComponent>
-    );
+  it('calls onChange with the selected value when changed', async () => {
+    const onChange = jest.fn();
+    const TestWrapper = () => {
+      const [value, setValue] = useState<CaseSeverity>('low' as CaseSeverity);
+      return (
+        <Severity
+          isLoading={false}
+          value={value}
+          onChange={(v) => {
+            setValue(v);
+            onChange(v);
+          }}
+        />
+      );
+    };
+    render(<TestWrapper />);
 
     expect(await screen.findByTestId('caseSeverity')).toBeInTheDocument();
 
@@ -52,20 +54,11 @@ describe('Severity form field', () => {
 
     await userEvent.click(await screen.findByTestId('case-severity-selection-high'));
 
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({ severity: 'high' }, true);
-    });
+    expect(onChange).toHaveBeenCalledWith('high');
   });
 
   it('disables when loading data', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <Severity isLoading={true} />
-      </FormTestComponent>
-    );
+    render(<Severity isLoading={true} value={'low' as CaseSeverity} onChange={jest.fn()} />);
 
     expect(await screen.findByTestId('case-severity-selection')).toBeDisabled();
   });

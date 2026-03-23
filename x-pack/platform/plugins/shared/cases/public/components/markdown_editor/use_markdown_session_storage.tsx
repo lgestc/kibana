@@ -14,13 +14,17 @@ import type { FieldHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_
 const STORAGE_DEBOUNCE_TIME = 500;
 
 export interface SessionStorageType {
-  field: FieldHook<string>;
+  field?: FieldHook<string>;
+  value?: string;
+  onChange?: (v: string) => void;
   sessionKey: string;
   initialValue: string | undefined;
 }
 
 export const useMarkdownSessionStorage = ({
   field,
+  value: controlledValue,
+  onChange: controlledOnChange,
   sessionKey,
   initialValue,
 }: SessionStorageType) => {
@@ -28,17 +32,20 @@ export const useMarkdownSessionStorage = ({
   const isFirstRender = useRef(true);
   const initialValueRef = useRef(initialValue);
 
+  const currentValue = field ? field.value : controlledValue ?? '';
+  const setValue = field ? field.setValue : controlledOnChange ?? (() => {});
+
   const [sessionValue, setSessionValue] = useSessionStorage(sessionKey, '', true);
 
   if (!isEmpty(sessionValue) && !isEmpty(sessionKey) && isFirstRender.current) {
-    field.setValue(sessionValue);
+    setValue(sessionValue);
   }
 
   if (isFirstRender.current) {
     isFirstRender.current = false;
   }
 
-  if (initialValue !== initialValueRef.current && initialValue !== field.value) {
+  if (initialValue !== initialValueRef.current && initialValue !== currentValue) {
     initialValueRef.current = initialValue;
     setHasConflicts(true);
   }
@@ -46,11 +53,11 @@ export const useMarkdownSessionStorage = ({
   useDebounce(
     () => {
       if (!isEmpty(sessionKey)) {
-        setSessionValue(field.value);
+        setSessionValue(currentValue);
       }
     },
     STORAGE_DEBOUNCE_TIME,
-    [field.value]
+    [currentValue]
   );
 
   return { hasConflicts };

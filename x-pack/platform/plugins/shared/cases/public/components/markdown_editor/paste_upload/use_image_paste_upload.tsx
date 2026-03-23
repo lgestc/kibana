@@ -24,7 +24,9 @@ import { type Owner } from '../../../../common/constants/types';
 
 interface UseImagePasteUploadArgs {
   editorRef: React.ForwardedRef<MarkdownEditorRef | null>;
-  field: FieldHook<string>;
+  field?: FieldHook<string>;
+  value?: string;
+  onChange?: (v: string) => void;
   caseId: string;
   owner: Owner;
   fileKindId: string;
@@ -41,12 +43,21 @@ const DEFAULT_STATE: PasteUploadState = { phase: UploadPhase.IDLE };
 export function useImagePasteUpload({
   editorRef,
   field,
+  value: controlledValue,
+  onChange: controlledOnChange,
   caseId,
   owner,
   fileKindId,
 }: UseImagePasteUploadArgs): UseImagePasteUploadReturn {
   const { client } = useFilesContext();
   const kind = client.getFileKind(fileKindId);
+
+  const noopOnChange = useMemo(() => (_v: string) => {}, []);
+  const value = field ? field.value : controlledValue ?? '';
+  const setValue = useMemo(
+    () => (field ? field.setValue : controlledOnChange ?? noopOnChange),
+    [field, controlledOnChange, noopOnChange]
+  );
 
   const uploadState = useMemo(
     () =>
@@ -77,14 +88,14 @@ export function useImagePasteUpload({
           file.fileJSON.extension
         )
       );
-      field.setValue(newText);
+      setValue(newText);
     },
-    [textarea, owner, client, field]
+    [textarea, owner, client, setValue]
   );
 
   const pasteHandlerRef = useRef<(e: ClipboardEvent) => void>();
 
-  useUploadStart(uiState, dispatch, textarea, field);
+  useUploadStart(uiState, dispatch, textarea, value, setValue);
 
   useUploadComplete(uiState, replacePlaceholder, dispatch);
 

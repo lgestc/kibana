@@ -6,11 +6,11 @@
  */
 
 import React from 'react';
-import { UseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { NumericField } from '@kbn/es-ui-shared-plugin/static/forms/components';
+import { Controller, useFormContext } from 'react-hook-form';
+import { EuiFieldNumber, EuiFormRow } from '@elastic/eui';
 import type { CaseCustomFieldNumber } from '../../../../common/types/domain';
 import type { CustomFieldType } from '../types';
-import { getNumberFieldConfig } from './config';
+import { REQUIRED_FIELD, SAFE_INTEGER_NUMBER_ERROR } from '../translations';
 import { OptionalFieldLabel } from '../../optional_field_label';
 
 const CreateComponent: CustomFieldType<CaseCustomFieldNumber>['Create'] = ({
@@ -19,30 +19,52 @@ const CreateComponent: CustomFieldType<CaseCustomFieldNumber>['Create'] = ({
   setAsOptional,
   setDefaultValue = true,
 }) => {
+  const { control } = useFormContext();
   const { key, label, required, defaultValue } = customFieldConfiguration;
-  const config = getNumberFieldConfig({
-    required: setAsOptional ? false : required,
-    label,
-    ...(defaultValue &&
-      setDefaultValue &&
-      !isNaN(Number(defaultValue)) && { defaultValue: Number(defaultValue) }),
-  });
+  const isRequired = setAsOptional ? false : required;
+  const fieldDefaultValue =
+    defaultValue && setDefaultValue && !isNaN(Number(defaultValue))
+      ? Number(defaultValue)
+      : undefined;
 
   return (
-    <UseField
-      path={`customFields.${key}`}
-      config={config}
-      component={NumericField}
-      label={label}
-      componentProps={{
-        labelAppend: setAsOptional ? OptionalFieldLabel : null,
-        euiFieldProps: {
-          'data-test-subj': `${key}-number-create-custom-field`,
-          fullWidth: true,
-          disabled: isLoading,
-          isLoading,
+    <Controller
+      name={`customFields.${key}`}
+      control={control}
+      defaultValue={fieldDefaultValue ?? ''}
+      rules={{
+        validate: (value: string | number) => {
+          if (isRequired && (value === '' || value == null)) {
+            return REQUIRED_FIELD(label);
+          }
+          if (value != null && value !== '') {
+            const numericValue = Number(value);
+            if (!Number.isSafeInteger(numericValue)) {
+              return SAFE_INTEGER_NUMBER_ERROR(label);
+            }
+          }
+          return undefined;
         },
       }}
+      render={({ field, fieldState }) => (
+        <EuiFormRow
+          fullWidth
+          label={label}
+          labelAppend={setAsOptional ? OptionalFieldLabel : null}
+          error={fieldState.error?.message}
+          isInvalid={Boolean(fieldState.error)}
+        >
+          <EuiFieldNumber
+            data-test-subj={`${key}-number-create-custom-field`}
+            fullWidth
+            disabled={isLoading}
+            isLoading={isLoading}
+            value={field.value ?? ''}
+            onChange={(e) => field.onChange(e.target.value)}
+            isInvalid={Boolean(fieldState.error)}
+          />
+        </EuiFormRow>
+      )}
     />
   );
 };

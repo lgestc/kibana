@@ -26,7 +26,11 @@ import { CommentEditor } from './comment_editor';
 
 type MarkdownEditorFormProps = EuiMarkdownEditorProps & {
   id: string;
-  field: FieldHook<string>;
+  field?: FieldHook<string>;
+  value?: string;
+  onChange?: (v: string) => void;
+  error?: string;
+  label?: string;
   dataTestSubj: string;
   idAria: string;
   isDisabled?: boolean;
@@ -45,6 +49,10 @@ export const MarkdownEditorForm = React.memo(
       {
         id,
         field,
+        value: controlledValue,
+        onChange: controlledOnChange,
+        error: controlledError,
+        label: controlledLabel,
         dataTestSubj,
         idAria,
         bottomRightContent,
@@ -57,9 +65,20 @@ export const MarkdownEditorForm = React.memo(
       },
       ref
     ) => {
-      const { isInvalid, errorMessage } = getFieldValidityAndErrorMessage(field);
+      const value = field ? field.value : controlledValue ?? '';
+      const onChange = field ? field.setValue : controlledOnChange ?? (() => {});
+      const label = field ? field.label : controlledLabel;
+      const helpText = field?.helpText;
+      const labelAppend = field?.labelAppend;
+
+      const { isInvalid, errorMessage } = field
+        ? getFieldValidityAndErrorMessage(field)
+        : { isInvalid: Boolean(controlledError), errorMessage: controlledError };
+
       const { hasConflicts } = useMarkdownSessionStorage({
         field,
+        value,
+        onChange,
         sessionKey: draftStorageKey ?? '',
         initialValue,
       });
@@ -72,11 +91,11 @@ export const MarkdownEditorForm = React.memo(
       const commentEditorContextValue = useMemo(
         () => ({
           editorId: id,
-          value: field.value,
+          value,
           caseTitle,
           caseTags,
         }),
-        [id, field.value, caseTitle, caseTags]
+        [id, value, caseTitle, caseTags]
       );
 
       return (
@@ -86,10 +105,10 @@ export const MarkdownEditorForm = React.memo(
             describedByIds={idAria ? [idAria] : undefined}
             fullWidth
             error={errorMessage}
-            helpText={field.helpText}
+            helpText={helpText}
             isInvalid={isInvalid}
-            label={field.label}
-            labelAppend={field.labelAppend}
+            label={label}
+            labelAppend={labelAppend}
           >
             <CommentEditor
               ariaLabel={idAria}
@@ -99,8 +118,8 @@ export const MarkdownEditorForm = React.memo(
               field={field}
               caseId={caseId}
               ref={ref}
-              onChange={field.setValue}
-              value={field.value}
+              onChange={onChange}
+              value={value}
             />
           </EuiFormRow>
           {bottomRightContent && (

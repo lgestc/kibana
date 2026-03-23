@@ -27,9 +27,15 @@ interface ConnectorSelectorProps {
   connectors: ActionConnector[];
   dataTestSubj: string;
   disabled: boolean;
-  field: FieldHook<string>;
   idAria: string;
   isLoading: boolean;
+  // Legacy @kbn form field (used by out-of-scope callers)
+  field?: FieldHook<string>;
+  // Controlled mode (used by RHF-migrated callers)
+  value?: string;
+  onChange?: (val: string) => void;
+  isInvalid?: boolean;
+  error?: string;
   handleChange?: (newValue: string) => void;
 }
 
@@ -37,24 +43,38 @@ export const ConnectorSelector = ({
   connectors,
   dataTestSubj,
   disabled = false,
-  field,
   idAria,
   isLoading = false,
+  field,
+  value: controlledValue,
+  onChange: controlledOnChange,
+  isInvalid: controlledIsInvalid,
+  error: controlledError,
   handleChange,
 }: ConnectorSelectorProps) => {
-  const { isInvalid, errorMessage } = getFieldValidityAndErrorMessage(field);
+  const fieldValidity = field ? getFieldValidityAndErrorMessage(field) : null;
+  const isInvalid = fieldValidity ? fieldValidity.isInvalid : Boolean(controlledIsInvalid);
+  const errorMessage = fieldValidity ? fieldValidity.errorMessage : controlledError;
+  const currentValue = field ? field.value : controlledValue ?? '';
+  const label = field ? field.label : undefined;
+  const labelAppend = field ? field.labelAppend : undefined;
+
   const onChange = useCallback(
     (val: string) => {
       if (handleChange) {
         handleChange(val);
       }
-      field.setValue(val);
+      if (field) {
+        field.setValue(val);
+      } else if (controlledOnChange) {
+        controlledOnChange(val);
+      }
     },
-    [handleChange, field]
+    [handleChange, field, controlledOnChange]
   );
 
   const isConnectorAvailable = Boolean(
-    connectors.find((connector) => connector.id === field.value)
+    connectors.find((connector) => connector.id === currentValue)
   );
 
   return (
@@ -70,15 +90,15 @@ export const ConnectorSelector = ({
       fullWidth
       helpText={ADD_CONNECTOR_HELPER_TEXT}
       isInvalid={isInvalid}
-      label={field.label}
-      labelAppend={field.labelAppend}
+      label={label}
+      labelAppend={labelAppend}
     >
       <ConnectorsDropdown
         connectors={connectors}
         disabled={disabled}
         isLoading={isLoading}
         onChange={onChange}
-        selectedConnector={isEmpty(field.value) || !isConnectorAvailable ? 'none' : field.value}
+        selectedConnector={isEmpty(currentValue) || !isConnectorAvailable ? 'none' : currentValue}
       />
     </EuiFormRow>
   );

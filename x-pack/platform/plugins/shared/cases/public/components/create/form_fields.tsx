@@ -15,7 +15,7 @@ import {
   EuiSpacer,
 } from '@elastic/eui';
 import { css } from '@emotion/react';
-import { useFormContext } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { Controller, useFormContext, useFormState } from 'react-hook-form';
 
 import type { CasePostRequest, CaseUI } from '../../../common';
 import type { ActionConnector } from '../../../common/types/domain';
@@ -28,6 +28,7 @@ import { useCasesFeatures } from '../../common/use_cases_features';
 import { TemplateSelector } from './templates';
 import { TemplateSelector as TemplateSelectorV2 } from './templates_v2';
 import { getInitialCaseValue } from '../../../common/utils/get_initial_case_value';
+import { createFormDeserializer } from './utils';
 import { KibanaServices } from '../../common/lib/kibana';
 import { CaseFormFields } from '../case_form_fields';
 import { builderMap as customFieldsBuilderMap } from '../custom_fields/builder';
@@ -68,7 +69,8 @@ const DEFAULT_EMPTY_TEMPLATE_KEY = 'defaultEmptyTemplateKey';
 
 export const CreateCaseFormFields: React.FC<CreateCaseFormFieldsProps> = React.memo(
   ({ configuration, connectors, isLoading, withSteps, draftStorageKey }) => {
-    const { reset, updateFieldValues, isSubmitting, setFieldValue } = useFormContext();
+    const { reset, setValue } = useFormContext();
+    const { isSubmitting } = useFormState();
 
     const {
       isSyncAlertsEnabled,
@@ -88,8 +90,8 @@ export const CreateCaseFormFields: React.FC<CreateCaseFormFieldsProps> = React.m
      * so the connector has to change.
      */
     useEffect(() => {
-      setFieldValue('connectorId', configuration.connector.id);
-    }, [configuration.connector.id, setFieldValue]);
+      setValue('connectorId', configuration.connector.id);
+    }, [configuration.connector.id, setValue]);
 
     const defaultTemplate = useMemo(
       () => ({
@@ -110,13 +112,15 @@ export const CreateCaseFormFields: React.FC<CreateCaseFormFieldsProps> = React.m
           caseFields
         );
 
+        const deserializedDefaults = createFormDeserializer(caseFormFields);
         reset({
-          resetValues: true,
-          defaultValue: getInitialCaseValue({ owner: configurationOwner }),
+          ...deserializedDefaults,
+          templateId: '',
+          templateVersion: undefined,
+          extendedFields: {},
         });
-        updateFieldValues(caseFormFields);
       },
-      [configurationOwner, reset, updateFieldValues]
+      [configurationOwner, reset]
     );
 
     const firstStep = useMemo(
@@ -152,23 +156,49 @@ export const CreateCaseFormFields: React.FC<CreateCaseFormFieldsProps> = React.m
             setCustomFieldsOptional={false}
             isEditMode={false}
             draftStorageKey={draftStorageKey}
+            isCreateMode={true}
           />
         ),
       }),
       [configuration.customFields, draftStorageKey, isSubmitting]
     );
     const showThirdStep = isSyncAlertsEnabled || canExtractObservables;
+    const { control } = useFormContext();
     const thirdStep = useMemo(
       () => ({
         title: i18n.STEP_THREE_TITLE,
         children: (
           <>
-            {isSyncAlertsEnabled && <SyncAlertsToggle isLoading={isSubmitting} />}
-            {canExtractObservables && <ObservablesToggle isLoading={isSubmitting} />}
+            {isSyncAlertsEnabled && (
+              <Controller
+                name="syncAlerts"
+                control={control}
+                render={({ field }) => (
+                  <SyncAlertsToggle
+                    value={field.value ?? true}
+                    onChange={field.onChange}
+                    isLoading={isSubmitting}
+                  />
+                )}
+              />
+            )}
+            {canExtractObservables && (
+              <Controller
+                name="extractObservables"
+                control={control}
+                render={({ field }) => (
+                  <ObservablesToggle
+                    value={field.value ?? true}
+                    onChange={field.onChange}
+                    isLoading={isSubmitting}
+                  />
+                )}
+              />
+            )}
           </>
         ),
       }),
-      [isSubmitting, isSyncAlertsEnabled, canExtractObservables]
+      [isSubmitting, isSyncAlertsEnabled, canExtractObservables, control]
     );
 
     const fourthStep = useMemo(

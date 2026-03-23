@@ -6,11 +6,12 @@
  */
 
 import React from 'react';
-import { UseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { TextField } from '@kbn/es-ui-shared-plugin/static/forms/components';
+import { Controller, useFormContext } from 'react-hook-form';
+import { EuiFieldText, EuiFormRow } from '@elastic/eui';
 import type { CaseCustomFieldText } from '../../../../common/types/domain';
 import type { CustomFieldType } from '../types';
-import { getTextFieldConfig } from './config';
+import { MAX_CUSTOM_FIELD_TEXT_VALUE_LENGTH } from '../../../../common/constants';
+import { MAX_LENGTH_ERROR, REQUIRED_FIELD } from '../translations';
 import { OptionalFieldLabel } from '../../optional_field_label';
 
 const CreateComponent: CustomFieldType<CaseCustomFieldText>['Create'] = ({
@@ -19,28 +20,46 @@ const CreateComponent: CustomFieldType<CaseCustomFieldText>['Create'] = ({
   setAsOptional,
   setDefaultValue = true,
 }) => {
+  const { control } = useFormContext();
   const { key, label, required, defaultValue } = customFieldConfiguration;
-  const config = getTextFieldConfig({
-    required: setAsOptional ? false : required,
-    label,
-    ...(defaultValue && setDefaultValue && { defaultValue: String(defaultValue) }),
-  });
+  const isRequired = setAsOptional ? false : required;
+  const fieldDefaultValue = defaultValue && setDefaultValue ? String(defaultValue) : undefined;
 
   return (
-    <UseField
-      path={`customFields.${key}`}
-      config={config}
-      component={TextField}
-      label={label}
-      componentProps={{
-        labelAppend: setAsOptional ? OptionalFieldLabel : null,
-        euiFieldProps: {
-          'data-test-subj': `${key}-text-create-custom-field`,
-          fullWidth: true,
-          disabled: isLoading,
-          isLoading,
+    <Controller
+      name={`customFields.${key}`}
+      control={control}
+      defaultValue={fieldDefaultValue ?? ''}
+      rules={{
+        validate: (value: string) => {
+          if (isRequired && !value?.trim()) {
+            return REQUIRED_FIELD(label);
+          }
+          if (value != null && value.length > MAX_CUSTOM_FIELD_TEXT_VALUE_LENGTH) {
+            return MAX_LENGTH_ERROR(label, MAX_CUSTOM_FIELD_TEXT_VALUE_LENGTH);
+          }
+          return undefined;
         },
       }}
+      render={({ field, fieldState }) => (
+        <EuiFormRow
+          fullWidth
+          label={label}
+          labelAppend={setAsOptional ? OptionalFieldLabel : null}
+          error={fieldState.error?.message}
+          isInvalid={Boolean(fieldState.error)}
+        >
+          <EuiFieldText
+            data-test-subj={`${key}-text-create-custom-field`}
+            fullWidth
+            disabled={isLoading}
+            isLoading={isLoading}
+            value={field.value ?? ''}
+            onChange={(e) => field.onChange(e.target.value)}
+            isInvalid={Boolean(fieldState.error)}
+          />
+        </EuiFormRow>
+      )}
     />
   );
 };

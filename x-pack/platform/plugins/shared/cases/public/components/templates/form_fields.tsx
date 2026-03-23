@@ -6,10 +6,9 @@
  */
 
 import React, { memo, useMemo } from 'react';
-import { UseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { HiddenField } from '@kbn/es-ui-shared-plugin/static/forms/components';
 import { EuiSteps } from '@elastic/eui';
 import { uniq } from 'lodash';
+import { Controller, useFormContext } from 'react-hook-form';
 import type { TemplateConfiguration } from '../../../common/types/domain';
 import { CaseFormFields } from '../case_form_fields';
 import * as i18n from './translations';
@@ -20,6 +19,7 @@ import { useCasesFeatures } from '../../common/use_cases_features';
 import { SyncAlertsToggle } from '../case_form_fields/sync_alerts_toggle';
 import { ObservablesToggle } from '../case_form_fields/observables_toggle';
 import { Connector } from '../case_form_fields/connector';
+import type { TemplateFormProps } from './types';
 
 interface FormFieldsProps {
   isSubmitting?: boolean;
@@ -40,6 +40,7 @@ const FormFieldsComponent: React.FC<FormFieldsProps> = ({
     useCasesFeatures();
   const { customFields: configurationCustomFields, templates } = currentConfiguration;
   const configurationTemplateTags = getTemplateTags(templates);
+  const { control } = useFormContext<TemplateFormProps>();
 
   const firstStep = useMemo(
     () => ({
@@ -75,15 +76,31 @@ const FormFieldsComponent: React.FC<FormFieldsProps> = ({
       children: (
         <>
           {isSyncAlertsEnabled && (
-            <SyncAlertsToggle
-              isLoading={isSubmitting}
-              defaultValue={initialValue?.caseFields?.settings?.syncAlerts ?? true}
+            <Controller
+              name="syncAlerts"
+              control={control}
+              render={({ field }) => (
+                <SyncAlertsToggle
+                  value={field.value ?? initialValue?.caseFields?.settings?.syncAlerts ?? true}
+                  onChange={field.onChange}
+                  isLoading={isSubmitting}
+                />
+              )}
             />
           )}
           {observablesAuthorized && isExtractObservablesEnabled && (
-            <ObservablesToggle
-              isLoading={isSubmitting}
-              defaultValue={initialValue?.caseFields?.settings?.extractObservables ?? true}
+            <Controller
+              name="extractObservables"
+              control={control}
+              render={({ field }) => (
+                <ObservablesToggle
+                  value={
+                    field.value ?? initialValue?.caseFields?.settings?.extractObservables ?? true
+                  }
+                  onChange={field.onChange}
+                  isLoading={isSubmitting}
+                />
+              )}
             />
           )}
         </>
@@ -96,6 +113,7 @@ const FormFieldsComponent: React.FC<FormFieldsProps> = ({
       isExtractObservablesEnabled,
       isSyncAlertsEnabled,
       observablesAuthorized,
+      control,
     ]
   );
   const showThirdStep = isSyncAlertsEnabled || isExtractObservablesEnabled;
@@ -116,14 +134,11 @@ const FormFieldsComponent: React.FC<FormFieldsProps> = ({
   );
 
   return (
-    <>
-      <UseField path="key" component={HiddenField} />
-      <EuiSteps
-        headingElement="h2"
-        steps={allSteps}
-        data-test-subj={'template-creation-form-steps'}
-      />
-    </>
+    <EuiSteps
+      headingElement="h2"
+      steps={allSteps}
+      data-test-subj={'template-creation-form-steps'}
+    />
   );
 };
 

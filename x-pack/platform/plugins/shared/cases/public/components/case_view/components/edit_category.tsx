@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   EuiTitle,
   EuiText,
@@ -17,8 +17,6 @@ import {
   EuiButtonIcon,
   EuiLoadingSpinner,
 } from '@elastic/eui';
-import type { FormHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { Form, useForm } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { useGetCategories } from '../../../containers/use_get_categories';
 import * as i18n from '../../category/translations';
 import { CategoryViewer } from '../../category/category_viewer_component';
@@ -34,36 +32,39 @@ export interface EditCategoryProps {
 
 interface CategoryFormState {
   isValid: boolean | undefined;
-  submit: FormHook<{ category?: EditCategoryProps['category'] }>['submit'];
+  submit: () => Promise<{ isValid: boolean; data: { category?: string | null } }>;
 }
 
-type CategoryFormWrapper = Pick<EditCategoryProps, 'category' | 'isLoading'> & {
+type CategoryFormWrapperProps = Pick<EditCategoryProps, 'category' | 'isLoading'> & {
   availableCategories: string[];
   onChange?: (state: CategoryFormState) => void;
 };
 
-const CategoryFormWrapper: React.FC<CategoryFormWrapper> = ({
+const CategoryFormWrapper: React.FC<CategoryFormWrapperProps> = ({
   category,
   availableCategories,
   isLoading,
   onChange,
 }) => {
-  const { form } = useForm({
-    defaultValue: { category },
-  });
+  const [value, setValue] = useState<string | null>(category ?? null);
 
-  const { submit, isValid: isFormValid } = form;
+  const submit = useCallback(async () => {
+    return { isValid: true as const, data: { category: value } };
+  }, [value]);
 
   useEffect(() => {
     if (onChange) {
-      onChange({ isValid: isFormValid, submit });
+      onChange({ isValid: true, submit });
     }
-  }, [isFormValid, onChange, submit]);
+  }, [onChange, submit]);
 
   return (
-    <Form form={form}>
-      <CategoryFormField isLoading={isLoading} availableCategories={availableCategories} />
-    </Form>
+    <CategoryFormField
+      value={value}
+      onChange={(v) => setValue(v ?? null)}
+      isLoading={isLoading}
+      availableCategories={availableCategories}
+    />
   );
 };
 

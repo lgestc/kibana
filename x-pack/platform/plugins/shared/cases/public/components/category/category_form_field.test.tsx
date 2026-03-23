@@ -5,201 +5,92 @@
  * 2.0.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CategoryFormField } from './category_form_field';
+import { CategoryFormField, validateCategory } from './category_form_field';
 import { categories } from '../../containers/mock';
 import { MAX_CATEGORY_LENGTH } from '../../../common/constants';
-import { FormTestComponent } from '../../common/test_utils';
 
 // Failing: See https://github.com/elastic/kibana/issues/177791
 describe('Category', () => {
-  const onSubmit = jest.fn();
+  const onChange = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('renders the category field correctly', async () => {
     render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
+      <CategoryFormField
+        isLoading={false}
+        value={null}
+        onChange={onChange}
+        availableCategories={categories}
+      />
     );
 
     expect(await screen.findByTestId('categories-list')).toBeInTheDocument();
   });
 
-  it('can submit without setting a category', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
+  it('calls onChange when a category is selected', async () => {
+    const TestWrapper = () => {
+      const [value, setValue] = useState<string | null>(null);
+      return (
+        <CategoryFormField
+          isLoading={false}
+          value={value}
+          onChange={(v) => {
+            setValue(v ?? null);
+            onChange(v);
+          }}
+          availableCategories={categories}
+        />
+      );
+    };
 
-    expect(await screen.findByTestId('categories-list')).toBeInTheDocument();
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({ category: null }, true);
-    });
-  });
-
-  it('can submit with category a string as default value', async () => {
-    render(
-      <FormTestComponent formDefaultValue={{ category: categories[0] }} onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
-
-    expect(await screen.findByTestId('categories-list')).toBeInTheDocument();
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({ category: categories[0] }, true);
-    });
-  });
-
-  it('can submit with category with null as default value', async () => {
-    render(
-      <FormTestComponent formDefaultValue={{ category: null }} onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
-
-    expect(await screen.findByTestId('categories-list')).toBeInTheDocument();
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({ category: null }, true);
-    });
-  });
-
-  it('cannot submit if the category is an empty string', async () => {
-    render(
-      <FormTestComponent formDefaultValue={{ category: '' }} onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
-
-    expect(await screen.findByTestId('categories-list')).toBeInTheDocument();
-
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({}, false);
-    });
-
-    expect(await screen.findByText('Empty category is not allowed'));
-  });
-
-  it(`cannot submit if the category is more than ${MAX_CATEGORY_LENGTH}`, async () => {
-    const category = 'a'.repeat(MAX_CATEGORY_LENGTH + 1);
-
-    render(
-      <FormTestComponent formDefaultValue={{ category }} onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
-
-    expect(await screen.findByTestId('categories-list')).toBeInTheDocument();
-
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({}, false);
-    });
-
-    expect(
-      await screen.findByText(
-        'The length of the category is too long. The maximum length is 50 characters.'
-      )
-    );
-  });
-
-  it('can set a category from existing ones', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
+    render(<TestWrapper />);
 
     await userEvent.type(await screen.findByRole('combobox'), `${categories[1]}{enter}`);
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
 
     await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({ category: categories[1] }, true);
-    });
-  });
-
-  it('can set a new category', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
-
-    await userEvent.type(await screen.findByRole('combobox'), 'my new category{enter}');
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({ category: 'my new category' }, true);
-    });
-  });
-
-  it('cannot set an empty category', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
-
-    await userEvent.type(await screen.findByRole('combobox'), ' {enter}');
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({}, false);
-    });
-    expect(await screen.findByText('Empty category is not allowed'));
-  });
-
-  it('setting an empty category and clear it do not produce an error', async () => {
-    render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <CategoryFormField isLoading={false} availableCategories={categories} />
-      </FormTestComponent>
-    );
-
-    await userEvent.type(await screen.findByRole('combobox'), ' {enter}');
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({}, false);
-    });
-
-    await userEvent.click(await screen.findByTestId('comboBoxClearButton'));
-    await userEvent.click(await screen.findByTestId('form-test-component-submit-button'));
-
-    await waitFor(() => {
-      // data, isValid
-      expect(onSubmit).toBeCalledWith({}, true);
+      expect(onChange).toHaveBeenCalledWith(categories[1]);
     });
   });
 
   it('disables the component correctly when it is loading', async () => {
     render(
-      <FormTestComponent onSubmit={onSubmit}>
-        <CategoryFormField isLoading={true} availableCategories={categories} />
-      </FormTestComponent>
+      <CategoryFormField
+        isLoading={true}
+        value={null}
+        onChange={onChange}
+        availableCategories={categories}
+      />
     );
 
     expect(await screen.findByRole('combobox')).toBeDisabled();
+  });
+
+  describe('validateCategory', () => {
+    it('returns undefined for null', () => {
+      expect(validateCategory(null)).toBeUndefined();
+    });
+
+    it('returns error for empty string', () => {
+      expect(validateCategory('')).toBeDefined();
+    });
+
+    it('returns error for whitespace-only string', () => {
+      expect(validateCategory('   ')).toBeDefined();
+    });
+
+    it(`returns error for string longer than ${MAX_CATEGORY_LENGTH}`, () => {
+      expect(validateCategory('a'.repeat(MAX_CATEGORY_LENGTH + 1))).toBeDefined();
+    });
+
+    it('returns undefined for valid category', () => {
+      expect(validateCategory('my category')).toBeUndefined();
+    });
   });
 });

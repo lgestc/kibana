@@ -8,7 +8,7 @@
 import type { FC } from 'react';
 import React, { useCallback, useMemo } from 'react';
 import { EuiText } from '@elastic/eui';
-import { FormProvider, useForm } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useToasts } from '../../../common/lib/kibana';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { EditableFieldWrapper } from './editable_field_wrapper';
@@ -39,37 +39,40 @@ export const EditFieldAdapter = <TComponent extends FieldRegistryComponent>({
   const { name, type, label } = componentProps;
   const fieldKey = useMemo(() => `${name}_as_${type}`, [name, type]);
 
-  const { form } = useForm({
-    defaultValue: {
+  const methods = useForm({
+    defaultValues: {
       [CASE_EXTENDED_FIELDS]: {
         [fieldKey]: value,
       },
     },
-    options: { stripEmptyFields: false },
   });
 
+  const { handleSubmit, reset } = methods;
+
   const handleEnterEdit = useCallback(() => {
-    form.reset({
-      defaultValue: {
-        [CASE_EXTENDED_FIELDS]: {
-          [fieldKey]: value,
-        },
+    reset({
+      [CASE_EXTENDED_FIELDS]: {
+        [fieldKey]: value,
       },
     });
-  }, [form, fieldKey, value]);
+  }, [reset, fieldKey, value]);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmitFn = useCallback(async () => {
     try {
-      const { isValid, data } = await form.submit();
-      if (isValid && data) {
-        onSubmit(data[CASE_EXTENDED_FIELDS]?.[fieldKey]);
-      }
+      await new Promise<void>((resolve, reject) => {
+        handleSubmit((data) => {
+          onSubmit(
+            (data as Record<string, Record<string, unknown>>)[CASE_EXTENDED_FIELDS]?.[fieldKey]
+          );
+          resolve();
+        }, reject)();
+      });
     } catch (error) {
       toasts.addError(error as Error, {
         title: i18n.FIELD_SUBMISSION_ERROR,
       });
     }
-  }, [form, fieldKey, onSubmit, toasts]);
+  }, [handleSubmit, fieldKey, onSubmit, toasts]);
 
   const displayValue = Array.isArray(value)
     ? value.length > 0
@@ -78,11 +81,11 @@ export const EditFieldAdapter = <TComponent extends FieldRegistryComponent>({
     : value || i18n.FIELD_NOT_DEFINED;
 
   return (
-    <FormProvider form={form}>
+    <FormProvider {...methods}>
       <EditableFieldWrapper
         title={label ?? name}
         isLoading={isLoading}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmitFn}
         onEnterEdit={handleEnterEdit}
         displayContent={
           <EuiText size="s" data-test-subj={`${dataTestSubj}-value`}>

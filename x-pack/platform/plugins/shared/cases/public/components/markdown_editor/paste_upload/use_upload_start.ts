@@ -5,7 +5,6 @@
  * 2.0.
  */
 
-import { type FieldHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { useEffect } from 'react';
 import { type PasteUploadState, type Action, UploadPhase, ActionType } from './types';
 
@@ -13,7 +12,8 @@ export function useUploadStart(
   state: PasteUploadState,
   dispatch: React.Dispatch<Action>,
   textarea: HTMLTextAreaElement | null,
-  field: FieldHook<string>
+  value: string,
+  setValue: (v: string) => void
 ) {
   // Handle uploading state
   useEffect(() => {
@@ -21,13 +21,13 @@ export function useUploadStart(
     if (phase !== UploadPhase.START_UPLOAD || !textarea) return;
     const { filename, placeholder } = state;
     const { selectionStart, selectionEnd } = textarea;
-    const before = field.value.slice(0, selectionStart);
-    const after = field.value.slice(selectionEnd);
-    field.setValue(before + placeholder + after);
+    const before = value.slice(0, selectionStart);
+    const after = value.slice(selectionEnd);
+    setValue(before + placeholder + after);
     dispatch({
       type: ActionType.UPLOAD_IN_PROGRESS,
       filename,
       placeholder,
     });
-  }, [state, textarea, field, dispatch]);
+  }, [state, textarea, value, setValue, dispatch]);
 }

@@ -5,69 +5,60 @@
  * 2.0.
  */
 
-import React from 'react';
-import { screen, within, render } from '@testing-library/react';
+import React, { useState } from 'react';
+import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ObservablesToggle } from './observables_toggle';
-import { schema } from '../create/schema';
-import { FormTestComponent } from '../../common/test_utils';
 
 const CASE_OBSERVABLES_TOGGLE_TEST_ID = 'caseObservablesToggle';
 
-describe('ObservablesToggle', () => {
-  const onSubmit = jest.fn();
-  const defaultFormProps = {
-    onSubmit,
-    formDefaultValue: { extractObservables: true },
-    schema: {
-      extractObservables: schema.extractObservables,
-    },
-  };
+const ToggleWrapper = ({
+  initialValue = true,
+  onChange,
+}: {
+  initialValue?: boolean;
+  onChange?: (v: boolean) => void;
+}) => {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <ObservablesToggle
+      isLoading={false}
+      value={value}
+      onChange={(v) => {
+        setValue(v);
+        onChange?.(v);
+      }}
+    />
+  );
+};
 
+describe('ObservablesToggle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('it render toggle correctly', async () => {
-    render(
-      <FormTestComponent>
-        <ObservablesToggle isLoading={false} defaultValue={true} />
-      </FormTestComponent>
-    );
+    render(<ObservablesToggle isLoading={false} value={true} onChange={jest.fn()} />);
 
-    const extractObservablesToggle = await screen.findByTestId(CASE_OBSERVABLES_TOGGLE_TEST_ID);
-    expect(extractObservablesToggle).toBeInTheDocument();
-    expect(within(extractObservablesToggle).getByRole('switch')).toHaveAttribute(
-      'aria-checked',
-      'true'
-    );
-    expect(within(extractObservablesToggle).getByText('Extract observables')).toBeInTheDocument();
+    const switchEl = await screen.findByTestId(CASE_OBSERVABLES_TOGGLE_TEST_ID);
+    expect(switchEl).toBeInTheDocument();
+    expect(switchEl).toHaveAttribute('aria-checked', 'true');
+    expect(await screen.findByText('Extract observables')).toBeInTheDocument();
   });
 
   it('it toggles the switch', async () => {
-    render(
-      <FormTestComponent>
-        <ObservablesToggle isLoading={false} />
-      </FormTestComponent>
-    );
+    render(<ToggleWrapper initialValue={true} />);
 
-    const extractObservablesToggle = await screen.findByTestId(CASE_OBSERVABLES_TOGGLE_TEST_ID);
+    const switchEl = await screen.findByTestId(CASE_OBSERVABLES_TOGGLE_TEST_ID);
 
-    await userEvent.click(within(extractObservablesToggle).getByRole('switch'));
-    expect(within(extractObservablesToggle).getByRole('switch')).toHaveAttribute(
-      'aria-checked',
-      'false'
-    );
+    await userEvent.click(switchEl);
+    expect(switchEl).toHaveAttribute('aria-checked', 'false');
   });
 
   it('renders disabled toggle when loading', async () => {
-    render(
-      <FormTestComponent {...defaultFormProps}>
-        <ObservablesToggle isLoading={true} />
-      </FormTestComponent>
-    );
-    const extractObservablesToggle = await screen.findByTestId(CASE_OBSERVABLES_TOGGLE_TEST_ID);
-    expect(extractObservablesToggle).toBeInTheDocument();
-    expect(within(extractObservablesToggle).getByRole('switch')).toBeDisabled();
+    render(<ObservablesToggle isLoading={true} value={true} onChange={jest.fn()} />);
+    const switchEl = await screen.findByTestId(CASE_OBSERVABLES_TOGGLE_TEST_ID);
+    expect(switchEl).toBeInTheDocument();
+    expect(switchEl).toBeDisabled();
   });
 });

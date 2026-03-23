@@ -7,8 +7,6 @@
 
 import React from 'react';
 
-import { Field } from '@kbn/es-ui-shared-plugin/static/forms/components';
-import { getUseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { EuiPageSection } from '@elastic/eui';
 import * as i18n from './translations';
 import type { CreateCaseFormProps } from './form';
@@ -16,8 +14,6 @@ import { CreateCaseForm } from './form';
 import { HeaderPage } from '../header_page';
 import { useCasesBreadcrumbs } from '../use_breadcrumbs';
 import { CasesDeepLinkId } from '../../common/navigation';
-
-export const CommonUseField = getUseField({ component: Field });
 
 export const CreateCase = React.memo<CreateCaseFormProps>(
   ({ afterCaseCreated, onCancel, onSuccess, timelineIntegration, withSteps, observables }) => {

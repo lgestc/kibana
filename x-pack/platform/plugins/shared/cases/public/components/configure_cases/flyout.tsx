@@ -18,20 +18,18 @@ import {
   EuiButton,
   useGeneratedHtmlId,
 } from '@elastic/eui';
-import type { FormHook, FormData } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib/types';
-
 import * as i18n from './translations';
 
-export interface FormState<T extends FormData = FormData, I extends FormData = T> {
+export interface FormState<T = unknown, I = T> {
   isValid: boolean | undefined;
-  submit: FormHook<T, I>['submit'];
+  submit: () => Promise<{ isValid: boolean; data: I }>;
 }
 
-export interface FlyOutBodyProps<T extends FormData = FormData, I extends FormData = T> {
+export interface FlyOutBodyProps<T = unknown, I = T> {
   onChange: (state: FormState<T, I>) => void;
 }
 
-export interface FlyoutProps<T extends FormData = FormData, I extends FormData = T> {
+export interface FlyoutProps<T = unknown, I = T> {
   disabled: boolean;
   isLoading: boolean;
   onCloseFlyout: () => void;
@@ -40,7 +38,7 @@ export interface FlyoutProps<T extends FormData = FormData, I extends FormData =
   children: ({ onChange }: FlyOutBodyProps<T, I>) => React.ReactNode;
 }
 
-export const CommonFlyout = <T extends FormData = FormData, I extends FormData = T>({
+export const CommonFlyout = <T = unknown, I = T>({
   onCloseFlyout,
   onSaveField,
   isLoading,
@@ -52,7 +50,7 @@ export const CommonFlyout = <T extends FormData = FormData, I extends FormData =
     isValid: undefined,
     submit: async () => ({
       isValid: false,
-      data: {} as T,
+      data: {} as I,
     }),
   });
 

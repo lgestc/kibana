@@ -7,29 +7,38 @@
 
 import React from 'react';
 import type { z } from '@kbn/zod/v4';
-
-import { UseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { SelectField } from '@kbn/es-ui-shared-plugin/static/forms/components';
+import { Controller, useFormContext } from 'react-hook-form';
+import { EuiFormRow, EuiSelect } from '@elastic/eui';
 import { CASE_EXTENDED_FIELDS } from '../../../../../common/constants';
 import type { SelectBasicFieldSchema } from '../../../../../common/types/domain/template/fields';
 
 type SelectBasicProps = z.infer<typeof SelectBasicFieldSchema>;
 
 export const SelectBasic: React.FC<SelectBasicProps> = ({ label, metadata, name, type }) => {
+  const { control } = useFormContext();
+  const fieldPath = `${CASE_EXTENDED_FIELDS}.${name}_as_${type}`;
+
   return (
-    <UseField
-      key={name}
-      path={`${CASE_EXTENDED_FIELDS}.${name}_as_${type}`}
-      component={SelectField}
-      componentProps={{
-        label,
-        euiFieldProps: {
-          options: metadata.options.map((option) => ({
-            value: option,
-            text: option,
-          })),
-        },
-      }}
+    <Controller
+      name={fieldPath}
+      control={control}
+      defaultValue=""
+      render={({ field, fieldState }) => (
+        <EuiFormRow
+          fullWidth
+          label={label}
+          error={fieldState.error?.message}
+          isInvalid={Boolean(fieldState.error)}
+        >
+          <EuiSelect
+            fullWidth
+            options={metadata.options.map((option) => ({ value: option, text: option }))}
+            value={field.value ?? ''}
+            onChange={(e) => field.onChange(e.target.value)}
+            isInvalid={Boolean(fieldState.error)}
+          />
+        </EuiFormRow>
+      )}
     />
   );
 };

@@ -6,28 +6,42 @@
  */
 
 import React, { memo } from 'react';
-import { getUseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { Field } from '@kbn/es-ui-shared-plugin/static/forms/components';
-const CommonUseField = getUseField({ component: Field });
+import { EuiFieldText, EuiFormRow } from '@elastic/eui';
+import * as i18n from './translations';
 
 interface Props {
+  value: string;
+  onChange: (v: string) => void;
   isLoading: boolean;
+  error?: string;
   autoFocus?: boolean;
 }
 
-const TitleComponent: React.FC<Props> = ({ isLoading, autoFocus = false }) => (
-  <CommonUseField
-    path="title"
-    componentProps={{
-      idAria: 'caseTitle',
-      'data-test-subj': 'caseTitle',
-      euiFieldProps: {
-        autoFocus,
-        fullWidth: true,
-        disabled: isLoading,
-      },
-    }}
-  />
+const TitleComponent: React.FC<Props> = ({
+  value,
+  onChange,
+  isLoading,
+  error,
+  autoFocus = false,
+}) => (
+  <EuiFormRow
+    fullWidth
+    label={i18n.NAME}
+    error={error}
+    isInvalid={Boolean(error)}
+    data-test-subj="caseTitle-form-row"
+  >
+    <EuiFieldText
+      id="caseTitle"
+      aria-describedby="caseTitle"
+      data-test-subj="caseTitle"
+      autoFocus={autoFocus}
+      fullWidth
+      disabled={isLoading}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  </EuiFormRow>
 );
 
 TitleComponent.displayName = 'TitleComponent';

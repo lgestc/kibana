@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { useFormContext, useFormData } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { useFormContext, useWatch } from 'react-hook-form';
 import type { ParsedTemplate } from '../../../common/types/domain/template/v1';
 import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
 import { useGetTemplate } from '../templates_v2/hooks/use_get_template';
@@ -18,8 +18,8 @@ interface UseTemplateFormSyncReturn {
 }
 
 export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
-  const { setFieldValue } = useFormContext();
-  const [{ templateId }] = useFormData<{ templateId?: string }>({ watch: ['templateId'] });
+  const { setValue } = useFormContext();
+  const templateId = useWatch<{ templateId?: string }, 'templateId'>({ name: 'templateId' });
   const { data: template, isLoading } = useGetTemplate(templateId || undefined);
   const appliedRef = useRef<string | undefined>(undefined);
   const appliedFieldsRef = useRef<string[]>([]);
@@ -28,14 +28,14 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
     if (!templateId) {
       if (appliedRef.current) {
         appliedRef.current = undefined;
-        setFieldValue('description', '');
-        setFieldValue('tags', []);
-        setFieldValue('severity', 'low');
-        setFieldValue('category', null);
+        setValue('description', '');
+        setValue('tags', []);
+        setValue('severity', 'low');
+        setValue('category', null);
 
         // Clear previously applied extended fields
         for (const fieldPath of appliedFieldsRef.current) {
-          setFieldValue(fieldPath, '');
+          setValue(fieldPath, '');
         }
         appliedFieldsRef.current = [];
       }
@@ -63,7 +63,7 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
 
     for (const [fieldName, value] of fieldMappings) {
       if (value !== undefined) {
-        setFieldValue(fieldName, value);
+        setValue(fieldName, value);
       }
     }
 
@@ -73,12 +73,12 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
       for (const field of template.definition.fields) {
         const fieldPath = `${CASE_EXTENDED_FIELDS}.${field.name}_as_${field.type}`;
         const defaultValue = getYamlDefaultAsString(field.metadata?.default);
-        setFieldValue(fieldPath, defaultValue);
+        setValue(fieldPath, defaultValue);
         newAppliedFields.push(fieldPath);
       }
     }
     appliedFieldsRef.current = newAppliedFields;
-  }, [templateId, template, setFieldValue]);
+  }, [templateId, template, setValue]);
 
   return { template, isLoading };
 };

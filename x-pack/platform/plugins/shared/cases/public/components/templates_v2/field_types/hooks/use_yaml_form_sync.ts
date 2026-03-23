@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import type { FormHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import type { UseFormReturn } from 'react-hook-form';
 import { CASE_EXTENDED_FIELDS } from '../../../../../common/constants';
 import { getYamlDefaultAsString } from '../../utils';
 
@@ -30,10 +30,11 @@ type OnFieldDefaultChange = (fieldName: string, value: string, control: string) 
  * - Prevents feedback loops by tracking synced values
  */
 export const useYamlFormSync = (
-  form: FormHook,
+  methods: UseFormReturn,
   parsedFields: FieldInfo[],
   onFieldDefaultChange?: OnFieldDefaultChange
 ) => {
+  const { setValue, watch } = methods;
   const yamlDefaultsRef = useRef<Record<string, string>>({});
   const syncingFromYamlRef = useRef(false);
   const onFieldDefaultChangeRef = useRef(onFieldDefaultChange);
@@ -53,24 +54,24 @@ export const useYamlFormSync = (
     for (const field of parsedFields) {
       const yamlDefault = getYamlDefaultAsString(field.metadata?.default);
       const fieldPath = `${CASE_EXTENDED_FIELDS}.${field.name}_as_${field.type}`;
-      form.setFieldValue(fieldPath, yamlDefault);
+      setValue(fieldPath, yamlDefault);
     }
 
-    // Reset the flag after all subscription callbacks triggered by setFieldValue have been processed
+    // Reset the flag after all subscription callbacks triggered by setValue have been processed
     setTimeout(() => {
       syncingFromYamlRef.current = false;
     }, 0);
-  }, [parsedFields, form]);
+  }, [parsedFields, setValue]);
 
   // Subscribe to form changes and propagate to YAML
   useEffect(() => {
-    const subscription = form.subscribe(({ data }) => {
+    const subscription = watch((formValues) => {
       // Skip if we're syncing from YAML to avoid feedback loop
       if (syncingFromYamlRef.current) {
         return;
       }
 
-      const extendedFields = (data.internal as Record<string, Record<string, string>>)?.[
+      const extendedFields = (formValues as Record<string, Record<string, string>>)?.[
         CASE_EXTENDED_FIELDS
       ];
       if (!extendedFields) return;
@@ -87,7 +88,7 @@ export const useYamlFormSync = (
     });
 
     return subscription.unsubscribe;
-  }, [form, parsedFields]);
+  }, [parsedFields, watch]);
 
   return { yamlDefaults: yamlDefaultsRef.current };
 };

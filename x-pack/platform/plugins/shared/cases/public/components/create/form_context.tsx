@@ -5,9 +5,8 @@
  * 2.0.
  */
 
-import React from 'react';
-import { Form, useForm } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { schema } from './schema';
+import React, { createContext, useCallback, useContext } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import type { CasesConfigurationUI } from '../../containers/types';
 import type { CasePostRequest } from '../../../common/types/api';
@@ -16,6 +15,16 @@ import { getInitialCaseValue } from '../../../common/utils/get_initial_case_valu
 import { createFormSerializer, createFormDeserializer } from './utils';
 import type { CaseFormFieldsSchemaProps } from '../case_form_fields/schema';
 import { type UseSubmitCaseValue } from './use_submit_case';
+
+interface CreateCaseFormContextValue {
+  submit: () => void;
+}
+
+const CreateCaseFormContext = createContext<CreateCaseFormContextValue>({
+  submit: () => {},
+});
+
+export const useCreateCaseFormContext = () => useContext(CreateCaseFormContext);
 
 export interface FormContextProps {
   children?: JSX.Element | JSX.Element[];
@@ -34,47 +43,57 @@ export const FormContext: React.FC<FormContextProps> = ({
 }) => {
   const { data: connectors = [] } = useGetSupportedActionConnectors();
 
-  const { form } = useForm({
-    defaultValue: {
-      /**
-       * This is needed to initiate the connector
-       * with the one set in the configuration
-       * when creating a case.
-       */
-      ...getInitialCaseValue({
-        owner: selectedOwner,
-        connector: currentConfiguration.connector,
-      }),
-      ...initialValue,
+  const rawDefaultValues = {
+    ...getInitialCaseValue({
+      owner: selectedOwner,
+      connector: currentConfiguration.connector,
+    }),
+    ...initialValue,
+  };
+
+  const defaultValues = createFormDeserializer(rawDefaultValues as CasePostRequest);
+
+  const methods = useForm<CaseFormFieldsSchemaProps>({
+    defaultValues: {
+      ...defaultValues,
+      templateId: '',
+      templateVersion: undefined,
+      extendedFields: {},
     },
-    options: { stripEmptyFields: false },
-    schema,
-    onSubmit: onSubmitCase,
-    serializer: (data: CaseFormFieldsSchemaProps) =>
-      createFormSerializer(
-        connectors,
-        {
-          ...currentConfiguration,
-          owner: selectedOwner,
-        },
-        data
-      ),
-    deserializer: createFormDeserializer,
   });
 
+  const { handleSubmit } = methods;
+
+  const submit = useCallback(() => {
+    handleSubmit(async (data) => {
+      const serialized = createFormSerializer(
+        connectors,
+        { ...currentConfiguration, owner: selectedOwner },
+        data
+      );
+      await onSubmitCase(serialized, true);
+    })();
+  }, [handleSubmit, connectors, currentConfiguration, selectedOwner, onSubmitCase]);
+
   return (
-    <Form
-      onKeyDown={(e: KeyboardEvent) => {
-        // It avoids the focus scaping from the flyout when enter is pressed.
-        // https://github.com/elastic/kibana/issues/111120
-        if (e.key === 'Enter') {
-          e.stopPropagation();
-        }
-      }}
-      form={form}
-    >
-      {children}
-    </Form>
+    <CreateCaseFormContext.Provider value={{ submit }}>
+      <FormProvider {...methods}>
+        <form>
+          <div
+            tabIndex={-1}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              // It avoids the focus escaping from the flyout when enter is pressed.
+              // https://github.com/elastic/kibana/issues/111120
+              if (e.key === 'Enter') {
+                e.stopPropagation();
+              }
+            }}
+          >
+            {children}
+          </div>
+        </form>
+      </FormProvider>
+    </CreateCaseFormContext.Provider>
   );
 };
 

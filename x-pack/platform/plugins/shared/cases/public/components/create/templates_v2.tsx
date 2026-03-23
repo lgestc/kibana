@@ -16,8 +16,7 @@ import {
 } from '@elastic/eui';
 import type { EuiComboBoxOptionOption } from '@elastic/eui';
 import { css } from '@emotion/react';
-import { UseField, useFormContext } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { HiddenField } from '@kbn/es-ui-shared-plugin/static/forms/components';
+import { useFormContext } from 'react-hook-form';
 import { OptionalFieldLabel } from '../optional_field_label';
 import { useCasesContext } from '../cases_context/use_cases_context';
 import { TEMPLATE_HELP_TEXT, TEMPLATE_LABEL, TEMPLATE_SELECT_PLACEHOLDER } from './translations';
@@ -33,7 +32,7 @@ interface Props {
 export const TemplateSelectorComponent: React.FC<Props> = ({ isLoading, isDisabled }) => {
   const { euiTheme } = useEuiTheme();
   const { owner } = useCasesContext();
-  const { setFieldValue } = useFormContext();
+  const { setValue, register } = useFormContext();
 
   const { data: templatesData, isLoading: isLoadingTemplates } = useGetTemplates({
     queryParams: { page: 1, perPage: 10000, owner },
@@ -60,18 +59,18 @@ export const TemplateSelectorComponent: React.FC<Props> = ({ isLoading, isDisabl
       setSelectedTemplate(selection);
 
       const templateId = selection?.value ?? '';
-      setFieldValue('templateId', templateId);
+      setValue('templateId', templateId);
 
       const matched = (templatesData?.templates ?? []).find((t) => t.templateId === templateId);
-      setFieldValue('templateVersion', matched?.templateVersion ?? '');
+      setValue('templateVersion', matched?.templateVersion ?? '');
     },
-    [setFieldValue, templatesData?.templates]
+    [setValue, templatesData?.templates]
   );
 
   return (
     <>
-      <UseField path="templateId" component={HiddenField} />
-      <UseField path="templateVersion" component={HiddenField} />
+      <input type="hidden" {...register('templateId')} />
+      <input type="hidden" {...register('templateVersion')} />
       <EuiFormRow
         id="createCaseTemplate"
         fullWidth

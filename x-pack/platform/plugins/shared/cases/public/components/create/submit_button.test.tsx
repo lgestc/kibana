@@ -8,20 +8,19 @@
 import React from 'react';
 import { waitFor, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useFormContext } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 
+import { useCreateCaseFormContext } from './form_context';
 import { SubmitCaseButton } from './submit_button';
 import { renderWithTestingProviders } from '../../common/mock';
 
-jest.mock('@kbn/es-ui-shared-plugin/static/forms/hook_form_lib');
+jest.mock('./form_context');
 
 describe('SubmitCaseButton', () => {
   const onSubmit = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // @ts-expect-error: not all properties are needed for testing
-    jest.mocked(useFormContext).mockReturnValue({ submit: onSubmit });
+    jest.mocked(useCreateCaseFormContext).mockReturnValue({ submit: onSubmit });
   });
 
   it('renders', async () => {
@@ -39,12 +38,7 @@ describe('SubmitCaseButton', () => {
   });
 
   it('disables when submitting', async () => {
-    // @ts-expect-error: not all properties are needed for testing
-    jest.mocked(useFormContext).mockReturnValue({ submit: onSubmit });
     renderWithTestingProviders(<SubmitCaseButton isSubmitting={true} />);
-
-    const button = await screen.findByTestId('create-case-submit');
-    await userEvent.click(button);
 
     expect(await screen.findByTestId('create-case-submit')).toBeDisabled();
   });

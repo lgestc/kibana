@@ -6,8 +6,8 @@
  */
 
 import React from 'react';
-import { UseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { ToggleField } from '@kbn/es-ui-shared-plugin/static/forms/components';
+import { Controller, useFormContext } from 'react-hook-form';
+import { EuiFormRow, EuiSwitch } from '@elastic/eui';
 import type { CaseCustomFieldToggle } from '../../../../common/types/domain';
 import type { CustomFieldType } from '../types';
 
@@ -16,21 +16,26 @@ const CreateComponent: CustomFieldType<CaseCustomFieldToggle>['Create'] = ({
   isLoading,
   setDefaultValue = true,
 }) => {
+  const { control } = useFormContext();
   const { key, label, defaultValue } = customFieldConfiguration;
+  const fieldDefaultValue = defaultValue && setDefaultValue ? defaultValue : false;
 
   return (
-    <UseField
-      path={`customFields.${key}`}
-      component={ToggleField}
-      config={{ defaultValue: defaultValue && setDefaultValue ? defaultValue : false }}
-      key={key}
-      label={label}
-      componentProps={{
-        euiFieldProps: {
-          'data-test-subj': `${key}-toggle-create-custom-field`,
-          disabled: isLoading,
-        },
-      }}
+    <Controller
+      name={`customFields.${key}`}
+      control={control}
+      defaultValue={fieldDefaultValue}
+      render={({ field }) => (
+        <EuiFormRow fullWidth label={label}>
+          <EuiSwitch
+            data-test-subj={`${key}-toggle-create-custom-field`}
+            disabled={isLoading}
+            label=""
+            checked={Boolean(field.value)}
+            onChange={(e) => field.onChange(e.target.checked)}
+          />
+        </EuiFormRow>
+      )}
     />
   );
 };

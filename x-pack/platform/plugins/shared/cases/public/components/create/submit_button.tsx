@@ -8,7 +8,7 @@
 import React, { memo } from 'react';
 import { EuiButton } from '@elastic/eui';
 
-import { useFormContext } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { useCreateCaseFormContext } from './form_context';
 import * as i18n from './translations';
 
 export interface SubmitCaseButtonComponentProps {
@@ -16,7 +16,7 @@ export interface SubmitCaseButtonComponentProps {
 }
 
 const SubmitCaseButtonComponent: React.FC<SubmitCaseButtonComponentProps> = ({ isSubmitting }) => {
-  const { submit } = useFormContext();
+  const { submit } = useCreateCaseFormContext();
 
   return (
     <EuiButton

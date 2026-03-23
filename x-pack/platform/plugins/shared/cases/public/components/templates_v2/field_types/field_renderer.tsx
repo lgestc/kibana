@@ -8,7 +8,7 @@
 import type { FC } from 'react';
 import type { z } from '@kbn/zod/v4';
 import React from 'react';
-import { FormProvider, useForm } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { FormProvider, useForm } from 'react-hook-form';
 import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/latest';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { controlRegistry } from './field_types_registry';
@@ -22,10 +22,6 @@ export interface TemplateFieldRendererProps {
   onFieldDefaultChange?: (fieldName: string, value: string, control: string) => void;
 }
 
-/**
- * WARN: this component uses shared-form renderer for Case form compatiblity.
- * Dont change this until we migrate everything to react hook form.
- */
 export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
   parsedTemplate,
   onFieldDefaultChange,
@@ -47,15 +43,14 @@ export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
     return defaults;
   }, [parsedTemplate.fields]);
 
-  const { form } = useForm<{}>({
-    defaultValue: initialDefaultValues,
-    options: { stripEmptyFields: false },
+  const methods = useForm({
+    defaultValues: initialDefaultValues,
   });
 
-  useYamlFormSync(form, parsedTemplate.fields, onFieldDefaultChange);
+  useYamlFormSync(methods, parsedTemplate.fields, onFieldDefaultChange);
 
   return (
-    <FormProvider key={templateKey} form={form}>
+    <FormProvider key={templateKey} {...methods}>
       {parsedTemplate.fields.map((field) => {
         const Control = controlRegistry[field.control] as FC<Record<string, unknown>>;
 

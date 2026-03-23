@@ -5,19 +5,19 @@
  * 2.0.
  */
 
-import { Form, useForm } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import type { DefaultValues } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { ActionConnector, TemplateConfiguration } from '../../../common/types/domain';
 import type { FormState } from '../configure_cases/flyout';
-import { schema } from './schema';
 import { FormFields } from './form_fields';
 import { templateDeserializer, templateSerializer } from './utils';
 import type { TemplateFormProps } from './types';
 import type { CasesConfigurationUI } from '../../containers/types';
 
 interface Props {
-  onChange: (state: FormState<TemplateConfiguration, TemplateFormProps>) => void;
+  onChange: (state: FormState<TemplateFormProps, TemplateConfiguration>) => void;
   initialValue: TemplateConfiguration | null;
   connectors: ActionConnector[];
   currentConfiguration: CasesConfigurationUI;
@@ -33,41 +33,73 @@ const FormComponent: React.FC<Props> = ({
 }) => {
   const keyDefaultValue = useMemo(() => uuidv4(), []);
 
-  const { form } = useForm({
-    defaultValue: initialValue ?? {
-      key: keyDefaultValue,
-      name: '',
-      description: '',
-      tags: [],
-      caseFields: {
-        connector: currentConfiguration.connector,
-      },
-    },
-    options: { stripEmptyFields: false },
-    schema,
-    deserializer: templateDeserializer,
-    serializer: (data: TemplateFormProps) =>
-      templateSerializer(connectors, currentConfiguration, data),
+  const defaultValues: TemplateFormProps = initialValue
+    ? templateDeserializer(initialValue) ?? {
+        key: keyDefaultValue,
+        name: '',
+        templateDescription: '',
+        templateTags: [],
+        connectorId: currentConfiguration.connector?.id ?? 'none',
+        fields: null,
+        customFields: {},
+        tags: [],
+        syncAlerts: true,
+        extractObservables: true,
+      }
+    : {
+        key: keyDefaultValue,
+        name: '',
+        templateDescription: '',
+        templateTags: [],
+        connectorId: currentConfiguration.connector?.id ?? 'none',
+        fields: null,
+        customFields: {},
+        tags: [],
+        syncAlerts: true,
+        extractObservables: true,
+      };
+
+  const methods = useForm<TemplateFormProps>({
+    defaultValues: defaultValues as DefaultValues<TemplateFormProps>,
   });
 
-  const { submit, isValid, isSubmitting } = form;
+  const {
+    handleSubmit,
+    formState: { isValid },
+  } = methods;
+
+  const submit = async (): Promise<{ isValid: boolean; data: TemplateConfiguration }> => {
+    return new Promise((resolve) => {
+      handleSubmit(
+        (data) => {
+          const serialized = templateSerializer(connectors, currentConfiguration, data);
+          resolve({ isValid: true, data: serialized });
+        },
+        () => {
+          resolve({ isValid: false, data: {} as TemplateConfiguration });
+        }
+      )();
+    });
+  };
 
   useEffect(() => {
     if (onChange) {
       onChange({ isValid, submit });
     }
-  }, [onChange, isValid, submit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onChange, isValid]);
 
   return (
-    <Form form={form}>
+    <FormProvider {...methods}>
+      <input type="hidden" {...methods.register('key')} />
       <FormFields
-        isSubmitting={isSubmitting}
+        isSubmitting={methods.formState.isSubmitting}
         connectors={connectors}
         currentConfiguration={currentConfiguration}
         isEditMode={isEditMode}
         initialValue={initialValue}
       />
-    </Form>
+    </FormProvider>
   );
 };
 

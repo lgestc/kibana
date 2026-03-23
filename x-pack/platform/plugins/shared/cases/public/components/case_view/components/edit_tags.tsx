@@ -16,20 +16,14 @@ import {
   EuiButtonIcon,
   EuiLoadingSpinner,
   useEuiTheme,
+  EuiComboBox,
 } from '@elastic/eui';
+import type { EuiComboBoxOptionOption } from '@elastic/eui';
 import { css } from '@emotion/react';
-import type { FieldConfig } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { Form, useForm, UseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { ComboBoxField } from '@kbn/es-ui-shared-plugin/static/forms/components';
 import * as i18n from '../../tags/translations';
 import { useGetTags } from '../../../containers/use_get_tags';
 import { Tags } from '../../tags/tags';
 import { useCasesContext } from '../../cases_context/use_cases_context';
-import { schema as createCaseSchema } from '../../create/schema';
-
-export const schema = {
-  tags: createCaseSchema.tags as FieldConfig<string[]>,
-};
 
 export interface EditTagsProps {
   isLoading: boolean;
@@ -39,35 +33,32 @@ export interface EditTagsProps {
 
 export const EditTags = React.memo(({ isLoading, onSubmit, tags }: EditTagsProps) => {
   const { permissions } = useCasesContext();
-  const initialState = { tags };
-
-  const { form } = useForm({
-    defaultValue: initialState,
-    options: { stripEmptyFields: false },
-    schema,
-  });
-
-  const { submit } = form;
   const [isEditTags, setIsEditTags] = useState(false);
+  const [editingTags, setEditingTags] = useState<string[]>(tags);
   const { euiTheme } = useEuiTheme();
-
-  const onSubmitTags = useCallback(async () => {
-    const { isValid, data: newData } = await submit();
-    if (isValid && newData.tags) {
-      const trimmedTags = newData.tags.map((tag: string) => tag.trim());
-
-      onSubmit(trimmedTags);
-      form.reset({ defaultValue: newData });
-      setIsEditTags(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onSubmit, submit]);
-
   const { data: tagOptions = [] } = useGetTags();
 
-  const options = tagOptions.map((label) => ({
-    label,
-  }));
+  const options = tagOptions.map((label) => ({ label }));
+  const selectedOptions = editingTags.map((label) => ({ label }));
+
+  const onComboChange = useCallback((selected: Array<EuiComboBoxOptionOption<string>>) => {
+    setEditingTags(selected.map((o) => o.label));
+  }, []);
+
+  const onClickEdit = useCallback(() => {
+    setEditingTags(tags);
+    setIsEditTags(true);
+  }, [tags]);
+
+  const onSubmitTags = useCallback(() => {
+    const trimmedTags = editingTags.map((tag) => tag.trim()).filter(Boolean);
+    onSubmit(trimmedTags);
+    setIsEditTags(false);
+  }, [editingTags, onSubmit]);
+
+  const onCancel = useCallback(() => {
+    setIsEditTags(false);
+  }, []);
 
   return (
     <EuiFlexItem grow={false}>
@@ -90,7 +81,7 @@ export const EditTags = React.memo(({ isLoading, onSubmit, tags }: EditTagsProps
               data-test-subj="tag-list-edit-button"
               aria-label={i18n.EDIT_TAGS_ARIA}
               iconType={'pencil'}
-              onClick={() => setIsEditTags(true)}
+              onClick={onClickEdit}
             />
           </EuiFlexItem>
         )}
@@ -127,23 +118,22 @@ export const EditTags = React.memo(({ isLoading, onSubmit, tags }: EditTagsProps
             direction="column"
           >
             <EuiFlexItem>
-              <Form form={form}>
-                <UseField
-                  path="tags"
-                  component={ComboBoxField}
-                  componentProps={{
-                    idAria: 'caseTags',
-                    'data-test-subj': 'caseTags',
-                    euiFieldProps: {
-                      fullWidth: true,
-                      placeholder: '',
-                      options,
-                      noSuggestions: false,
-                      customOptionText: i18n.ADD_TAG_CUSTOM_OPTION_LABEL_COMBO_BOX,
-                    },
-                  }}
-                />
-              </Form>
+              <EuiComboBox
+                aria-label={i18n.TAGS}
+                data-test-subj="caseTags"
+                fullWidth
+                isClearable
+                noSuggestions={false}
+                options={options}
+                placeholder=""
+                selectedOptions={selectedOptions}
+                onChange={onComboChange}
+                onCreateOption={(searchValue) => {
+                  const trimmed = searchValue.trim();
+                  if (trimmed) setEditingTags((prev) => [...prev, trimmed]);
+                }}
+                customOptionText={i18n.ADD_TAG_CUSTOM_OPTION_LABEL_COMBO_BOX}
+              />
             </EuiFlexItem>
             <EuiFlexItem>
               <EuiFlexGroup alignItems="center" responsive={false}>
@@ -163,7 +153,7 @@ export const EditTags = React.memo(({ isLoading, onSubmit, tags }: EditTagsProps
                   <EuiButtonEmpty
                     data-test-subj="edit-tags-cancel"
                     iconType="cross"
-                    onClick={() => setIsEditTags(false)}
+                    onClick={onCancel}
                     size="s"
                   >
                     {i18n.CANCEL}

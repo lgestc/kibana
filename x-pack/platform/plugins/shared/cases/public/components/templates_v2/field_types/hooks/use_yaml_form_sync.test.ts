@@ -6,24 +6,24 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import type { FormHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import type { UseFormReturn } from 'react-hook-form';
 import { useYamlFormSync } from './use_yaml_form_sync';
 import { CASE_EXTENDED_FIELDS } from '../../../../../common/constants';
 
 describe('useYamlFormSync', () => {
-  let mockForm: jest.Mocked<FormHook>;
-  let mockSubscriptionCallback: (data: { data: { internal: Record<string, unknown> } }) => void;
+  let mockForm: jest.Mocked<Pick<UseFormReturn, 'setValue' | 'watch'>>;
+  let mockSubscriptionCallback: (data: Record<string, unknown>) => void;
   let mockUnsubscribe: jest.Mock;
 
   const createMockForm = () => {
     mockUnsubscribe = jest.fn();
     return {
-      setFieldValue: jest.fn(),
-      subscribe: jest.fn((callback) => {
+      setValue: jest.fn(),
+      watch: jest.fn((callback) => {
         mockSubscriptionCallback = callback;
         return { unsubscribe: mockUnsubscribe };
       }),
-    } as unknown as jest.Mocked<FormHook>;
+    } as unknown as jest.Mocked<Pick<UseFormReturn, 'setValue' | 'watch'>>;
   };
 
   const createParsedFields = (
@@ -59,13 +59,13 @@ describe('useYamlFormSync', () => {
         { name: 'count', type: 'integer', control: 'INPUT_NUMBER', defaultValue: 42 },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields));
+      renderHook(() => useYamlFormSync(mockForm as unknown as UseFormReturn, parsedFields));
 
-      expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+      expect(mockForm.setValue).toHaveBeenCalledWith(
         `${CASE_EXTENDED_FIELDS}.summary_as_keyword`,
         'Default text'
       );
-      expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+      expect(mockForm.setValue).toHaveBeenCalledWith(
         `${CASE_EXTENDED_FIELDS}.count_as_integer`,
         '42'
       );
@@ -76,9 +76,9 @@ describe('useYamlFormSync', () => {
         { name: 'effort', type: 'integer', control: 'INPUT_NUMBER', defaultValue: 100 },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields));
+      renderHook(() => useYamlFormSync(mockForm as unknown as UseFormReturn, parsedFields));
 
-      expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+      expect(mockForm.setValue).toHaveBeenCalledWith(
         `${CASE_EXTENDED_FIELDS}.effort_as_integer`,
         '100'
       );
@@ -89,9 +89,9 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields));
+      renderHook(() => useYamlFormSync(mockForm as unknown as UseFormReturn, parsedFields));
 
-      expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+      expect(mockForm.setValue).toHaveBeenCalledWith(
         `${CASE_EXTENDED_FIELDS}.summary_as_keyword`,
         ''
       );
@@ -102,11 +102,14 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT', defaultValue: 'Initial' },
       ]);
 
-      const { rerender } = renderHook(({ fields }) => useYamlFormSync(mockForm, fields), {
-        initialProps: { fields: initialFields },
-      });
+      const { rerender } = renderHook(
+        ({ fields }) => useYamlFormSync(mockForm as unknown as UseFormReturn, fields),
+        {
+          initialProps: { fields: initialFields },
+        }
+      );
 
-      expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+      expect(mockForm.setValue).toHaveBeenCalledWith(
         `${CASE_EXTENDED_FIELDS}.summary_as_keyword`,
         'Initial'
       );
@@ -117,7 +120,7 @@ describe('useYamlFormSync', () => {
 
       rerender({ fields: updatedFields });
 
-      expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+      expect(mockForm.setValue).toHaveBeenCalledWith(
         `${CASE_EXTENDED_FIELDS}.summary_as_keyword`,
         'Updated'
       );
@@ -130,9 +133,9 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields));
+      renderHook(() => useYamlFormSync(mockForm as unknown as UseFormReturn, parsedFields));
 
-      expect(mockForm.subscribe).toHaveBeenCalled();
+      expect(mockForm.watch).toHaveBeenCalled();
     });
 
     it('unsubscribes on unmount', () => {
@@ -140,7 +143,9 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT' },
       ]);
 
-      const { unmount } = renderHook(() => useYamlFormSync(mockForm, parsedFields));
+      const { unmount } = renderHook(() =>
+        useYamlFormSync(mockForm as unknown as UseFormReturn, parsedFields)
+      );
 
       unmount();
 
@@ -153,7 +158,13 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT', defaultValue: 'Original' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields, mockOnFieldDefaultChange));
+      renderHook(() =>
+        useYamlFormSync(
+          mockForm as unknown as UseFormReturn,
+          parsedFields,
+          mockOnFieldDefaultChange
+        )
+      );
 
       // Wait for syncingFromYamlRef to be reset
       act(() => {
@@ -163,12 +174,8 @@ describe('useYamlFormSync', () => {
       // Simulate form change
       act(() => {
         mockSubscriptionCallback({
-          data: {
-            internal: {
-              [CASE_EXTENDED_FIELDS]: {
-                summary_as_keyword: 'User typed value',
-              },
-            },
+          [CASE_EXTENDED_FIELDS]: {
+            summary_as_keyword: 'User typed value',
           },
         });
       });
@@ -186,7 +193,13 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT', defaultValue: 'Same value' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields, mockOnFieldDefaultChange));
+      renderHook(() =>
+        useYamlFormSync(
+          mockForm as unknown as UseFormReturn,
+          parsedFields,
+          mockOnFieldDefaultChange
+        )
+      );
 
       // Wait for syncingFromYamlRef to be reset
       act(() => {
@@ -196,12 +209,8 @@ describe('useYamlFormSync', () => {
       // Simulate form reporting the same value as YAML
       act(() => {
         mockSubscriptionCallback({
-          data: {
-            internal: {
-              [CASE_EXTENDED_FIELDS]: {
-                summary_as_keyword: 'Same value',
-              },
-            },
+          [CASE_EXTENDED_FIELDS]: {
+            summary_as_keyword: 'Same value',
           },
         });
       });
@@ -215,18 +224,20 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT', defaultValue: 'YAML value' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields, mockOnFieldDefaultChange));
+      renderHook(() =>
+        useYamlFormSync(
+          mockForm as unknown as UseFormReturn,
+          parsedFields,
+          mockOnFieldDefaultChange
+        )
+      );
 
       // Do NOT advance timers - syncingFromYamlRef is still true
       // Simulate form change while syncing
       act(() => {
         mockSubscriptionCallback({
-          data: {
-            internal: {
-              [CASE_EXTENDED_FIELDS]: {
-                summary_as_keyword: 'Different value',
-              },
-            },
+          [CASE_EXTENDED_FIELDS]: {
+            summary_as_keyword: 'Different value',
           },
         });
       });
@@ -243,17 +254,19 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT', defaultValue: 'Initial' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields, mockOnFieldDefaultChange));
+      renderHook(() =>
+        useYamlFormSync(
+          mockForm as unknown as UseFormReturn,
+          parsedFields,
+          mockOnFieldDefaultChange
+        )
+      );
 
-      // Simulate subscription firing immediately after setFieldValue (before setTimeout callback)
+      // Simulate subscription firing immediately after setValue (before setTimeout callback)
       act(() => {
         mockSubscriptionCallback({
-          data: {
-            internal: {
-              [CASE_EXTENDED_FIELDS]: {
-                summary_as_keyword: 'Initial',
-              },
-            },
+          [CASE_EXTENDED_FIELDS]: {
+            summary_as_keyword: 'Initial',
           },
         });
       });
@@ -269,12 +282,8 @@ describe('useYamlFormSync', () => {
       // Now form changes should trigger callback
       act(() => {
         mockSubscriptionCallback({
-          data: {
-            internal: {
-              [CASE_EXTENDED_FIELDS]: {
-                summary_as_keyword: 'User changed',
-              },
-            },
+          [CASE_EXTENDED_FIELDS]: {
+            summary_as_keyword: 'User changed',
           },
         });
       });
@@ -294,7 +303,9 @@ describe('useYamlFormSync', () => {
         { name: 'count', type: 'integer', control: 'INPUT_NUMBER', defaultValue: 5 },
       ]);
 
-      const { result } = renderHook(() => useYamlFormSync(mockForm, parsedFields));
+      const { result } = renderHook(() =>
+        useYamlFormSync(mockForm as unknown as UseFormReturn, parsedFields)
+      );
 
       expect(result.current.yamlDefaults).toEqual({
         summary: 'Default',
@@ -307,9 +318,12 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT', defaultValue: 'Initial' },
       ]);
 
-      const { result, rerender } = renderHook(({ fields }) => useYamlFormSync(mockForm, fields), {
-        initialProps: { fields: initialFields },
-      });
+      const { result, rerender } = renderHook(
+        ({ fields }) => useYamlFormSync(mockForm as unknown as UseFormReturn, fields),
+        {
+          initialProps: { fields: initialFields },
+        }
+      );
 
       expect(result.current.yamlDefaults.summary).toBe('Initial');
 
@@ -325,9 +339,11 @@ describe('useYamlFormSync', () => {
 
   describe('edge cases', () => {
     it('handles empty parsedFields array', () => {
-      const { result } = renderHook(() => useYamlFormSync(mockForm, []));
+      const { result } = renderHook(() =>
+        useYamlFormSync(mockForm as unknown as UseFormReturn, [])
+      );
 
-      expect(mockForm.setFieldValue).not.toHaveBeenCalled();
+      expect(mockForm.setValue).not.toHaveBeenCalled();
       expect(result.current.yamlDefaults).toEqual({});
     });
 
@@ -336,7 +352,9 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT', defaultValue: 'Value' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields, undefined));
+      renderHook(() =>
+        useYamlFormSync(mockForm as unknown as UseFormReturn, parsedFields, undefined)
+      );
 
       act(() => {
         jest.advanceTimersByTime(0);
@@ -346,12 +364,8 @@ describe('useYamlFormSync', () => {
       expect(() => {
         act(() => {
           mockSubscriptionCallback({
-            data: {
-              internal: {
-                [CASE_EXTENDED_FIELDS]: {
-                  summary_as_keyword: 'Changed',
-                },
-              },
+            [CASE_EXTENDED_FIELDS]: {
+              summary_as_keyword: 'Changed',
             },
           });
         });
@@ -364,7 +378,13 @@ describe('useYamlFormSync', () => {
         { name: 'summary', type: 'keyword', control: 'INPUT_TEXT' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields, mockOnFieldDefaultChange));
+      renderHook(() =>
+        useYamlFormSync(
+          mockForm as unknown as UseFormReturn,
+          parsedFields,
+          mockOnFieldDefaultChange
+        )
+      );
 
       act(() => {
         jest.advanceTimersByTime(0);
@@ -372,11 +392,7 @@ describe('useYamlFormSync', () => {
 
       // Simulate form data without extendedFields
       act(() => {
-        mockSubscriptionCallback({
-          data: {
-            internal: {},
-          },
-        });
+        mockSubscriptionCallback({});
       });
 
       expect(mockOnFieldDefaultChange).not.toHaveBeenCalled();
@@ -395,7 +411,10 @@ describe('useYamlFormSync', () => {
       ];
 
       const { result } = renderHook(() =>
-        useYamlFormSync(mockForm, parsedFields as Parameters<typeof useYamlFormSync>[1])
+        useYamlFormSync(
+          mockForm as unknown as UseFormReturn,
+          parsedFields as Parameters<typeof useYamlFormSync>[1]
+        )
       );
 
       expect(result.current.yamlDefaults).toEqual({
@@ -414,9 +433,15 @@ describe('useYamlFormSync', () => {
         { name: 'select', type: 'keyword', control: 'SELECT_BASIC', defaultValue: 'option1' },
       ]);
 
-      renderHook(() => useYamlFormSync(mockForm, parsedFields, mockOnFieldDefaultChange));
+      renderHook(() =>
+        useYamlFormSync(
+          mockForm as unknown as UseFormReturn,
+          parsedFields,
+          mockOnFieldDefaultChange
+        )
+      );
 
-      expect(mockForm.setFieldValue).toHaveBeenCalledTimes(4);
+      expect(mockForm.setValue).toHaveBeenCalledTimes(4);
 
       act(() => {
         jest.advanceTimersByTime(0);
@@ -425,15 +450,11 @@ describe('useYamlFormSync', () => {
       // Change the number field
       act(() => {
         mockSubscriptionCallback({
-          data: {
-            internal: {
-              [CASE_EXTENDED_FIELDS]: {
-                text_as_keyword: 'text',
-                number_as_integer: '20',
-                area_as_keyword: 'area',
-                select_as_keyword: 'option1',
-              },
-            },
+          [CASE_EXTENDED_FIELDS]: {
+            text_as_keyword: 'text',
+            number_as_integer: '20',
+            area_as_keyword: 'area',
+            select_as_keyword: 'option1',
           },
         });
       });

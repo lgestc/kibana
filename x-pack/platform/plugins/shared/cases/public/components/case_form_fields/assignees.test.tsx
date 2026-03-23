@@ -5,44 +5,49 @@
  * 2.0.
  */
 
-import type { FC, PropsWithChildren } from 'react';
-import React from 'react';
+import React, { useState } from 'react';
 import userEvent from '@testing-library/user-event';
 
-import type { FormHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { useForm, Form } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { userProfiles } from '../../containers/user_profiles/api.mock';
 import { Assignees } from './assignees';
-import { act, waitFor, screen } from '@testing-library/react';
+import { waitFor, screen } from '@testing-library/react';
 import * as api from '../../containers/user_profiles/api';
 import type { UserProfile } from '@kbn/user-profile-components';
+import type { CaseAssignees } from '../../../common/types/domain';
 import { renderWithTestingProviders } from '../../common/mock';
 
 jest.mock('../../containers/user_profiles/api');
 
 const currentUserProfile = userProfiles[0];
 
+const AssigneesWrapper = ({
+  initialValue = [],
+  onChange,
+}: {
+  initialValue?: CaseAssignees;
+  onChange?: (v: CaseAssignees) => void;
+}) => {
+  const [value, setValue] = useState<CaseAssignees>(initialValue);
+  return (
+    <Assignees
+      isLoading={false}
+      value={value}
+      onChange={(v) => {
+        setValue(v);
+        onChange?.(v);
+      }}
+    />
+  );
+};
+
 // Failing: See https://github.com/elastic/kibana/issues/189719
 describe('Assignees', () => {
-  let globalForm: FormHook;
-
-  const MockHookWrapperComponent: FC<PropsWithChildren<unknown>> = ({ children }) => {
-    const { form } = useForm();
-    globalForm = form;
-
-    return <Form form={form}>{children}</Form>;
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders', async () => {
-    renderWithTestingProviders(
-      <MockHookWrapperComponent>
-        <Assignees isLoading={false} />
-      </MockHookWrapperComponent>
-    );
+    renderWithTestingProviders(<AssigneesWrapper />);
 
     await waitFor(() => {
       expect(screen.queryByTestId('comboBoxSearchInput')).not.toBeDisabled();
@@ -55,11 +60,7 @@ describe('Assignees', () => {
     const spyOnGetCurrentUserProfile = jest.spyOn(api, 'getCurrentUserProfile');
     spyOnGetCurrentUserProfile.mockResolvedValue(undefined as unknown as UserProfile);
 
-    renderWithTestingProviders(
-      <MockHookWrapperComponent>
-        <Assignees isLoading={false} />
-      </MockHookWrapperComponent>
-    );
+    renderWithTestingProviders(<AssigneesWrapper />);
 
     await waitFor(() => {
       expect(screen.queryByTestId('comboBoxSearchInput')).not.toBeDisabled();
@@ -73,11 +74,8 @@ describe('Assignees', () => {
     const spyOnGetCurrentUserProfile = jest.spyOn(api, 'getCurrentUserProfile');
     spyOnGetCurrentUserProfile.mockResolvedValue(currentUserProfile);
 
-    renderWithTestingProviders(
-      <MockHookWrapperComponent>
-        <Assignees isLoading={false} />
-      </MockHookWrapperComponent>
-    );
+    const onChange = jest.fn();
+    renderWithTestingProviders(<AssigneesWrapper onChange={onChange} />);
 
     await waitFor(() => {
       expect(screen.queryByTestId('comboBoxSearchInput')).not.toBeDisabled();
@@ -85,18 +83,16 @@ describe('Assignees', () => {
 
     await userEvent.click(await screen.findByTestId('create-case-assign-yourself-link'));
 
-    expect(globalForm.getFormData()).toEqual({ assignees: [{ uid: currentUserProfile.uid }] });
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith([{ uid: currentUserProfile.uid }]);
+    });
   });
 
   it('disables the assign yourself button if the current user is already selected', async () => {
     const spyOnGetCurrentUserProfile = jest.spyOn(api, 'getCurrentUserProfile');
     spyOnGetCurrentUserProfile.mockResolvedValue(currentUserProfile);
 
-    renderWithTestingProviders(
-      <MockHookWrapperComponent>
-        <Assignees isLoading={false} />
-      </MockHookWrapperComponent>
-    );
+    renderWithTestingProviders(<AssigneesWrapper />);
 
     await waitFor(() => {
       expect(screen.queryByTestId('comboBoxSearchInput')).not.toBeDisabled();
@@ -104,19 +100,12 @@ describe('Assignees', () => {
 
     await userEvent.click(await screen.findByTestId('create-case-assign-yourself-link'));
 
-    await waitFor(() => {
-      expect(globalForm.getFormData()).toEqual({ assignees: [{ uid: currentUserProfile.uid }] });
-    });
-
     expect(await screen.findByTestId('create-case-assign-yourself-link')).toBeDisabled();
   });
 
   it('assignees users correctly', async () => {
-    renderWithTestingProviders(
-      <MockHookWrapperComponent>
-        <Assignees isLoading={false} />
-      </MockHookWrapperComponent>
-    );
+    const onChange = jest.fn();
+    renderWithTestingProviders(<AssigneesWrapper onChange={onChange} />);
 
     await waitFor(() => {
       expect(screen.queryByTestId('comboBoxSearchInput')).not.toBeDisabled();
@@ -133,7 +122,7 @@ describe('Assignees', () => {
     await userEvent.click(await screen.findByText(`${currentUserProfile.user.full_name}`));
 
     await waitFor(() => {
-      expect(globalForm.getFormData()).toEqual({ assignees: [{ uid: currentUserProfile.uid }] });
+      expect(onChange).toHaveBeenCalledWith([{ uid: currentUserProfile.uid }]);
     });
   });
 
@@ -162,11 +151,7 @@ describe('Assignees', () => {
     const spyOnSuggestUserProfiles = jest.spyOn(api, 'suggestUserProfiles');
     spyOnSuggestUserProfiles.mockResolvedValue(similarProfiles);
 
-    renderWithTestingProviders(
-      <MockHookWrapperComponent>
-        <Assignees isLoading={false} />
-      </MockHookWrapperComponent>
-    );
+    renderWithTestingProviders(<AssigneesWrapper />);
 
     await waitFor(() => {
       expect(screen.queryByTestId('comboBoxSearchInput')).not.toBeDisabled();
@@ -199,23 +184,7 @@ describe('Assignees', () => {
     const spyOnBulkGetUserProfiles = jest.spyOn(api, 'bulkGetUserProfiles');
     spyOnBulkGetUserProfiles.mockResolvedValue([userProfile]);
 
-    renderWithTestingProviders(
-      <MockHookWrapperComponent>
-        <Assignees isLoading={false} />
-      </MockHookWrapperComponent>
-    );
-
-    expect(screen.queryByText(userProfile.user.full_name)).not.toBeInTheDocument();
-
-    act(() => {
-      globalForm.setFieldValue('assignees', [{ uid: userProfile.uid }]);
-    });
-
-    await waitFor(() => {
-      expect(globalForm.getFormData()).toEqual({
-        assignees: [{ uid: userProfile.uid }],
-      });
-    });
+    renderWithTestingProviders(<AssigneesWrapper initialValue={[{ uid: userProfile.uid }]} />);
 
     await waitFor(() => {
       expect(spyOnBulkGetUserProfiles).toBeCalledTimes(1);

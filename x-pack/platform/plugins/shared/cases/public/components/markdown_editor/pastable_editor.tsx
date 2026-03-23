@@ -15,7 +15,9 @@ import { MarkdownEditor } from './editor';
 import { type EditorBaseProps, type MarkdownEditorRef } from './types';
 
 interface PastableMarkdownEditorProps extends EditorBaseProps {
-  field: FieldHook<string>;
+  field?: FieldHook<string>;
+  value?: string;
+  onChange?: (v: string) => void;
   caseId: string;
   owner: Owner;
 }
@@ -25,6 +27,8 @@ const PastableMarkdownEditorComponent = forwardRef<MarkdownEditorRef, PastableMa
     const {
       ariaLabel,
       field,
+      value: controlledValue,
+      onChange: controlledOnChange,
       caseId,
       editorId,
       disabledUiPlugins,
@@ -32,11 +36,16 @@ const PastableMarkdownEditorComponent = forwardRef<MarkdownEditorRef, PastableMa
       owner,
     } = props;
 
+    const value = field ? field.value : controlledValue ?? '';
+    const onChange = field ? field.setValue : controlledOnChange ?? (() => {});
+
     const fileKindId = constructFileKindIdByOwner(owner);
 
     const { isUploading, errors } = useImagePasteUpload({
       editorRef: ref,
       field,
+      value,
+      onChange,
       caseId,
       owner,
       fileKindId,
@@ -54,8 +63,8 @@ const PastableMarkdownEditorComponent = forwardRef<MarkdownEditorRef, PastableMa
           ref={ref}
           ariaLabel={ariaLabel}
           editorId={editorId}
-          onChange={field.setValue}
-          value={field.value}
+          onChange={onChange}
+          value={value}
           disabledUiPlugins={disabledUiPlugins}
           data-test-subj={`${dataTestSubj}-markdown-editor`}
           errors={errors}

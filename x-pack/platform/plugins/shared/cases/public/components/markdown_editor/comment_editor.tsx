@@ -16,7 +16,7 @@ import { useCasesContext } from '../cases_context/use_cases_context';
 
 /** Shared props required by both editor variants */
 interface Props extends EditorBaseProps {
-  field: FieldHook<string>;
+  field?: FieldHook<string>;
   caseId?: string;
   onChange: (value: string) => void;
   value: string;
@@ -53,6 +53,8 @@ export const CommentEditor = forwardRef<MarkdownEditorRef, Props>((props, ref) =
         {...props}
         ref={ref}
         field={props.field}
+        value={props.value}
+        onChange={props.onChange}
         caseId={props.caseId}
         owner={owner}
       />
