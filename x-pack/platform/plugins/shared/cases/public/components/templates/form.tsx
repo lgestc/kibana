@@ -7,7 +7,7 @@
 
 import type { DefaultValues } from 'react-hook-form';
 import { FormProvider, useForm } from 'react-hook-form';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { ActionConnector, TemplateConfiguration } from '../../../common/types/domain';
 import type { FormState } from '../configure_cases/flyout';
@@ -68,26 +68,27 @@ const FormComponent: React.FC<Props> = ({
     formState: { isValid },
   } = methods;
 
-  const submit = async (): Promise<{ isValid: boolean; data: TemplateConfiguration }> => {
-    return new Promise((resolve) => {
-      handleSubmit(
-        (data) => {
-          const serialized = templateSerializer(connectors, currentConfiguration, data);
-          resolve({ isValid: true, data: serialized });
-        },
-        () => {
-          resolve({ isValid: false, data: {} as TemplateConfiguration });
-        }
-      )();
-    });
-  };
+  const submit = useCallback(
+    (): Promise<{ isValid: boolean; data: TemplateConfiguration }> =>
+      new Promise((resolve) => {
+        handleSubmit(
+          (data) => {
+            const serialized = templateSerializer(connectors, currentConfiguration, data);
+            resolve({ isValid: true, data: serialized });
+          },
+          () => {
+            resolve({ isValid: false, data: {} as TemplateConfiguration });
+          }
+        )();
+      }),
+    [handleSubmit, connectors, currentConfiguration]
+  );
 
   useEffect(() => {
     if (onChange) {
       onChange({ isValid, submit });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onChange, isValid]);
+  }, [onChange, isValid, submit]);
 
   return (
     <FormProvider {...methods}>
