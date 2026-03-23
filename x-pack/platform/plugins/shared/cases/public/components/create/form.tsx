@@ -7,7 +7,7 @@
 
 import React, { useCallback, useState, useMemo } from 'react';
 import { EuiButtonEmpty, EuiFlexGroup, EuiFlexItem, EuiFormRow } from '@elastic/eui';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import type { CasePostRequest, ObservablePost } from '../../../common/types/api';
 import { fieldName as descriptionFieldName } from '../case_form_fields/description';
 import * as i18n from './translations';
@@ -48,6 +48,13 @@ export interface CreateCaseFormProps extends Pick<Partial<CreateCaseFormFieldsPr
   observables?: ObservablePost[];
   initialValue?: Pick<CasePostRequest, 'title' | 'description'>;
 }
+
+const InsertTimelineAdapter: React.FC<{ fieldName: string }> = ({ fieldName }) => {
+  const { setValue } = useFormContext();
+  const value = (useWatch({ name: fieldName }) as string) ?? '';
+  const onChange = useCallback((v: string) => setValue(fieldName, v), [fieldName, setValue]);
+  return <InsertTimeline value={value} onChange={onChange} />;
+};
 
 type FormFieldsWithFormContextProps = Pick<
   CreateCaseFormFieldsProps,
@@ -224,7 +231,7 @@ export const CreateCaseForm: React.FC<CreateCaseFormProps> = React.memo(
               </EuiFlexItem>
             </EuiFlexGroup>
           </EuiFormRow>
-          <InsertTimeline fieldName={descriptionFieldName} />
+          <InsertTimelineAdapter fieldName={descriptionFieldName} />
         </FormContext>
       </CasesTimelineIntegrationProvider>
     );

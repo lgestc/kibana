@@ -248,7 +248,10 @@ export const AddComment = React.memo(
                   ),
                 }}
               />
-              <InsertTimeline fieldName="comment" />
+              <InsertTimeline
+                value={comment ?? ''}
+                onChange={(newValue) => setFieldValue('comment', newValue)}
+              />
             </Form>
           )}
         </span>

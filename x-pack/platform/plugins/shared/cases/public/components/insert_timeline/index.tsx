@@ -6,20 +6,17 @@
  */
 
 import { useCallback } from 'react';
-import { useFormContext } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { useTimelineContext } from '../timeline_context/use_timeline_context';
 
-type InsertFields = 'comment' | 'description';
+interface Props {
+  value: string;
+  onChange: (value: string) => void;
+}
 
-export const InsertTimeline: React.FC<{ fieldName: InsertFields }> = ({ fieldName }) => {
-  const { setFieldValue, getFormData } = useFormContext();
+export const InsertTimeline: React.FC<Props> = ({ value, onChange }) => {
   const timelineHooks = useTimelineContext()?.hooks;
-  const formData = getFormData();
-  const onTimelineAttached = useCallback(
-    (newValue: string) => setFieldValue(fieldName, newValue),
-    [fieldName, setFieldValue]
-  );
-  timelineHooks?.useInsertTimeline(formData[fieldName] ?? '', onTimelineAttached);
+  const onTimelineAttached = useCallback((newValue: string) => onChange(newValue), [onChange]);
+  timelineHooks?.useInsertTimeline(value, onTimelineAttached);
   return null;
 };
 
