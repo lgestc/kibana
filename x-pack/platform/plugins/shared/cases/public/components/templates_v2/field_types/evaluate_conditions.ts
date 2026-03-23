@@ -28,9 +28,9 @@ const evaluateRule = (
     case 'contains':
       return typeof current === 'string' && current.includes(String(rule.value ?? ''));
     case 'empty':
-      return current == null || current === '';
+      return current === null || current === undefined || current === '';
     case 'not_empty':
-      return current != null && current !== '';
+      return current !== null && current !== undefined && current !== '';
     default:
       return true;
   }

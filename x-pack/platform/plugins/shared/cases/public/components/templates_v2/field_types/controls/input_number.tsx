@@ -15,6 +15,7 @@ import type {
   InputNumberFieldSchema,
   ConditionRenderProps,
 } from '../../../../../common/types/domain/template/fields';
+import { FIELD_REQUIRED, FIELD_MIN_VALUE, FIELD_MAX_VALUE } from '../../translations';
 
 const { emptyField } = fieldValidators;
 
@@ -24,7 +25,7 @@ export const InputNumber = ({ label, name, type, isRequired, min, max }: InputNu
   const validations = [];
 
   if (isRequired) {
-    validations.push({ validator: emptyField('Required') });
+    validations.push({ validator: emptyField(FIELD_REQUIRED) });
   }
 
   if (min !== undefined) {
@@ -32,7 +33,7 @@ export const InputNumber = ({ label, name, type, isRequired, min, max }: InputNu
       validator: ({ value }: { value: unknown }) => {
         const num = Number(value);
         if (!Number.isNaN(num) && num < min) {
-          return { message: `Value must be at least ${min}` };
+          return { message: FIELD_MIN_VALUE(min) };
         }
       },
     });
@@ -43,7 +44,7 @@ export const InputNumber = ({ label, name, type, isRequired, min, max }: InputNu
       validator: ({ value }: { value: unknown }) => {
         const num = Number(value);
         if (!Number.isNaN(num) && num > max) {
-          return { message: `Value must be at most ${max}` };
+          return { message: FIELD_MAX_VALUE(max) };
         }
       },
     });

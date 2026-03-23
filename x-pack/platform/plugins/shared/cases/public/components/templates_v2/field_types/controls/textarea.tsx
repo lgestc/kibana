@@ -15,6 +15,13 @@ import type {
   TextareaFieldSchema,
   ConditionRenderProps,
 } from '../../../../../common/types/domain/template/fields';
+import {
+  FIELD_REQUIRED,
+  FIELD_MIN_LENGTH,
+  FIELD_MAX_LENGTH,
+  FIELD_PATTERN_MISMATCH,
+  FIELD_PATTERN_INVALID,
+} from '../../translations';
 
 const { emptyField } = fieldValidators;
 
@@ -32,7 +39,7 @@ export const Textarea = ({
   const validations = [];
 
   if (isRequired) {
-    validations.push({ validator: emptyField('Required') });
+    validations.push({ validator: emptyField(FIELD_REQUIRED) });
   }
 
   if (patternValidation) {
@@ -40,8 +47,12 @@ export const Textarea = ({
     validations.push({
       validator: ({ value }: { value: unknown }) => {
         if (typeof value !== 'string' || value === '') return;
-        if (!new RegExp(regex).test(value)) {
-          return { message: message ?? `Value does not match pattern: ${regex}` };
+        try {
+          if (!new RegExp(regex).test(value)) {
+            return { message: message ?? FIELD_PATTERN_MISMATCH(regex) };
+          }
+        } catch {
+          return { message: FIELD_PATTERN_INVALID };
         }
       },
     });
@@ -51,7 +62,7 @@ export const Textarea = ({
     validations.push({
       validator: ({ value }: { value: unknown }) => {
         if (typeof value === 'string' && value.length < minLength) {
-          return { message: `Must be at least ${minLength} characters` };
+          return { message: FIELD_MIN_LENGTH(minLength) };
         }
       },
     });
@@ -61,7 +72,7 @@ export const Textarea = ({
     validations.push({
       validator: ({ value }: { value: unknown }) => {
         if (typeof value === 'string' && value.length > maxLength) {
-          return { message: `Must be at most ${maxLength} characters` };
+          return { message: FIELD_MAX_LENGTH(maxLength) };
         }
       },
     });

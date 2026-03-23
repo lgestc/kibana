@@ -16,6 +16,7 @@ import type {
   SelectBasicFieldSchema,
   ConditionRenderProps,
 } from '../../../../../common/types/domain/template/fields';
+import { FIELD_REQUIRED } from '../../translations';
 
 const { emptyField } = fieldValidators;
 
@@ -25,7 +26,7 @@ export const SelectBasic = ({ label, metadata, name, type, isRequired }: SelectB
   const validations = [];
 
   if (isRequired) {
-    validations.push({ validator: emptyField('Required') });
+    validations.push({ validator: emptyField(FIELD_REQUIRED) });
   }
 
   return (
