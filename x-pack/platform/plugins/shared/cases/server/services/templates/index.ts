@@ -236,7 +236,11 @@ export class TemplatesService {
     };
   }
 
-  async createTemplate(input: CreateTemplateInput, author: string): Promise<SavedObject<Template>> {
+  async createTemplate(
+    input: CreateTemplateInput,
+    author: string,
+    id: string
+  ): Promise<SavedObject<Template>> {
     const parsedDefinition = parseYaml(input.definition) as ParsedTemplate['definition'];
 
     const templateSavedObject = await this.dependencies.unsecuredSavedObjectsClient.create(
@@ -255,7 +259,7 @@ export class TemplatesService {
         fieldCount: parsedDefinition.fields.length,
         fieldNames: parsedDefinition.fields.map((f) => f.name),
       } as Template,
-      { refresh: true }
+      { refresh: true, id }
     );
 
     return templateSavedObject;

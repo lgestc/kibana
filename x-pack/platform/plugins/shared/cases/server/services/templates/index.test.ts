@@ -622,7 +622,8 @@ describe('TemplatesService', () => {
         description: 'A detailed description',
         tags: ['security', 'network'],
       },
-      'alice'
+      'alice',
+      'generated-id'
     );
 
     expect(unsecuredSavedObjectsClient.create).toHaveBeenCalledWith(
@@ -636,7 +637,7 @@ describe('TemplatesService', () => {
         fieldNames: ['field_one'],
         isLatest: true,
       }),
-      expect.any(Object)
+      expect.objectContaining({ id: 'generated-id' })
     );
   });
 
@@ -659,7 +660,8 @@ describe('TemplatesService', () => {
         description: 'Description from input',
         tags: ['input-tag'],
       },
-      'alice'
+      'alice',
+      'generated-id'
     );
 
     expect(unsecuredSavedObjectsClient.create).toHaveBeenCalledWith(
@@ -689,7 +691,8 @@ describe('TemplatesService', () => {
         description: 'Fallback description',
         tags: ['fallback-tag'],
       },
-      'alice'
+      'alice',
+      'generated-id'
     );
 
     expect(unsecuredSavedObjectsClient.create).toHaveBeenCalledWith(

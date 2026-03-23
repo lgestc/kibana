@@ -103,40 +103,24 @@ const CasesRoutesComponent: React.FC<CasesRoutesProps> = ({
           )}
         </Route>
 
-        {isTemplatesEnabled && (
-          <Route exact path={getCasesTemplatesPath(basePath)}>
-            {permissions.manageTemplates ? (
+        {isTemplatesEnabled && permissions.manageTemplates && (
+          <>
+            <Route exact path={getCasesTemplatesPath(basePath)}>
               <Suspense fallback={<EuiLoadingSpinner />}>
                 <AllCasesTemplatesLazy />
               </Suspense>
-            ) : (
-              <NoPrivilegesPage pageName={i18n.TEMPLATES_PAGE_NAME} />
-            )}
-          </Route>
-        )}
-
-        {isTemplatesEnabled && (
-          <Route exact path={getCasesCreateTemplatePath(basePath)}>
-            {permissions.manageTemplates ? (
+            </Route>
+            <Route exact path={getCasesCreateTemplatePath(basePath)}>
               <Suspense fallback={<EuiLoadingSpinner />}>
                 <CreateTemplateLazy />
               </Suspense>
-            ) : (
-              <NoPrivilegesPage pageName={i18n.TEMPLATES_PAGE_NAME} />
-            )}
-          </Route>
-        )}
-
-        {isTemplatesEnabled && (
-          <Route exact path={getCasesEditTemplatePath(basePath)}>
-            {permissions.manageTemplates ? (
+            </Route>
+            <Route exact path={getCasesEditTemplatePath(basePath)}>
               <Suspense fallback={<EuiLoadingSpinner />}>
                 <EditTemplateLazy />
               </Suspense>
-            ) : (
-              <NoPrivilegesPage pageName={i18n.TEMPLATES_PAGE_NAME} />
-            )}
-          </Route>
+            </Route>
+          </>
         )}
 
         {/* NOTE: current case view implementation retains some local state between renders, eg. when going from one case directly to another one. as a short term fix, we are forcing the component remount. */}

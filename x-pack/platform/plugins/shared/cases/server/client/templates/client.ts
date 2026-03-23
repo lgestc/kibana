@@ -58,7 +58,7 @@ export const createTemplatesSubClient = (clientArgs: CasesClientArgs): Templates
         entities: [{ owner: input.owner, id: generatedId }],
       });
 
-      return templatesService.createTemplate(input, user.username ?? 'unknown');
+      return templatesService.createTemplate(input, user.username ?? 'unknown', generatedId);
     },
 
     updateTemplate: async (templateId: string, input: UpdateTemplateInput) => {

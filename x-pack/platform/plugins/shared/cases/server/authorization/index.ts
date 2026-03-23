@@ -12,6 +12,7 @@ import {
   CASE_COMMENT_SAVED_OBJECT,
   CASE_CONFIGURE_SAVED_OBJECT,
   CASE_SAVED_OBJECT,
+  CASE_TEMPLATE_SAVED_OBJECT,
   CASE_USER_ACTION_SAVED_OBJECT,
 } from '../../common/constants';
 import type { Verbs, OperationDetails } from './types';
@@ -198,13 +199,16 @@ const CaseOperations = {
     docType: 'case',
     savedObjectType: CASE_SAVED_OBJECT,
   },
+};
+
+const TemplateOperations = {
   [WriteOperations.ManageTemplate]: {
     ecsType: EVENT_TYPES.change,
     name: WriteOperations.ManageTemplate as const,
     action: 'case_template_manage',
     verbs: updateVerbs,
-    docType: 'case template',
-    savedObjectType: CASE_SAVED_OBJECT,
+    docType: 'case templates',
+    savedObjectType: CASE_TEMPLATE_SAVED_OBJECT,
   },
 };
 
@@ -331,6 +335,7 @@ const AttachmentOperations = {
  */
 export const Operations: Record<ReadOperations | WriteOperations, OperationDetails> = {
   ...CaseOperations,
+  ...TemplateOperations,
   ...ConfigurationOperations,
   ...AttachmentOperations,
   [ReadOperations.GetTags]: {
