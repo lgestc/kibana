@@ -67,12 +67,14 @@ export const createTemplatesSubClient = (clientArgs: CasesClientArgs): Templates
     getTemplate: async (templateId: string, version?: string) => {
       const existing = await templatesService.getTemplate(templateId, version);
 
-      if (existing) {
-        const { ensureSavedObjectsAreAuthorized } = await authorization.getAuthorizationFilter(
-          Operations[ReadOperations.FindCases]
-        );
-        ensureSavedObjectsAreAuthorized([{ owner: existing.attributes.owner, id: existing.id }]);
+      if (!existing) {
+        return existing;
       }
+
+      const { ensureSavedObjectsAreAuthorized } = await authorization.getAuthorizationFilter(
+        Operations[ReadOperations.FindCases]
+      );
+      ensureSavedObjectsAreAuthorized([{ owner: existing.attributes.owner, id: existing.id }]);
 
       return existing;
     },
