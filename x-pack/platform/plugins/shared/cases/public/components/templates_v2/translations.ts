@@ -649,4 +649,3 @@ export const TEMPLATE_VALIDATION_ERROR = (fileName: string, index: number, issue
 export const TEMPLATE_TITLE = i18n.translate('xpack.cases.templates.title', {
   defaultMessage: 'Templates',
 });
-
