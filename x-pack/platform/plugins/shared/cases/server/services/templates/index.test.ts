@@ -78,6 +78,7 @@ describe('TemplatesService', () => {
       unsecuredSavedObjectsClient,
       savedObjectsSerializer,
       esClient,
+      namespace: 'default',
     });
 
   /** Default getAllTemplates params — override individual fields as needed */

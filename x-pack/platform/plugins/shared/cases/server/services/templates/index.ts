@@ -33,6 +33,7 @@ export class TemplatesService {
       unsecuredSavedObjectsClient: SavedObjectsClientContract;
       savedObjectsSerializer: ISavedObjectsSerializer;
       esClient: ElasticsearchClient;
+      namespace: string;
     }
   ) {}
 
@@ -216,6 +217,7 @@ export class TemplatesService {
 
     const findResult = (await this.dependencies.unsecuredSavedObjectsClient.search({
       type: CASE_TEMPLATE_SAVED_OBJECT,
+      namespaces: [this.dependencies.namespace],
       from,
       size: perPage,
       sort,
