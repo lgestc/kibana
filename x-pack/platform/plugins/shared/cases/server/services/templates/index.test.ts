@@ -15,7 +15,7 @@ import type {
 } from '@kbn/core-saved-objects-api-server';
 import type { Template } from '../../../common/types/domain/template/v1';
 import { CASE_TEMPLATE_SAVED_OBJECT } from '../../../common/constants';
-import { Operations, WriteOperations } from '../../authorization';
+import { Operations } from '../../authorization';
 import { TemplatesService } from '.';
 
 const buildDefinition = (name: string, extras?: { description?: string; tags?: string[] }) =>
