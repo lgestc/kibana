@@ -15,7 +15,7 @@ import type {
 } from '@kbn/core-saved-objects-api-server';
 import type { Template } from '../../../common/types/domain/template/v1';
 import { CASE_TEMPLATE_SAVED_OBJECT } from '../../../common/constants';
-import { Operations, ReadOperations } from '../../authorization';
+import { Operations, WriteOperations } from '../../authorization';
 import { TemplatesService } from '.';
 
 const buildDefinition = (name: string, extras?: { description?: string; tags?: string[] }) =>
@@ -162,7 +162,7 @@ describe('TemplatesService', () => {
         total: 2,
       });
       expect(authorization.getAuthorizationFilter).toHaveBeenCalledWith(
-        Operations[ReadOperations.FindCases]
+        Operations[WriteOperations.ManageTemplate]
       );
       expect(ensureSavedObjectsAreAuthorized).toHaveBeenCalledWith([
         { owner: so1.attributes.owner, id: so1.id },
@@ -680,7 +680,7 @@ describe('TemplatesService', () => {
       expect(unsecuredSavedObjectsClient.search).toHaveBeenCalled();
       expect(result).toEqual(template);
       expect(authorization.getAuthorizationFilter).toHaveBeenCalledWith(
-        Operations[ReadOperations.FindCases]
+        Operations[WriteOperations.ManageTemplate]
       );
       expect(ensureSavedObjectsAreAuthorized).toHaveBeenCalledWith([
         { owner: template.attributes.owner, id: template.id },

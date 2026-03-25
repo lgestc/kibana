@@ -29,7 +29,7 @@ import type {
   TemplatesFindResponse,
 } from '../../../common/types/api/template/v1';
 import type { Authorization } from '../../authorization/authorization';
-import { Operations, ReadOperations } from '../../authorization';
+import { Operations, WriteOperations } from '../../authorization';
 
 export class TemplatesService {
   constructor(
@@ -58,7 +58,7 @@ export class TemplatesService {
 
     const { authorizedOwners, ensureSavedObjectsAreAuthorized } =
       await this.dependencies.authorization.getAuthorizationFilter(
-        Operations[ReadOperations.FindCases]
+        Operations[WriteOperations.ManageTemplate]
       );
 
     const effectiveOwner = authorizedOwners
@@ -114,7 +114,7 @@ export class TemplatesService {
 
     const { ensureSavedObjectsAreAuthorized } =
       await this.dependencies.authorization.getAuthorizationFilter(
-        Operations[ReadOperations.FindCases]
+        Operations[WriteOperations.ManageTemplate]
       );
     ensureSavedObjectsAreAuthorized([{ owner: existing.attributes.owner, id: existing.id }]);
 
@@ -380,7 +380,7 @@ export class TemplatesService {
    */
   async getTags(): Promise<string[]> {
     const { authorizedOwners } = await this.dependencies.authorization.getAuthorizationFilter(
-      Operations[ReadOperations.FindCases]
+      Operations[WriteOperations.ManageTemplate]
     );
     const { templates } = await this.searchTemplates({
       page: 1,
@@ -399,7 +399,7 @@ export class TemplatesService {
    */
   async getAuthors(): Promise<string[]> {
     const { authorizedOwners } = await this.dependencies.authorization.getAuthorizationFilter(
-      Operations[ReadOperations.FindCases]
+      Operations[WriteOperations.ManageTemplate]
     );
     const { templates } = await this.searchTemplates({
       page: 1,
