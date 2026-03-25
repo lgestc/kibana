@@ -13,6 +13,7 @@ import type {
   SavedObjectsRawDoc,
 } from '@kbn/core/server';
 import { toElasticsearchQuery, fromKueryExpression } from '@kbn/es-query';
+import type { PublicMethodsOf } from '@kbn/utility-types';
 import { v4 } from 'uuid';
 import { load as parseYaml } from 'js-yaml';
 import type {
@@ -26,6 +27,8 @@ import type {
   TemplatesFindRequest,
   TemplatesFindResponse,
 } from '../../../common/types/api/template/v1';
+import type { Authorization } from '../../authorization/authorization';
+import { Operations, ReadOperations } from '../../authorization';
 
 export class TemplatesService {
   constructor(
@@ -34,6 +37,7 @@ export class TemplatesService {
       savedObjectsSerializer: ISavedObjectsSerializer;
       esClient: ElasticsearchClient;
       namespace: string;
+      authorization: PublicMethodsOf<Authorization>;
     }
   ) {}
 
@@ -51,6 +55,17 @@ export class TemplatesService {
       isEnabled,
     } = params;
 
+    const { authorizedOwners, ensureSavedObjectsAreAuthorized } =
+      await this.dependencies.authorization.getAuthorizationFilter(
+        Operations[ReadOperations.FindCases]
+      );
+
+    const effectiveOwner = authorizedOwners
+      ? owner?.length
+        ? owner.filter((o) => authorizedOwners.includes(o))
+        : authorizedOwners
+      : owner;
+
     const { templates, total } = await this.searchTemplates({
       page,
       perPage,
@@ -60,10 +75,14 @@ export class TemplatesService {
       search,
       tags,
       author,
-      owner,
+      owner: effectiveOwner,
       isLatest: true,
       isEnabled,
     });
+
+    ensureSavedObjectsAreAuthorized(
+      templates.map((t) => ({ owner: t.attributes.owner, id: t.id }))
+    );
 
     const searchLower = search?.toLowerCase() ?? '';
 
@@ -83,6 +102,25 @@ export class TemplatesService {
   }
 
   async getTemplate(
+    templateId: string,
+    version?: string
+  ): Promise<SavedObject<Template> | undefined> {
+    const existing = await this._getTemplate(templateId, version);
+
+    if (!existing) {
+      return existing;
+    }
+
+    const { ensureSavedObjectsAreAuthorized } =
+      await this.dependencies.authorization.getAuthorizationFilter(
+        Operations[ReadOperations.FindCases]
+      );
+    ensureSavedObjectsAreAuthorized([{ owner: existing.attributes.owner, id: existing.id }]);
+
+    return existing;
+  }
+
+  private async _getTemplate(
     templateId: string,
     version?: string
   ): Promise<SavedObject<Template> | undefined> {
@@ -249,6 +287,11 @@ export class TemplatesService {
     author: string,
     id: string = v4()
   ): Promise<SavedObject<Template>> {
+    await this.dependencies.authorization.ensureAuthorized({
+      operation: Operations.manageTemplate,
+      entities: [{ owner: input.owner, id }],
+    });
+
     const parsedDefinition = parseYaml(input.definition) as ParsedTemplate['definition'];
 
     const templateSavedObject = await this.dependencies.unsecuredSavedObjectsClient.create(
@@ -278,11 +321,16 @@ export class TemplatesService {
     templateId: string,
     input: UpdateTemplateInput
   ): Promise<SavedObject<Template>> {
-    const currentTemplate = await this.getTemplate(templateId);
+    const currentTemplate = await this._getTemplate(templateId);
 
     if (!currentTemplate) {
       throw new Error('template does not exist');
     }
+
+    await this.dependencies.authorization.ensureAuthorized({
+      operation: Operations.manageTemplate,
+      entities: [{ owner: currentTemplate.attributes.owner, id: currentTemplate.id }],
+    });
 
     const parsedDefinition = parseYaml(input.definition) as ParsedTemplate['definition'];
 
@@ -329,14 +377,17 @@ export class TemplatesService {
   /**
    * Returns all unique tags from the latest version of each non-deleted template.
    */
-  async getTags(owner?: string[]): Promise<string[]> {
+  async getTags(): Promise<string[]> {
+    const { authorizedOwners } = await this.dependencies.authorization.getAuthorizationFilter(
+      Operations[ReadOperations.FindCases]
+    );
     const { templates } = await this.searchTemplates({
       page: 1,
       perPage: 10000,
       sortField: 'name',
       sortOrder: 'asc',
       isLatest: true,
-      ...(owner?.length ? { owner } : {}),
+      ...(authorizedOwners?.length ? { owner: authorizedOwners } : {}),
     });
     const tags = templates.flatMap((so) => so.attributes.tags ?? []).filter(Boolean);
     return [...new Set(tags)].sort();
@@ -345,14 +396,17 @@ export class TemplatesService {
   /**
    * Returns all unique authors from the latest version of each non-deleted template.
    */
-  async getAuthors(owner?: string[]): Promise<string[]> {
+  async getAuthors(): Promise<string[]> {
+    const { authorizedOwners } = await this.dependencies.authorization.getAuthorizationFilter(
+      Operations[ReadOperations.FindCases]
+    );
     const { templates } = await this.searchTemplates({
       page: 1,
       perPage: 10000,
       sortField: 'name',
       sortOrder: 'asc',
       isLatest: true,
-      ...(owner?.length ? { owner } : {}),
+      ...(authorizedOwners?.length ? { owner: authorizedOwners } : {}),
     });
     const authors = templates
       .map((so) => so.attributes.author)
@@ -361,7 +415,7 @@ export class TemplatesService {
   }
 
   async incrementUsageStats(templateId: string): Promise<void> {
-    const template = await this.getTemplate(templateId);
+    const template = await this._getTemplate(templateId);
 
     if (!template) {
       return;
@@ -383,6 +437,17 @@ export class TemplatesService {
   }
 
   async deleteTemplate(templateId: string): Promise<void> {
+    const latestTemplate = await this._getTemplate(templateId);
+
+    if (!latestTemplate) {
+      return;
+    }
+
+    await this.dependencies.authorization.ensureAuthorized({
+      operation: Operations.manageTemplate,
+      entities: [{ owner: latestTemplate.attributes.owner, id: latestTemplate.id }],
+    });
+
     const templateSnapshots = await this.dependencies.unsecuredSavedObjectsClient.find({
       type: CASE_TEMPLATE_SAVED_OBJECT,
       filter: fromKueryExpression(

@@ -152,6 +152,7 @@ export class CasesClientFactory {
       request,
       auditLogger,
       alertsClient,
+      auth,
     });
 
     const userInfo = await this.getUserInfo(request);
@@ -193,6 +194,7 @@ export class CasesClientFactory {
     request,
     auditLogger,
     alertsClient,
+    auth,
   }: {
     unsecuredSavedObjectsClient: SavedObjectsClientContract;
     savedObjectsSerializer: ISavedObjectsSerializer;
@@ -200,6 +202,7 @@ export class CasesClientFactory {
     request: KibanaRequest;
     auditLogger: AuditLogger;
     alertsClient: PublicMethodsOf<AlertsClient>;
+    auth: PublicMethodsOf<Authorization>;
   }): CasesServices {
     this.validateInitialization();
 
@@ -219,6 +222,7 @@ export class CasesClientFactory {
       savedObjectsSerializer,
       esClient,
       namespace,
+      authorization: auth,
     });
 
     const caseService = new CasesService({
