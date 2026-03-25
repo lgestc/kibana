@@ -106,19 +106,7 @@ export class TemplatesService {
     templateId: string,
     version?: string
   ): Promise<SavedObject<Template> | undefined> {
-    const existing = await this._getTemplate(templateId, version);
-
-    if (!existing) {
-      return existing;
-    }
-
-    const { ensureSavedObjectsAreAuthorized } =
-      await this.dependencies.authorization.getAuthorizationFilter(
-        Operations[WriteOperations.ManageTemplate]
-      );
-    ensureSavedObjectsAreAuthorized([{ owner: existing.attributes.owner, id: existing.id }]);
-
-    return existing;
+    return this._getTemplate(templateId, version);
   }
 
   private async _getTemplate(

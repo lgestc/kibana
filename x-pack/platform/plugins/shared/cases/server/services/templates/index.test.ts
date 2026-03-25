@@ -679,12 +679,7 @@ describe('TemplatesService', () => {
 
       expect(unsecuredSavedObjectsClient.search).toHaveBeenCalled();
       expect(result).toEqual(template);
-      expect(authorization.getAuthorizationFilter).toHaveBeenCalledWith(
-        Operations[WriteOperations.ManageTemplate]
-      );
-      expect(ensureSavedObjectsAreAuthorized).toHaveBeenCalledWith([
-        { owner: template.attributes.owner, id: template.id },
-      ]);
+      expect(authorization.getAuthorizationFilter).not.toHaveBeenCalled();
     });
 
     it('returns undefined when no templates are found', async () => {
