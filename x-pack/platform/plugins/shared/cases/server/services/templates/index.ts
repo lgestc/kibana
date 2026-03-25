@@ -247,7 +247,7 @@ export class TemplatesService {
   async createTemplate(
     input: CreateTemplateInput,
     author: string,
-    id: string
+    id: string = v4()
   ): Promise<SavedObject<Template>> {
     const parsedDefinition = parseYaml(input.definition) as ParsedTemplate['definition'];
 
