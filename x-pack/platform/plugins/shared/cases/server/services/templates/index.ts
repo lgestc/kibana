@@ -29,7 +29,7 @@ import type {
   TemplatesFindResponse,
 } from '../../../common/types/api/template/v1';
 import type { Authorization } from '../../authorization/authorization';
-import { Operations, WriteOperations } from '../../authorization';
+import { Operations } from '../../authorization';
 
 // Note: the manageTemplate sub-privilege is only required for template mutations
 // (create, update, delete). Read operations (getAllTemplates, getTemplate, getTags,
