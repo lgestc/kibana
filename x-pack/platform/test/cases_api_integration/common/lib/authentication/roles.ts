@@ -361,7 +361,7 @@ export const securitySolutionOnlyManageTemplates: Role = {
     kibana: [
       {
         feature: {
-          securitySolutionFixture: ['cases_manage_templates'],
+          securitySolutionFixture: ['minimal_all', 'cases_manage_templates'],
           actions: ['all'],
           actionsSimulators: ['all'],
         },

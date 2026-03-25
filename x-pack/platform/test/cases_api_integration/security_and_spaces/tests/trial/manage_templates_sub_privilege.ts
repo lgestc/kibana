@@ -90,6 +90,7 @@ export default ({ getService }: FtrProviderContext): void => {
       it('allows a user with the manageTemplates sub-privilege to list templates', async () => {
         const response = await supertestWithoutAuth
           .get(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .query({ page: 1, perPage: 20 })
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .expect(200);
 
@@ -107,6 +108,7 @@ export default ({ getService }: FtrProviderContext): void => {
 
         const response = await supertestWithoutAuth
           .get(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .query({ page: 1, perPage: 20 })
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .expect(200);
 
