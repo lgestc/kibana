@@ -11,6 +11,7 @@ import type { MemoryRouterProps } from 'react-router';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
+  buildCasesPermissions,
   noCasesSettingsPermission,
   noCreateCasesPermissions,
   readCasesPermissions,
@@ -20,6 +21,7 @@ import { CasesRoutes } from './routes';
 import type { CasesPermissions } from '../../../common';
 import { useGetCase } from '../../containers/use_get_case';
 import { defaultGetCase } from '../case_view/mocks';
+import { KibanaServices } from '../../common/lib/kibana';
 
 jest.mock('../../containers/use_get_case');
 
@@ -37,6 +39,21 @@ jest.mock('../configure_cases', () => ({
 
 jest.mock('../case_view/case_view_page', () => ({
   CaseViewPage: () => <div>{'Case View Page'}</div>,
+}));
+
+jest.mock('../templates_v2/pages/all_templates_page', () => ({
+  __esModule: true,
+  default: () => <div>{'All templates'}</div>,
+}));
+
+jest.mock('../templates_v2/pages/create_template/page', () => ({
+  __esModule: true,
+  default: () => <div>{'Create template'}</div>,
+}));
+
+jest.mock('../templates_v2/pages/edit_template/page', () => ({
+  __esModule: true,
+  default: () => <div>{'Edit template'}</div>,
 }));
 
 const useGetCaseMock = useGetCase as jest.Mock;
@@ -116,6 +133,54 @@ describe('Cases routes', () => {
     it('shows the no privileges page if the user does not have settings privileges', async () => {
       renderWithRouter(['/cases/configure'], noCasesSettingsPermission());
       expect(await screen.findByText('Privileges required')).toBeInTheDocument();
+    });
+  });
+
+  describe('Templates routes', () => {
+    let getConfigSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      getConfigSpy = jest
+        .spyOn(KibanaServices, 'getConfig')
+        .mockReturnValue(
+          { templates: { enabled: true } } as ReturnType<typeof KibanaServices.getConfig>
+        );
+    });
+
+    afterEach(() => {
+      getConfigSpy.mockRestore();
+    });
+
+    it('navigates to the all templates page', async () => {
+      renderWithRouter(['/cases/templates']);
+      expect(await screen.findByText('All templates')).toBeInTheDocument();
+    });
+
+    it('navigates to the create template page', async () => {
+      renderWithRouter(['/cases/templates/create']);
+      expect(await screen.findByText('Create template')).toBeInTheDocument();
+    });
+
+    it('navigates to the edit template page', async () => {
+      renderWithRouter(['/cases/templates/some-id/edit']);
+      expect(await screen.findByText('Edit template')).toBeInTheDocument();
+    });
+
+    it('does not render template routes when the templates feature is disabled', async () => {
+      getConfigSpy.mockReturnValue(
+        { templates: { enabled: false } } as ReturnType<typeof KibanaServices.getConfig>
+      );
+      renderWithRouter(['/cases/templates']);
+      // Without a registered template route, /cases/templates matches the case view route
+      expect(await screen.findByText('Case View Page')).toBeInTheDocument();
+      expect(screen.queryByText('All templates')).not.toBeInTheDocument();
+    });
+
+    it('does not render template routes when the user lacks manageTemplates permission', async () => {
+      renderWithRouter(['/cases/templates'], buildCasesPermissions({ manageTemplates: false }));
+      // Without a registered template route, /cases/templates matches the case view route
+      expect(await screen.findByText('Case View Page')).toBeInTheDocument();
+      expect(screen.queryByText('All templates')).not.toBeInTheDocument();
     });
   });
 });
