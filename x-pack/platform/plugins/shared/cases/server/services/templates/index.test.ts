@@ -15,6 +15,7 @@ import type {
 } from '@kbn/core-saved-objects-api-server';
 import type { Template } from '../../../common/types/domain/template/v1';
 import { CASE_TEMPLATE_SAVED_OBJECT } from '../../../common/constants';
+import { Operations, ReadOperations } from '../../authorization';
 import { TemplatesService } from '.';
 
 const buildDefinition = (name: string, extras?: { description?: string; tags?: string[] }) =>
@@ -160,6 +161,13 @@ describe('TemplatesService', () => {
         perPage: 10,
         total: 2,
       });
+      expect(authorization.getAuthorizationFilter).toHaveBeenCalledWith(
+        Operations[ReadOperations.FindCases]
+      );
+      expect(ensureSavedObjectsAreAuthorized).toHaveBeenCalledWith([
+        { owner: so1.attributes.owner, id: so1.id },
+        { owner: so2.attributes.owner, id: so2.id },
+      ]);
     });
 
     it('returns an empty list when no templates exist', async () => {
@@ -671,6 +679,12 @@ describe('TemplatesService', () => {
 
       expect(unsecuredSavedObjectsClient.search).toHaveBeenCalled();
       expect(result).toEqual(template);
+      expect(authorization.getAuthorizationFilter).toHaveBeenCalledWith(
+        Operations[ReadOperations.FindCases]
+      );
+      expect(ensureSavedObjectsAreAuthorized).toHaveBeenCalledWith([
+        { owner: template.attributes.owner, id: template.id },
+      ]);
     });
 
     it('returns undefined when no templates are found', async () => {
@@ -724,6 +738,10 @@ describe('TemplatesService', () => {
       }),
       expect.objectContaining({ id: 'generated-id' })
     );
+    expect(authorization.ensureAuthorized).toHaveBeenCalledWith({
+      operation: Operations.manageTemplate,
+      entities: [{ owner: 'securitySolution', id: 'generated-id' }],
+    });
   });
 
   it('extracts description and tags from YAML on create, preferring YAML over input', async () => {
@@ -1020,7 +1038,7 @@ describe('TemplatesService', () => {
           owner: 'securitySolution',
           definition: buildDefinition('Missing Template'),
         })
-      ).rejects.toThrow('template does not exist');
+      ).rejects.toThrow('Template with id missing-template not found');
     });
 
     it('carries over usageCount and lastUsedAt from the previous version', async () => {
@@ -1066,6 +1084,10 @@ describe('TemplatesService', () => {
         }),
         expect.any(Object)
       );
+      expect(authorization.ensureAuthorized).toHaveBeenCalledWith({
+        operation: Operations.manageTemplate,
+        entities: [{ owner: 'securitySolution', id: 'template-so-id' }],
+      });
     });
   });
 
@@ -1212,6 +1234,26 @@ describe('TemplatesService', () => {
         ],
         { refresh: true }
       );
+      expect(authorization.ensureAuthorized).toHaveBeenCalledWith({
+        operation: Operations.manageTemplate,
+        entities: [{ owner: 'securitySolution', id: 'so-1' }],
+      });
+    });
+
+    it('does nothing and skips auth when template does not exist', async () => {
+      const service = createService();
+
+      jest
+        .spyOn(
+          service as unknown as Record<'_getTemplate', typeof service.getTemplate>,
+          '_getTemplate'
+        )
+        .mockResolvedValue(undefined);
+
+      await service.deleteTemplate('non-existent');
+
+      expect(authorization.ensureAuthorized).not.toHaveBeenCalled();
+      expect(unsecuredSavedObjectsClient.bulkUpdate).not.toHaveBeenCalled();
     });
   });
 });

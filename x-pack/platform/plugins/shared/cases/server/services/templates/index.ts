@@ -5,6 +5,7 @@
  * 2.0.
  */
 
+import Boom from '@hapi/boom';
 import type {
   ElasticsearchClient,
   ISavedObjectsSerializer,
@@ -324,7 +325,7 @@ export class TemplatesService {
     const currentTemplate = await this._getTemplate(templateId);
 
     if (!currentTemplate) {
-      throw new Error('template does not exist');
+      throw Boom.notFound(`Template with id ${templateId} not found`);
     }
 
     await this.dependencies.authorization.ensureAuthorized({
