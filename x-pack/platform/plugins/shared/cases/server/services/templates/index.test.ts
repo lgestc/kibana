@@ -161,10 +161,8 @@ describe('TemplatesService', () => {
         perPage: 10,
         total: 2,
       });
-      expect(authorization.getAuthorizationFilter).toHaveBeenCalledWith(
-        Operations[WriteOperations.ManageTemplate]
-      );
-      expect(ensureSavedObjectsAreAuthorized).toHaveBeenCalledWith([
+      expect(authorization.getAuthorizationFilter).not.toHaveBeenCalled();
+      expect(ensureSavedObjectsAreAuthorized).not.toHaveBeenCalledWith([
         { owner: so1.attributes.owner, id: so1.id },
         { owner: so2.attributes.owner, id: so2.id },
       ]);

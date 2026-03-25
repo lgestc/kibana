@@ -31,6 +31,10 @@ import type {
 import type { Authorization } from '../../authorization/authorization';
 import { Operations, WriteOperations } from '../../authorization';
 
+// Note: the manageTemplate sub-privilege is only required for template mutations
+// (create, update, delete). Read operations (getAllTemplates, getTemplate, getTags,
+// getAuthors) do not require any special privilege.
+
 export class TemplatesService {
   constructor(
     private readonly dependencies: {
@@ -56,17 +60,6 @@ export class TemplatesService {
       isEnabled,
     } = params;
 
-    const { authorizedOwners, ensureSavedObjectsAreAuthorized } =
-      await this.dependencies.authorization.getAuthorizationFilter(
-        Operations[WriteOperations.ManageTemplate]
-      );
-
-    const effectiveOwner = authorizedOwners
-      ? owner?.length
-        ? owner.filter((o) => authorizedOwners.includes(o))
-        : authorizedOwners
-      : owner;
-
     const { templates, total } = await this.searchTemplates({
       page,
       perPage,
@@ -76,14 +69,10 @@ export class TemplatesService {
       search,
       tags,
       author,
-      owner: effectiveOwner,
+      owner,
       isLatest: true,
       isEnabled,
     });
-
-    ensureSavedObjectsAreAuthorized(
-      templates.map((t) => ({ owner: t.attributes.owner, id: t.id }))
-    );
 
     const searchLower = search?.toLowerCase() ?? '';
 
@@ -367,16 +356,12 @@ export class TemplatesService {
    * Returns all unique tags from the latest version of each non-deleted template.
    */
   async getTags(): Promise<string[]> {
-    const { authorizedOwners } = await this.dependencies.authorization.getAuthorizationFilter(
-      Operations[WriteOperations.ManageTemplate]
-    );
     const { templates } = await this.searchTemplates({
       page: 1,
       perPage: 10000,
       sortField: 'name',
       sortOrder: 'asc',
       isLatest: true,
-      ...(authorizedOwners?.length ? { owner: authorizedOwners } : {}),
     });
     const tags = templates.flatMap((so) => so.attributes.tags ?? []).filter(Boolean);
     return [...new Set(tags)].sort();
@@ -386,16 +371,12 @@ export class TemplatesService {
    * Returns all unique authors from the latest version of each non-deleted template.
    */
   async getAuthors(): Promise<string[]> {
-    const { authorizedOwners } = await this.dependencies.authorization.getAuthorizationFilter(
-      Operations[WriteOperations.ManageTemplate]
-    );
     const { templates } = await this.searchTemplates({
       page: 1,
       perPage: 10000,
       sortField: 'name',
       sortOrder: 'asc',
       isLatest: true,
-      ...(authorizedOwners?.length ? { owner: authorizedOwners } : {}),
     });
     const authors = templates
       .map((so) => so.attributes.author)
