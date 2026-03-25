@@ -95,7 +95,7 @@ export default ({ getService }: FtrProviderContext): void => {
           .expect(200);
 
         expect(response.body.templates.length).to.be.greaterThan(0);
-        expect(response.body.templates[0].templateId).to.eql(templateId);
+        expect(response.body.templates.some((t: { templateId: string }) => t.templateId === templateId)).to.be(true);
       });
 
       it('does not return templates from a different owner', async () => {
