@@ -95,11 +95,26 @@ export default ({ getService }: FtrProviderContext): void => {
           .expect(200);
 
         expect(response.body.templates.length).to.be.greaterThan(0);
-        expect(response.body.templates.some((t: { templateId: string }) => t.templateId === templateId)).to.be(true);
+        expect(
+          response.body.templates.some((t: { templateId: string }) => t.templateId === templateId)
+        ).to.be(true);
       });
 
-      it('does not return templates from a different owner', async () => {
-        // Create a template for a different owner (observabilityFixture)
+      it('allows a user without the manageTemplates sub-privilege to list templates', async () => {
+        const response = await supertestWithoutAuth
+          .get(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .query({ page: 1, perPage: 20 })
+          .auth(secOnlyNoManageTemplates.username, secOnlyNoManageTemplates.password)
+          .expect(200);
+
+        expect(response.body.templates.length).to.be.greaterThan(0);
+        expect(
+          response.body.templates.some((t: { templateId: string }) => t.templateId === templateId)
+        ).to.be(true);
+      });
+
+      it('filters templates by owner when owner query param is provided', async () => {
+        // Create a template for a different owner
         await supertest
           .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
           .set('kbn-xsrf', 'true')
@@ -108,11 +123,10 @@ export default ({ getService }: FtrProviderContext): void => {
 
         const response = await supertestWithoutAuth
           .get(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
-          .query({ page: 1, perPage: 20 })
+          .query({ page: 1, perPage: 20, owner: 'securitySolutionFixture' })
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .expect(200);
 
-        // secOnlyManageTemplates is scoped to securitySolutionFixture only
         for (const t of response.body.templates) {
           expect(t.owner).to.eql('securitySolutionFixture');
         }
