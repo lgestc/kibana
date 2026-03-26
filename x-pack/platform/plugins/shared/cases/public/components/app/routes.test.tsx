@@ -41,11 +41,6 @@ jest.mock('../case_view/case_view_page', () => ({
   CaseViewPage: () => <div>{'Case View Page'}</div>,
 }));
 
-jest.mock('../templates_v2/pages/all_templates_page', () => ({
-  __esModule: true,
-  default: () => <div>{'All templates'}</div>,
-}));
-
 jest.mock('../templates_v2/pages/create_template/page', () => ({
   __esModule: true,
   default: () => <div>{'Create template'}</div>,
@@ -151,40 +146,19 @@ describe('Cases routes', () => {
       getConfigSpy.mockRestore();
     });
 
-    it('navigates to the all templates page', async () => {
-      renderWithRouter(['/cases/templates']);
-      expect(await screen.findByText('All templates')).toBeInTheDocument();
-    });
-
     it('navigates to the create template page', async () => {
-      renderWithRouter(['/cases/templates/create']);
+      renderWithRouter(['/cases/configure/templates/create']);
       expect(await screen.findByText('Create template')).toBeInTheDocument();
     });
 
     it('navigates to the edit template page', async () => {
-      renderWithRouter(['/cases/templates/some-id/edit']);
+      renderWithRouter(['/cases/configure/templates/some-id/edit']);
       expect(await screen.findByText('Edit template')).toBeInTheDocument();
-    });
-
-    it('does not render template routes when the templates feature is disabled', async () => {
-      getConfigSpy.mockReturnValue({ templates: { enabled: false } } as ReturnType<
-        typeof KibanaServices.getConfig
-      >);
-      renderWithRouter(['/cases/templates']);
-      // Without a registered template route, /cases/templates matches the case view route
-      expect(await screen.findByText('Case View Page')).toBeInTheDocument();
-      expect(screen.queryByText('All templates')).not.toBeInTheDocument();
-    });
-
-    it('shows the no privileges page on the all templates route when user lacks manageTemplates permission', async () => {
-      renderWithRouter(['/cases/templates'], buildCasesPermissions({ manageTemplates: false }));
-      expect(await screen.findByText('Privileges required')).toBeInTheDocument();
-      expect(screen.queryByText('All templates')).not.toBeInTheDocument();
     });
 
     it('shows the no privileges page on the create template route when user lacks manageTemplates permission', async () => {
       renderWithRouter(
-        ['/cases/templates/create'],
+        ['/cases/configure/templates/create'],
         buildCasesPermissions({ manageTemplates: false })
       );
       expect(await screen.findByText('Privileges required')).toBeInTheDocument();
@@ -193,7 +167,7 @@ describe('Cases routes', () => {
 
     it('shows the no privileges page on the edit template route when user lacks manageTemplates permission', async () => {
       renderWithRouter(
-        ['/cases/templates/some-id/edit'],
+        ['/cases/configure/templates/some-id/edit'],
         buildCasesPermissions({ manageTemplates: false })
       );
       expect(await screen.findByText('Privileges required')).toBeInTheDocument();
