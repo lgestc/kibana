@@ -51,7 +51,9 @@ import * as i18n from './translations';
 jest.mock('../../common/lib/kibana');
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
-  useLocation: jest.fn().mockReturnValue({ pathname: '/', search: '', hash: '', state: undefined, key: 'default' }),
+  useLocation: jest
+    .fn()
+    .mockReturnValue({ pathname: '/', search: '', hash: '', state: undefined, key: 'default' }),
 }));
 jest.mock('../templates_v2/pages/all_templates_page', () => ({
   __esModule: true,
