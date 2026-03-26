@@ -11,7 +11,6 @@ import yaml from 'js-yaml';
 import type { FtrProviderContext } from '../../../common/ftr_provider_context';
 import { deleteAllCaseItems, getSpaceUrlPrefix } from '../../../common/lib/api';
 import {
-  superUser,
   secOnly,
   secOnlyManageTemplates,
   secOnlyNoManageTemplates,
