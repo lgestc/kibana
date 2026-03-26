@@ -24,9 +24,9 @@ import {
   getCaseViewWithCommentPath,
   useAllCasesNavigation,
   useCaseViewNavigation,
-  getCasesTemplatesPath,
-  getCasesCreateTemplatePath,
-  getCasesEditTemplatePath,
+  getCasesConfigureCreateTemplatePath,
+  getCasesConfigureEditTemplatePath,
+  getCasesConfigureTemplatesPath,
 } from '../../common/navigation';
 import { NoPrivilegesPage } from '../no_privileges';
 import * as i18n from './translations';
@@ -47,9 +47,7 @@ const EditTemplateLazy: FC<EditTemplatePageProps> = lazy(
   () => import('../templates_v2/pages/edit_template/page')
 );
 
-const AllCasesTemplatesLazy: React.FC = lazy(
-  () => import('../templates_v2/pages/all_templates_page')
-);
+const AllTemplatesLazy: FC = lazy(() => import('../templates_v2/pages/all_templates_page'));
 
 const CasesRoutesComponent: React.FC<CasesRoutesProps> = ({
   actionsNavigation,
@@ -95,6 +93,21 @@ const CasesRoutesComponent: React.FC<CasesRoutesProps> = ({
           )}
         </Route>
 
+        {isTemplatesEnabled && (
+          <Route exact path={getCasesConfigureCreateTemplatePath(basePath)}>
+            <Suspense fallback={<EuiLoadingSpinner />}>
+              <CreateTemplateLazy />
+            </Suspense>
+          </Route>
+        )}
+        {isTemplatesEnabled && (
+          <Route exact path={getCasesConfigureEditTemplatePath(basePath)}>
+            <Suspense fallback={<EuiLoadingSpinner />}>
+              <EditTemplateLazy />
+            </Suspense>
+          </Route>
+        )}
+
         <Route path={getCasesConfigurePath(basePath)}>
           {permissions.settings ? (
             <ConfigureCases />
@@ -104,10 +117,10 @@ const CasesRoutesComponent: React.FC<CasesRoutesProps> = ({
         </Route>
 
         {isTemplatesEnabled && (
-          <Route exact path={getCasesTemplatesPath(basePath)}>
+          <Route exact path={getCasesConfigureTemplatesPath(basePath)}>
             {permissions.manageTemplates ? (
               <Suspense fallback={<EuiLoadingSpinner />}>
-                <AllCasesTemplatesLazy />
+                <AllTemplatesLazy />
               </Suspense>
             ) : (
               <NoPrivilegesPage pageName={i18n.TEMPLATES_PAGE_NAME} />
@@ -116,7 +129,7 @@ const CasesRoutesComponent: React.FC<CasesRoutesProps> = ({
         )}
 
         {isTemplatesEnabled && (
-          <Route exact path={getCasesCreateTemplatePath(basePath)}>
+          <Route exact path={getCasesConfigureCreateTemplatePath(basePath)}>
             {permissions.manageTemplates ? (
               <Suspense fallback={<EuiLoadingSpinner />}>
                 <CreateTemplateLazy />
@@ -128,7 +141,7 @@ const CasesRoutesComponent: React.FC<CasesRoutesProps> = ({
         )}
 
         {isTemplatesEnabled && (
-          <Route exact path={getCasesEditTemplatePath(basePath)}>
+          <Route exact path={getCasesConfigureEditTemplatePath(basePath)}>
             {permissions.manageTemplates ? (
               <Suspense fallback={<EuiLoadingSpinner />}>
                 <EditTemplateLazy />
