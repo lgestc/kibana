@@ -222,7 +222,6 @@ export class CasesClientFactory {
       savedObjectsSerializer,
       esClient,
       namespace,
-      authorization: auth,
     });
 
     const caseService = new CasesService({

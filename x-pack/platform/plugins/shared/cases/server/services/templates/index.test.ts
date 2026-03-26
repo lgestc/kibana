@@ -15,7 +15,6 @@ import type {
 } from '@kbn/core-saved-objects-api-server';
 import type { Template } from '../../../common/types/domain/template/v1';
 import { CASE_TEMPLATE_SAVED_OBJECT } from '../../../common/constants';
-import { Operations } from '../../authorization';
 import { TemplatesService } from '.';
 
 const buildDefinition = (name: string, extras?: { description?: string; tags?: string[] }) =>
@@ -73,17 +72,6 @@ describe('TemplatesService', () => {
   const unsecuredSavedObjectsClient = savedObjectsClientMock.create();
   const savedObjectsSerializer = serializerMock.create();
   const esClient = elasticsearchServiceMock.createElasticsearchClient();
-  const ensureSavedObjectsAreAuthorized = jest.fn();
-  const authorization = {
-    ensureAuthorized: jest.fn().mockResolvedValue(undefined),
-    getAuthorizationFilter: jest.fn().mockResolvedValue({
-      authorizedOwners: undefined,
-      ensureSavedObjectsAreAuthorized,
-    }),
-    getAndEnsureAuthorizedEntities: jest
-      .fn()
-      .mockResolvedValue({ authorized: [], unauthorized: [] }),
-  };
 
   const createService = () =>
     new TemplatesService({
@@ -91,7 +79,6 @@ describe('TemplatesService', () => {
       savedObjectsSerializer,
       esClient,
       namespace: 'default',
-      authorization,
     });
 
   /** Default getAllTemplates params — override individual fields as needed */
@@ -109,10 +96,6 @@ describe('TemplatesService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    authorization.getAuthorizationFilter.mockResolvedValue({
-      authorizedOwners: undefined,
-      ensureSavedObjectsAreAuthorized,
-    });
   });
 
   describe('getAllTemplates', () => {
@@ -161,11 +144,6 @@ describe('TemplatesService', () => {
         perPage: 10,
         total: 2,
       });
-      expect(authorization.getAuthorizationFilter).not.toHaveBeenCalled();
-      expect(ensureSavedObjectsAreAuthorized).not.toHaveBeenCalledWith([
-        { owner: so1.attributes.owner, id: so1.id },
-        { owner: so2.attributes.owner, id: so2.id },
-      ]);
     });
 
     it('returns an empty list when no templates exist', async () => {
@@ -677,7 +655,6 @@ describe('TemplatesService', () => {
 
       expect(unsecuredSavedObjectsClient.search).toHaveBeenCalled();
       expect(result).toEqual(template);
-      expect(authorization.getAuthorizationFilter).not.toHaveBeenCalled();
     });
 
     it('returns undefined when no templates are found', async () => {
@@ -731,10 +708,6 @@ describe('TemplatesService', () => {
       }),
       expect.objectContaining({ id: 'generated-id' })
     );
-    expect(authorization.ensureAuthorized).toHaveBeenCalledWith({
-      operation: Operations.manageTemplate,
-      entities: [{ owner: 'securitySolution', id: 'generated-id' }],
-    });
   });
 
   it('extracts description and tags from YAML on create, preferring YAML over input', async () => {
@@ -1077,10 +1050,6 @@ describe('TemplatesService', () => {
         }),
         expect.any(Object)
       );
-      expect(authorization.ensureAuthorized).toHaveBeenCalledWith({
-        operation: Operations.manageTemplate,
-        entities: [{ owner: 'securitySolution', id: 'template-so-id' }],
-      });
     });
   });
 
@@ -1227,13 +1196,9 @@ describe('TemplatesService', () => {
         ],
         { refresh: true }
       );
-      expect(authorization.ensureAuthorized).toHaveBeenCalledWith({
-        operation: Operations.manageTemplate,
-        entities: [{ owner: 'securitySolution', id: 'so-1' }],
-      });
     });
 
-    it('does nothing and skips auth when template does not exist', async () => {
+    it('does nothing when template does not exist', async () => {
       const service = createService();
 
       jest
@@ -1245,7 +1210,6 @@ describe('TemplatesService', () => {
 
       await service.deleteTemplate('non-existent');
 
-      expect(authorization.ensureAuthorized).not.toHaveBeenCalled();
       expect(unsecuredSavedObjectsClient.bulkUpdate).not.toHaveBeenCalled();
     });
   });

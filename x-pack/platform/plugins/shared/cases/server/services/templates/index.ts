@@ -14,7 +14,6 @@ import type {
   SavedObjectsRawDoc,
 } from '@kbn/core/server';
 import { toElasticsearchQuery, fromKueryExpression } from '@kbn/es-query';
-import type { PublicMethodsOf } from '@kbn/utility-types';
 import { v4 } from 'uuid';
 import { load as parseYaml } from 'js-yaml';
 import type {
@@ -28,12 +27,6 @@ import type {
   TemplatesFindRequest,
   TemplatesFindResponse,
 } from '../../../common/types/api/template/v1';
-import type { Authorization } from '../../authorization/authorization';
-import { Operations } from '../../authorization';
-
-// Note: the manageTemplate sub-privilege is only required for template mutations
-// (create, update, delete). Read operations (getAllTemplates, getTemplate, getTags,
-// getAuthors) do not require any special privilege.
 
 export class TemplatesService {
   constructor(
@@ -42,7 +35,6 @@ export class TemplatesService {
       savedObjectsSerializer: ISavedObjectsSerializer;
       esClient: ElasticsearchClient;
       namespace: string;
-      authorization: PublicMethodsOf<Authorization>;
     }
   ) {}
 
@@ -265,11 +257,6 @@ export class TemplatesService {
     author: string,
     id: string = v4()
   ): Promise<SavedObject<Template>> {
-    await this.dependencies.authorization.ensureAuthorized({
-      operation: Operations.manageTemplate,
-      entities: [{ owner: input.owner, id }],
-    });
-
     const parsedDefinition = parseYaml(input.definition) as ParsedTemplate['definition'];
 
     const templateSavedObject = await this.dependencies.unsecuredSavedObjectsClient.create(
@@ -304,11 +291,6 @@ export class TemplatesService {
     if (!currentTemplate) {
       throw Boom.notFound(`Template with id ${templateId} not found`);
     }
-
-    await this.dependencies.authorization.ensureAuthorized({
-      operation: Operations.manageTemplate,
-      entities: [{ owner: currentTemplate.attributes.owner, id: currentTemplate.id }],
-    });
 
     const parsedDefinition = parseYaml(input.definition) as ParsedTemplate['definition'];
 
@@ -412,11 +394,6 @@ export class TemplatesService {
     if (!latestTemplate) {
       return;
     }
-
-    await this.dependencies.authorization.ensureAuthorized({
-      operation: Operations.manageTemplate,
-      entities: [{ owner: latestTemplate.attributes.owner, id: latestTemplate.id }],
-    });
 
     const templateSnapshots = await this.dependencies.unsecuredSavedObjectsClient.find({
       type: CASE_TEMPLATE_SAVED_OBJECT,
