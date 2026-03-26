@@ -70,14 +70,14 @@ export const createTemplatesSubClient = (clientArgs: CasesClientArgs): Templates
     },
 
     deleteTemplate: async (templateId: string) => {
-      const template = await templatesService.getTemplate(templateId);
-      if (!template) {
-        return;
-      }
       await authorization.ensureAuthorized({
         operation: Operations.manageTemplate,
         entities: [{ owner: template.attributes.owner, id: template.id }],
       });
+      const template = await templatesService.getTemplate(templateId);
+      if (!template) {
+        throw Boom.notFound(`Template with id ${templateId} not found`);
+      }
       return templatesService.deleteTemplate(templateId);
     },
 
