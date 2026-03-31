@@ -11,7 +11,7 @@ import { CASE_EXTENDED_FIELDS } from '../../../constants';
 import { ExternalServiceSchema } from '../external_service/v1';
 import { CaseAssigneesSchema, UserSchema } from '../user/v1';
 import { CaseConnectorSchema } from '../connector/v1';
-import { AttachmentSchema } from '../attachment/v1';
+import { AttachmentSchemaV2 } from '../attachment/v2';
 import { CaseCustomFieldsSchema } from '../custom_field/v1';
 import { CaseObservableSchema } from '../observable/v1';
 import { CaseSeverity } from '../../domain/case/v1';
@@ -109,7 +109,7 @@ export const CaseSchema = CaseAttributesSchema.extend({
   totalAlerts: z.number(),
   totalEvents: z.number().optional(),
   version: z.string(),
-  comments: z.array(AttachmentSchema).optional(),
+  comments: z.array(AttachmentSchemaV2).optional(),
 });
 
 export const CasesSchema = z.array(CaseSchema);

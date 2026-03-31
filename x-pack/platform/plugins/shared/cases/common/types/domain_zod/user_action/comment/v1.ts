@@ -7,11 +7,16 @@
 
 import { z } from '@kbn/zod/v4';
 import { UserActionTypes } from '../action/v1';
-import { AttachmentPayloadSchema } from '../../attachment/v1';
+import {
+  AttachmentRequestSchemaV2,
+  AttachmentRequestWithoutRefsSchemaV2,
+} from '../../../api_zod/attachment/v2';
 
-export const CommentUserActionPayloadSchema = z.object({ comment: AttachmentPayloadSchema });
+export const CommentUserActionPayloadSchema = z.object({ comment: AttachmentRequestSchemaV2 });
 
-export const CommentUserActionPayloadWithoutIdsSchema = CommentUserActionPayloadSchema;
+export const CommentUserActionPayloadWithoutIdsSchema = z.object({
+  comment: AttachmentRequestWithoutRefsSchemaV2,
+});
 
 export const CommentUserActionSchema = z.object({
   type: z.literal(UserActionTypes.comment),

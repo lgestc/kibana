@@ -20,7 +20,7 @@ export const limitedStringSchema = ({ fieldName, min, max }: LimitedSchemaType) 
   z.string().superRefine((s, ctx) => {
     const trimmed = s.trim();
 
-    if (trimmed.length === 0 && trimmed.length < min) {
+    if (trimmed.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `The ${fieldName} field cannot be an empty string.`,
