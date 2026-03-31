@@ -8,10 +8,9 @@
 import React, { useMemo } from 'react';
 import { EuiCallOut, EuiSpacer, EuiTitle } from '@elastic/eui';
 import { useWatch } from 'react-hook-form';
-import type { FC } from 'react';
-import { controlRegistry } from '../templates_v2/field_types/field_types_registry';
 import { useTemplateFormSync } from './use_template_form_sync';
 import * as i18n from './translations';
+import { FieldsRenderer } from '../templates_v2/field_types/field_renderer';
 
 export const CreateCaseTemplateFields: React.FC = () => {
   const templateId = useWatch<{ templateId?: string }, 'templateId'>({ name: 'templateId' });
@@ -22,15 +21,7 @@ export const CreateCaseTemplateFields: React.FC = () => {
       return null;
     }
 
-    return template.definition.fields.map((field) => {
-      const Control = controlRegistry[field.control] as FC<Record<string, unknown>>;
-
-      if (!Control) {
-        return null;
-      }
-
-      return <Control key={field.name} {...field} />;
-    });
+    return <FieldsRenderer parsedTemplate={template.definition} />;
   }, [template]);
 
   if (isLoading) {

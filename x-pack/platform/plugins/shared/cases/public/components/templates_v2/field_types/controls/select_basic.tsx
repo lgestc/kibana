@@ -10,11 +10,21 @@ import type { z } from '@kbn/zod/v4';
 import { Controller, useFormContext } from 'react-hook-form';
 import { EuiFormRow, EuiSelect } from '@elastic/eui';
 import { CASE_EXTENDED_FIELDS } from '../../../../../common/constants';
-import type { SelectBasicFieldSchema } from '../../../../../common/types/domain/template/fields';
+import type {
+  SelectBasicFieldSchema,
+  ConditionRenderProps,
+} from '../../../../../common/types/domain/template/fields';
+import { FIELD_REQUIRED } from '../../translations';
 
-type SelectBasicProps = z.infer<typeof SelectBasicFieldSchema>;
+type SelectBasicProps = z.infer<typeof SelectBasicFieldSchema> & ConditionRenderProps;
 
-export const SelectBasic: React.FC<SelectBasicProps> = ({ label, metadata, name, type }) => {
+export const SelectBasic: React.FC<SelectBasicProps> = ({
+  label,
+  metadata,
+  name,
+  type,
+  isRequired,
+}) => {
   const { control } = useFormContext();
   const fieldPath = `${CASE_EXTENDED_FIELDS}.${name}_as_${type}`;
 
@@ -23,6 +33,9 @@ export const SelectBasic: React.FC<SelectBasicProps> = ({ label, metadata, name,
       name={fieldPath}
       control={control}
       defaultValue=""
+      rules={{
+        required: isRequired ? FIELD_REQUIRED : false,
+      }}
       render={({ field, fieldState }) => (
         <EuiFormRow
           fullWidth
