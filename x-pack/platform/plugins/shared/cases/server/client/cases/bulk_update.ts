@@ -48,6 +48,11 @@ import {
   getTimingMetricsForUpdate,
 } from './utils';
 import { LICENSING_CASE_ASSIGNMENT_FEATURE } from '../../common/constants';
+import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
+import { load as parseYaml } from 'js-yaml';
+import { ParsedTemplateDefinitionSchema } from '../../../common/types/domain/template/v1';
+import { applySystemFieldMappings } from '../../../common/utils/apply_system_field_mappings';
+import type { FieldDefinition } from '../../../common/types/domain/template/fields';
 import type { LicensingService } from '../../services/licensing';
 import type { CaseSavedObjectTransformed } from '../../common/types/case';
 import { decodeWithExcessOrThrow, decodeOrThrow } from '../../common/runtime_types';
@@ -381,6 +386,7 @@ export const bulkUpdate = async (
       licensingService,
       notificationService,
       attachmentService,
+      templatesService,
     },
     user,
     logger,
@@ -465,16 +471,77 @@ export const bulkUpdate = async (
       throw Boom.notAcceptable('All update fields are identical to current version.');
     }
 
+    /**
+     * Apply system field mappings from the template definition for cases that
+     * include extended_fields in the update. The template ID is taken from the
+     * update request (if being changed) or from the original case.
+     */
+    const uniqueTemplateIds = new Set(
+      casesToUpdate
+        .filter(({ updateReq, originalCase }) => {
+          const hasExtendedFields = updateReq[CASE_EXTENDED_FIELDS] != null;
+          const templateId =
+            updateReq.template?.id ?? originalCase.attributes.template?.id ?? null;
+          return hasExtendedFields && templateId != null;
+        })
+        .map(
+          ({ updateReq, originalCase }) =>
+            updateReq.template?.id ?? originalCase.attributes.template?.id!
+        )
+    );
+
+    const templateFieldsMap = new Map<string, FieldDefinition[]>();
+    if (uniqueTemplateIds.size > 0) {
+      await Promise.all(
+        [...uniqueTemplateIds].map(async (templateId) => {
+          try {
+            const templateSO = await templatesService.getTemplate(templateId);
+            if (templateSO?.attributes.definition) {
+              const parsedResult = ParsedTemplateDefinitionSchema.safeParse(
+                parseYaml(templateSO.attributes.definition)
+              );
+              if (parsedResult.success) {
+                templateFieldsMap.set(templateId, parsedResult.data.fields);
+              }
+            }
+          } catch (err) {
+            logger.warn(`Failed to fetch template ${templateId} for system field mappings: ${err}`);
+          }
+        })
+      );
+    }
+
+    const casesToUpdateWithMappings = casesToUpdate.map(({ updateReq, originalCase }) => {
+      const extendedFields = updateReq[CASE_EXTENDED_FIELDS];
+      if (extendedFields == null) return { updateReq, originalCase };
+
+      const templateId =
+        updateReq.template?.id ?? originalCase.attributes.template?.id ?? null;
+      if (templateId == null) return { updateReq, originalCase };
+
+      const fields = templateFieldsMap.get(templateId);
+      if (fields == null) return { updateReq, originalCase };
+
+      const systemOverrides = applySystemFieldMappings(
+        fields,
+        extendedFields as Record<string, unknown>
+      );
+      return { updateReq: { ...updateReq, ...systemOverrides } as CasePatchRequest, originalCase };
+    }) as UpdateRequestWithOriginalCase[];
+
     const hasPlatinumLicense = await licensingService.isAtLeastPlatinum();
 
-    throwIfUpdateOwner(casesToUpdate);
-    throwIfUpdateAssigneesWithoutValidLicense(casesToUpdate, hasPlatinumLicense);
+    throwIfUpdateOwner(casesToUpdateWithMappings);
+    throwIfUpdateAssigneesWithoutValidLicense(casesToUpdateWithMappings, hasPlatinumLicense);
 
-    await validateCustomFieldsInRequest({ casesToUpdate, customFieldsConfigurationMap });
+    await validateCustomFieldsInRequest({
+      casesToUpdate: casesToUpdateWithMappings,
+      customFieldsConfigurationMap,
+    });
 
     const patchCasesPayload = createPatchCasesPayload({
       user,
-      casesToUpdate,
+      casesToUpdate: casesToUpdateWithMappings,
       customFieldsConfigurationMap,
     });
     const userActionsDict = userActionService.creator.buildUserActions({

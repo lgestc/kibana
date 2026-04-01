@@ -113,7 +113,7 @@ export const create = async (
               parsedResult.data.fields,
               extendedFields
             );
-            queryWithMappings = { ...query, ...systemOverrides };
+            queryWithMappings = { ...query, ...systemOverrides } as CasePostRequest;
           }
         }
       } catch (error) {

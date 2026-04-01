@@ -120,7 +120,7 @@ export const bulkCreate = async (
       const extendedFields =
         (theCase[CASE_EXTENDED_FIELDS] as Record<string, unknown> | undefined) ?? {};
       const systemOverrides = fields ? applySystemFieldMappings(fields, extendedFields) : {};
-      const caseWithMappings = { ...theCase, ...systemOverrides };
+      const caseWithMappings = { ...theCase, ...systemOverrides } as typeof theCase;
 
       bulkCreateRequest.push(
         createBulkCreateCaseRequest({ theCase: caseWithMappings, user, customFieldsConfiguration })
