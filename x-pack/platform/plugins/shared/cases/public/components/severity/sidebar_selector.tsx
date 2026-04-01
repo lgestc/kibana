@@ -5,17 +5,19 @@
  * 2.0.
  */
 
-import { EuiFlexItem, EuiHorizontalRule, EuiTitle } from '@elastic/eui';
+import { EuiFlexGroup, EuiFlexItem, EuiHorizontalRule, EuiTitle } from '@elastic/eui';
 import React from 'react';
 import type { CaseSeverity } from '../../../common/types/domain';
 import { SeveritySelector } from './selector';
 import { SEVERITY_TITLE } from './translations';
+import { MappedByTemplateLabel } from '../case_form_fields/mapped_by_template_label';
 
 interface Props {
   selectedSeverity: CaseSeverity;
   onSeverityChange: (status: CaseSeverity) => void;
   isLoading: boolean;
   isDisabled: boolean;
+  isMappedByTemplate?: boolean;
 }
 
 export const SeveritySidebarSelector: React.FC<Props> = ({
@@ -23,18 +25,28 @@ export const SeveritySidebarSelector: React.FC<Props> = ({
   onSeverityChange,
   isLoading,
   isDisabled,
+  isMappedByTemplate = false,
 }) => {
   return (
     <EuiFlexItem grow={false} data-test-subj="sidebar-severity">
-      <EuiTitle size="xs">
-        <h3>{SEVERITY_TITLE}</h3>
-      </EuiTitle>
+      <EuiFlexGroup alignItems="center" gutterSize="s" responsive={false}>
+        <EuiFlexItem grow={false}>
+          <EuiTitle size="xs">
+            <h3>{SEVERITY_TITLE}</h3>
+          </EuiTitle>
+        </EuiFlexItem>
+        {isMappedByTemplate && (
+          <EuiFlexItem grow={false}>
+            <MappedByTemplateLabel />
+          </EuiFlexItem>
+        )}
+      </EuiFlexGroup>
       <EuiHorizontalRule margin="xs" />
       <SeveritySelector
         isLoading={isLoading}
         selectedSeverity={selectedSeverity}
         onSeverityChange={onSeverityChange}
-        isDisabled={isDisabled}
+        isDisabled={isDisabled || isMappedByTemplate}
       />
     </EuiFlexItem>
   );

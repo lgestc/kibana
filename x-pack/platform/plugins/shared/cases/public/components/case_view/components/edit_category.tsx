@@ -25,11 +25,13 @@ import { CategoryViewer } from '../../category/category_viewer_component';
 import { useCasesContext } from '../../cases_context/use_cases_context';
 import { CategoryFormField } from '../../category/category_form_field';
 import { RemovableItem } from '../../removable_item/removable_item';
+import { MappedByTemplateLabel } from '../../case_form_fields/mapped_by_template_label';
 
 export interface EditCategoryProps {
   isLoading: boolean;
   onSubmit: (category: string | null) => void;
   category?: string | null;
+  isMappedByTemplate?: boolean;
 }
 
 interface CategoryFormState {
@@ -69,7 +71,8 @@ const CategoryFormWrapper: React.FC<CategoryFormWrapper> = ({
 
 CategoryFormWrapper.displayName = 'CategoryFormWrapper';
 
-export const EditCategory = React.memo(({ isLoading, onSubmit, category }: EditCategoryProps) => {
+export const EditCategory = React.memo(
+  ({ isLoading, onSubmit, category, isMappedByTemplate = false }: EditCategoryProps) => {
   const { permissions } = useCasesContext();
   const [isEditCategory, setIsEditCategory] = useState(false);
   const { data: categories = [], isLoading: isLoadingCategories } = useGetCategories();
@@ -120,7 +123,7 @@ export const EditCategory = React.memo(({ isLoading, onSubmit, category }: EditC
           </EuiTitle>
         </EuiFlexItem>
         {isLoadingAll && <EuiLoadingSpinner data-test-subj="category-loading" />}
-        {!isLoadingAll && permissions.update && (
+        {!isLoadingAll && permissions.update && !isMappedByTemplate && (
           <EuiFlexItem grow={false}>
             <EuiButtonIcon
               data-test-subj="category-edit-button"
@@ -130,20 +133,29 @@ export const EditCategory = React.memo(({ isLoading, onSubmit, category }: EditC
             />
           </EuiFlexItem>
         )}
+        {!isLoadingAll && isMappedByTemplate && (
+          <EuiFlexItem grow={false}>
+            <MappedByTemplateLabel />
+          </EuiFlexItem>
+        )}
       </EuiFlexGroup>
       <EuiHorizontalRule margin="xs" />
       <EuiFlexGroup gutterSize="none" data-test-subj="case-category">
         {!isEditCategory && (
           <EuiFlexItem>
             {category ? (
-              <RemovableItem
-                onRemoveItem={removeCategory}
-                tooltipContent={i18n.REMOVE_CATEGORY}
-                buttonAriaLabel={i18n.REMOVE_CATEGORY_ARIA_LABEL}
-                dataTestSubjPrefix="category"
-              >
+              isMappedByTemplate ? (
                 <CategoryViewer category={category} />
-              </RemovableItem>
+              ) : (
+                <RemovableItem
+                  onRemoveItem={removeCategory}
+                  tooltipContent={i18n.REMOVE_CATEGORY}
+                  buttonAriaLabel={i18n.REMOVE_CATEGORY_ARIA_LABEL}
+                  dataTestSubjPrefix="category"
+                >
+                  <CategoryViewer category={category} />
+                </RemovableItem>
+              )
             ) : (
               <EuiText size="xs" data-test-subj="no-categories">
                 {i18n.NO_CATEGORIES}
@@ -191,6 +203,7 @@ export const EditCategory = React.memo(({ isLoading, onSubmit, category }: EditC
       </EuiFlexGroup>
     </EuiFlexItem>
   );
-});
+  }
+);
 
 EditCategory.displayName = 'EditCategory';

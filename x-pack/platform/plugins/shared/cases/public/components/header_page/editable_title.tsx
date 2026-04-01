@@ -14,14 +14,21 @@ import { MAX_TITLE_LENGTH } from '../../../common/constants';
 import * as i18n from './translations';
 import { TitleExperimentalBadge, TitleBetaBadge } from './title';
 import { useCasesContext } from '../cases_context/use_cases_context';
+import { MappedByTemplateLabel } from '../case_form_fields/mapped_by_template_label';
 
 export interface EditableTitleProps {
   isLoading: boolean;
   title: string;
   onSubmit: (title: string) => void;
+  isMappedByTemplate?: boolean;
 }
 
-const EditableTitleComponent: React.FC<EditableTitleProps> = ({ onSubmit, isLoading, title }) => {
+const EditableTitleComponent: React.FC<EditableTitleProps> = ({
+  onSubmit,
+  isLoading,
+  title,
+  isMappedByTemplate = false,
+}) => {
   const { releasePhase, permissions } = useCasesContext();
   const [editMode, setEditMode] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -95,7 +102,7 @@ const EditableTitleComponent: React.FC<EditableTitleProps> = ({ onSubmit, isLoad
           size="s"
           isInvalid={hasErrors}
           isLoading={isLoading}
-          isReadOnly={!permissions.update}
+          isReadOnly={!permissions.update || isMappedByTemplate}
           onSave={(value) => {
             return onClickSubmit(value);
           }}
@@ -107,6 +114,11 @@ const EditableTitleComponent: React.FC<EditableTitleProps> = ({ onSubmit, isLoad
         {releasePhase === 'experimental' && <TitleExperimentalBadge />}
         {releasePhase === 'beta' && <TitleBetaBadge />}
       </EuiFlexItem>
+      {isMappedByTemplate && (
+        <EuiFlexItem grow={false}>
+          <MappedByTemplateLabel />
+        </EuiFlexItem>
+      )}
     </EuiFlexGroup>
   );
 };

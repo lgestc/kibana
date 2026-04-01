@@ -55,6 +55,7 @@ import { CustomFields } from './custom_fields';
 import { useReplaceCustomField } from '../../../containers/use_replace_custom_field';
 import { KibanaServices } from '../../../common/lib/kibana';
 import { TemplateFields } from './template_fields';
+import { useGetTemplate } from '../../templates_v2/hooks/use_get_template';
 
 const LOCALSTORAGE_SORT_ORDER_KEY = 'cases.userActivity.sortOrder';
 
@@ -101,6 +102,15 @@ export const CaseViewActivity = ({
   const { data: casesConfiguration } = useGetCaseConfiguration();
 
   const isTemplatesV2Enabled = KibanaServices.getConfig()?.templates?.enabled ?? false;
+
+  const { data: templateData } = useGetTemplate(
+    isTemplatesV2Enabled ? caseData.template?.id : undefined,
+    caseData.template?.version
+  );
+  const mappedFields = useMemo(
+    () => new Set(templateData?.mappedSystemFields ?? []),
+    [templateData]
+  );
 
   const { userProfiles, reporterAsArray } = parseCaseUsers({
     caseUsers,
@@ -227,6 +237,7 @@ export const CaseViewActivity = ({
           isLoadingDescription={isLoadingDescription}
           caseData={caseData}
           onUpdateField={onUpdateField}
+          isMappedByTemplate={mappedFields.has('description')}
         />
         <EuiSpacer size="l" />
         <EuiFlexItem grow={false}>
@@ -293,6 +304,7 @@ export const CaseViewActivity = ({
             isLoading={isLoading && loadingKey === 'severity'}
             selectedSeverity={caseData.severity}
             onSeverityChange={onUpdateSeverity}
+            isMappedByTemplate={mappedFields.has('severity')}
           />
           <UserList
             dataTestSubj="case-view-user-list-reporter"
@@ -321,6 +333,7 @@ export const CaseViewActivity = ({
             category={caseData.category}
             onSubmit={onSubmitCategory}
             isLoading={isLoading && loadingKey === 'category'}
+            isMappedByTemplate={mappedFields.has('category')}
           />
           {showConnectorSidebar ? (
             <EditConnector

@@ -26,6 +26,7 @@ import { EditableMarkdown, ScrollableMarkdown } from '../markdown_editor';
 import type { CaseUI } from '../../containers/types';
 import type { OnUpdateFields } from '../case_view/types';
 import { schema } from './schema';
+import { MappedByTemplateLabel } from '../case_form_fields/mapped_by_template_label';
 
 const DESCRIPTION_ID = 'description';
 
@@ -36,6 +37,7 @@ export interface DescriptionProps {
   caseData: CaseUI;
   isLoadingDescription: boolean;
   onUpdateField: ({ key, value, onSuccess, onError }: OnUpdateFields) => void;
+  isMappedByTemplate?: boolean;
 }
 
 const getFlexGroupCss = ({
@@ -87,6 +89,7 @@ export const Description = ({
   caseData,
   onUpdateField,
   isLoadingDescription,
+  isMappedByTemplate = false,
 }: DescriptionProps) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isEditable, setIsEditable] = useState<boolean>(false);
@@ -180,13 +183,15 @@ export const Description = ({
             </EuiFlexItem>
             <EuiFlexGroup justifyContent="flexEnd" gutterSize="s">
               <EuiFlexItem grow={false}>
-                {permissions.update ? (
+                {permissions.update && !isMappedByTemplate ? (
                   <EuiButtonIcon
                     aria-label={i18n.EDIT_DESCRIPTION}
                     iconType="pencil"
                     onClick={() => setIsEditable(true)}
                     data-test-subj="description-edit-icon"
                   />
+                ) : isMappedByTemplate ? (
+                  <MappedByTemplateLabel />
                 ) : null}
               </EuiFlexItem>
               <EuiFlexItem grow={false}>
