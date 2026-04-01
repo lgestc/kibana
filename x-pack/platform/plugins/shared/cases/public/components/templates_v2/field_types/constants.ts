@@ -32,7 +32,7 @@ fields:
       # set to true to include time selection
       # show_time: true
       # 'utc' (default) or 'local' to use the browser's timezone
-      # timezone: local     
+      # timezone: local
   - name: summary
     control: INPUT_TEXT
     label: Summary
@@ -51,17 +51,6 @@ fields:
     type: keyword
     metadata:
       default: Enter details here...
-  - name: priority
-    control: SELECT_BASIC
-    label: Priority
-    type: keyword
-    metadata:
-      default: medium
-      options:
-        - low
-        - medium
-        - high
-        - urgent
   # display.show_when hides this field unless priority is urgent
   - name: urgency_reason
     control: TEXTAREA
@@ -120,4 +109,34 @@ fields:
         field: scheduled_at
         operator: eq
         value: "2024-06-01T09:00:00.000Z"
+  # system.maps_to: title — this field's value becomes the case title.
+  # The standard title input is hidden when this mapping is active.
+  - name: case_name
+    control: INPUT_TEXT
+    label: Case name
+    type: keyword
+    system:
+      maps_to: title
+    validation:
+      required: true
+  # system.maps_to: severity with value_map — maps template-specific labels
+  # (P1..P4) to the system severity enum (critical, high, medium, low).
+  # value_map is required when maps_to is 'severity'.
+  - name: priority
+    control: SELECT_BASIC
+    label: Priority
+    type: keyword
+    system:
+      maps_to: severity
+      value_map:
+        P1: critical
+        P2: high
+        P3: medium
+        P4: low
+    metadata:
+      options:
+        - P1
+        - P2
+        - P3
+        - P4
 `.trimStart();

@@ -8,23 +8,31 @@
 import React, { memo } from 'react';
 import { getUseField } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { Field } from '@kbn/es-ui-shared-plugin/static/forms/components';
+import { MappedByTemplateLabel } from './mapped_by_template_label';
+
 const CommonUseField = getUseField({ component: Field });
 
 interface Props {
   isLoading: boolean;
   autoFocus?: boolean;
+  isMappedByTemplate?: boolean;
 }
 
-const TitleComponent: React.FC<Props> = ({ isLoading, autoFocus = false }) => (
+const TitleComponent: React.FC<Props> = ({
+  isLoading,
+  autoFocus = false,
+  isMappedByTemplate = false,
+}) => (
   <CommonUseField
     path="title"
+    config={isMappedByTemplate ? { labelAppend: <MappedByTemplateLabel /> } : undefined}
     componentProps={{
       idAria: 'caseTitle',
       'data-test-subj': 'caseTitle',
       euiFieldProps: {
         autoFocus,
         fullWidth: true,
-        disabled: isLoading,
+        disabled: isLoading || isMappedByTemplate,
       },
     }}
   />

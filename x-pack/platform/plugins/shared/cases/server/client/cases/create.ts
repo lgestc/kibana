@@ -6,6 +6,7 @@
  */
 
 import Boom from '@hapi/boom';
+import { load as parseYaml } from 'js-yaml';
 import { SavedObjectsUtils } from '@kbn/core/server';
 
 import type { Case } from '../../../common/types/domain';
@@ -17,12 +18,15 @@ import { createCaseError } from '../../common/error';
 import { flattenCaseSavedObject, transformNewCase } from '../../common/utils';
 import type { CasesClient, CasesClientArgs } from '..';
 import { LICENSING_CASE_ASSIGNMENT_FEATURE } from '../../common/constants';
+import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
 import type { CasePostRequest } from '../../../common/types/api';
 import { CasePostRequestRt } from '../../../common/types/api';
 import {} from '../utils';
 import { validateCustomFields } from './validators';
 import { emptyCaseAssigneesSanitizer } from './sanitizers';
 import { normalizeCreateCaseRequest } from './utils';
+import { ParsedTemplateDefinitionSchema } from '../../../common/types/domain/template/v1';
+import { applySystemFieldMappings } from '../../../common/utils/apply_system_field_mappings';
 
 /**
  * Creates a new case.
@@ -89,12 +93,43 @@ export const create = async (
     }
 
     /**
+     * Apply system field mappings from the template definition, if present.
+     * Fields in the template's `fields` array that declare `system.maps_to`
+     * have their submitted extended_field values written to the corresponding
+     * system field. Mapped values take precedence over form-level defaults.
+     */
+    let queryWithMappings = query;
+    if (query.template?.id) {
+      try {
+        const templateSO = await templatesService.getTemplate(query.template.id);
+        if (templateSO?.attributes.definition) {
+          const parsedResult = ParsedTemplateDefinitionSchema.safeParse(
+            parseYaml(templateSO.attributes.definition)
+          );
+          if (parsedResult.success) {
+            const extendedFields =
+              (query[CASE_EXTENDED_FIELDS] as Record<string, unknown> | undefined) ?? {};
+            const systemOverrides = applySystemFieldMappings(
+              parsedResult.data.fields,
+              extendedFields
+            );
+            queryWithMappings = { ...query, ...systemOverrides };
+          }
+        }
+      } catch (error) {
+        logger.warn(
+          `Failed to apply system field mappings for template ${query.template.id}: ${error}`
+        );
+      }
+    }
+
+    /**
      * Trim title, category, description and tags
      * and fill out missing custom fields
      * before saving to ES
      */
 
-    const normalizedCase = normalizeCreateCaseRequest(query, customFieldsConfiguration);
+    const normalizedCase = normalizeCreateCaseRequest(queryWithMappings, customFieldsConfiguration);
 
     const newCase = await caseService.createCase({
       attributes: transformNewCase({

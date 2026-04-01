@@ -7,6 +7,31 @@
 
 import { z } from '@kbn/zod/v4';
 
+export const SystemField = {
+  TITLE: 'title',
+  DESCRIPTION: 'description',
+  SEVERITY: 'severity',
+  CATEGORY: 'category',
+} as const;
+
+export type SystemField = (typeof SystemField)[keyof typeof SystemField];
+
+const SystemFieldMappingSeveritySchema = z.object({
+  maps_to: z.literal('severity'),
+  value_map: z.record(z.string(), z.enum(['low', 'medium', 'high', 'critical'])),
+});
+
+const SystemFieldMappingTextSchema = z.object({
+  maps_to: z.enum(['title', 'description', 'category']),
+});
+
+export const SystemFieldMappingSchema = z.discriminatedUnion('maps_to', [
+  SystemFieldMappingSeveritySchema,
+  SystemFieldMappingTextSchema,
+]);
+
+export type SystemFieldMapping = z.infer<typeof SystemFieldMappingSchema>;
+
 export const FieldType = {
   INPUT_TEXT: 'INPUT_TEXT',
   INPUT_NUMBER: 'INPUT_NUMBER',
@@ -71,6 +96,7 @@ const BaseFieldSchema = z.object({
   name: z.string(),
   label: z.string().optional(),
   type: z.literal('keyword'),
+  system: SystemFieldMappingSchema.optional(),
   display: DisplaySchema.optional(),
   validation: ValidationSchema.optional(),
   metadata: z
@@ -144,3 +170,5 @@ export const FieldSchema = z.discriminatedUnion('control', [
   TextareaFieldSchema,
   DatePickerFieldSchema,
 ]);
+
+export type FieldDefinition = z.infer<typeof FieldSchema>;

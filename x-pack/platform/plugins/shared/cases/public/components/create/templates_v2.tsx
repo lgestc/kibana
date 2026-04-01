@@ -64,6 +64,7 @@ export const TemplateSelectorComponent: React.FC<Props> = ({ isLoading, isDisabl
 
       const matched = (templatesData?.templates ?? []).find((t) => t.templateId === templateId);
       setFieldValue('templateVersion', matched?.templateVersion ?? '');
+      setFieldValue('mappedSystemFields', matched?.mappedSystemFields ?? []);
     },
     [setFieldValue, templatesData?.templates]
   );
@@ -72,6 +73,7 @@ export const TemplateSelectorComponent: React.FC<Props> = ({ isLoading, isDisabl
     <>
       <UseField path="templateId" component={HiddenField} />
       <UseField path="templateVersion" component={HiddenField} />
+      <UseField path="mappedSystemFields" component={HiddenField} />
       <EuiFormRow
         id="createCaseTemplate"
         fullWidth

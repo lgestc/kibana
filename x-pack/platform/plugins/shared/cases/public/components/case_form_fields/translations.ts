@@ -12,3 +12,10 @@ export * from '../../common/translations';
 export const CUSTOM_FIELDS = i18n.translate('xpack.cases.customFields', {
   defaultMessage: 'Custom fields',
 });
+
+export const MAPPED_BY_TEMPLATE_TOOLTIP = i18n.translate(
+  'xpack.cases.caseFormFields.mappedByTemplate',
+  {
+    defaultMessage: 'This field is set by the selected template and cannot be edited directly.',
+  }
+);

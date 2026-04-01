@@ -22,6 +22,8 @@ import type {
   Template,
   UpdateTemplateInput,
 } from '../../../common/types/domain/template/v1';
+import { ParsedTemplateDefinitionSchema } from '../../../common/types/domain/template/v1';
+import { getMappedSystemFields } from '../../../common/utils/get_mapped_system_fields';
 import { CASE_TEMPLATE_SAVED_OBJECT } from '../../../common/constants';
 import type {
   TemplatesFindRequest,
@@ -258,6 +260,10 @@ export class TemplatesService {
     id: string = v4()
   ): Promise<SavedObject<Template>> {
     const parsedDefinition = parseYaml(input.definition) as ParsedTemplate['definition'];
+    const parsedResult = ParsedTemplateDefinitionSchema.safeParse(parsedDefinition);
+    const mappedSystemFields = parsedResult.success
+      ? getMappedSystemFields(parsedResult.data.fields)
+      : [];
 
     const templateSavedObject = await this.dependencies.unsecuredSavedObjectsClient.create(
       CASE_TEMPLATE_SAVED_OBJECT,
@@ -274,6 +280,7 @@ export class TemplatesService {
         author,
         fieldCount: parsedDefinition.fields.length,
         fieldNames: parsedDefinition.fields.map((f) => f.name),
+        mappedSystemFields,
         isEnabled: input.isEnabled ?? true,
       } as Template,
       { refresh: true, id }
@@ -293,6 +300,10 @@ export class TemplatesService {
     }
 
     const parsedDefinition = parseYaml(input.definition) as ParsedTemplate['definition'];
+    const parsedResult = ParsedTemplateDefinitionSchema.safeParse(parsedDefinition);
+    const mappedSystemFields = parsedResult.success
+      ? getMappedSystemFields(parsedResult.data.fields)
+      : [];
 
     const templateSavedObject = await this.dependencies.unsecuredSavedObjectsClient.create(
       CASE_TEMPLATE_SAVED_OBJECT,
@@ -309,6 +320,7 @@ export class TemplatesService {
         author: currentTemplate.attributes.author,
         fieldCount: parsedDefinition.fields.length,
         fieldNames: parsedDefinition.fields.map((f) => f.name),
+        mappedSystemFields,
         usageCount: currentTemplate.attributes.usageCount,
         lastUsedAt: currentTemplate.attributes.lastUsedAt,
         isEnabled: input.isEnabled ?? currentTemplate.attributes.isEnabled ?? true,

@@ -7,6 +7,7 @@
 
 import Boom from '@hapi/boom';
 import { partition } from 'lodash';
+import { load as parseYaml } from 'js-yaml';
 
 import type { SavedObject } from '@kbn/core/server';
 import { SavedObjectsUtils } from '@kbn/core/server';
@@ -20,6 +21,7 @@ import { createCaseError, isSODecoratedError, isSOError } from '../../common/err
 import { flattenCaseSavedObject, transformNewCase } from '../../common/utils';
 import type { CasesClient, CasesClientArgs } from '..';
 import { LICENSING_CASE_ASSIGNMENT_FEATURE } from '../../common/constants';
+import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
 import type {
   BulkCreateCasesRequest,
   BulkCreateCasesResponse,
@@ -31,6 +33,9 @@ import { normalizeCreateCaseRequest } from './utils';
 import type { BulkCreateCasesArgs } from '../../services/cases/types';
 import type { NotifyAssigneesArgs } from '../../services/notifications/types';
 import type { CaseTransformedAttributes } from '../../common/types/case';
+import { ParsedTemplateDefinitionSchema } from '../../../common/types/domain/template/v1';
+import type { FieldDefinition } from '../../../common/types/domain/template/fields';
+import { applySystemFieldMappings } from '../../../common/utils/apply_system_field_mappings';
 
 export const bulkCreate = async (
   data: BulkCreateCasesRequest,
@@ -77,6 +82,33 @@ export const bulkCreate = async (
 
     const hasPlatinumLicenseOrGreater = await licensingService.isAtLeastPlatinum();
 
+    // Pre-fetch template definitions for system field mapping
+    const uniqueTemplateIds = [
+      ...new Set(
+        casesWithIds.map((c) => c.template?.id).filter((id): id is string => id != null)
+      ),
+    ];
+    const templateFieldsMap = new Map<string, FieldDefinition[]>();
+    await Promise.all(
+      uniqueTemplateIds.map(async (templateId) => {
+        try {
+          const templateSO = await templatesService.getTemplate(templateId);
+          if (templateSO?.attributes.definition) {
+            const parsedResult = ParsedTemplateDefinitionSchema.safeParse(
+              parseYaml(templateSO.attributes.definition)
+            );
+            if (parsedResult.success) {
+              templateFieldsMap.set(templateId, parsedResult.data.fields);
+            }
+          }
+        } catch (error) {
+          logger.warn(
+            `Failed to fetch template for system field mapping (template ${templateId}): ${error}`
+          );
+        }
+      })
+    );
+
     const bulkCreateRequest: BulkCreateCasesArgs['cases'] = [];
 
     for (const theCase of casesWithIds) {
@@ -84,8 +116,14 @@ export const bulkCreate = async (
 
       validateRequest({ theCase, customFieldsConfiguration, hasPlatinumLicenseOrGreater });
 
+      const fields = theCase.template?.id ? templateFieldsMap.get(theCase.template.id) : undefined;
+      const extendedFields =
+        (theCase[CASE_EXTENDED_FIELDS] as Record<string, unknown> | undefined) ?? {};
+      const systemOverrides = fields ? applySystemFieldMappings(fields, extendedFields) : {};
+      const caseWithMappings = { ...theCase, ...systemOverrides };
+
       bulkCreateRequest.push(
-        createBulkCreateCaseRequest({ theCase, user, customFieldsConfiguration })
+        createBulkCreateCaseRequest({ theCase: caseWithMappings, user, customFieldsConfiguration })
       );
     }
 

@@ -35,6 +35,7 @@ export type CaseFormFieldsSchemaProps = Omit<
   templateId?: string;
   templateVersion?: number;
   extendedFields?: Record<string, unknown>;
+  mappedSystemFields?: string[];
 };
 
 export const schema: FormSchema<CaseFormFieldsSchemaProps> = {
@@ -123,5 +124,8 @@ export const schema: FormSchema<CaseFormFieldsSchemaProps> = {
   },
   extendedFields: {
     defaultValue: {},
+  },
+  mappedSystemFields: {
+    defaultValue: [],
   },
 };
