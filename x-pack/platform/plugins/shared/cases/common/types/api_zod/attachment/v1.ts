@@ -140,7 +140,7 @@ export const BulkGetAttachmentsResponseSchema = z.object({
       error: z.string(),
       message: z.string(),
       status: z.number().optional(),
-      attachmentId: z.string(),
+      savedObjectId: z.string(),
     })
   ),
 });
