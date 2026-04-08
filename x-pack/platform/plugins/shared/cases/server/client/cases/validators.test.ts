@@ -761,7 +761,7 @@ describe('validators', () => {
           updateReq: {
             id: 'case-1',
             version: '1',
-            template: { id: 'missing-tpl' },
+            template: { id: 'missing-tpl', version: 1 },
             extended_fields: { summary_as_keyword: 'hi' },
           },
           originalCase: makeOriginalCase(),
@@ -776,7 +776,7 @@ describe('validators', () => {
           updateReq: {
             id: 'case-1',
             version: '1',
-            template: { id: 'tpl-1' },
+            template: { id: 'tpl-1', version: 1 },
             extended_fields: { summary_as_keyword: 'hello' },
           },
           originalCase: makeOriginalCase(),
@@ -804,13 +804,43 @@ describe('validators', () => {
           updateReq: {
             id: 'case-1',
             version: '1',
-            template: { id: 'tpl-1' },
+            template: { id: 'tpl-1', version: 1 },
             extended_fields: {},
           },
           originalCase: makeOriginalCase(),
           templatesService: templatesService as unknown as TemplatesService,
         })
       ).rejects.toThrow('Invalid extended_fields: Field "Summary" is required');
+    });
+
+    it('throws when template definition is invalid YAML/schema', async () => {
+      templatesService.getTemplate.mockResolvedValue({
+        id: 'so-id',
+        type: 'cases-templates',
+        references: [],
+        attributes: {
+          templateId: 'tpl-1',
+          name: 'Bad Template',
+          owner: 'securitySolution',
+          definition: 'not: valid: yaml: [broken',
+          templateVersion: 1,
+          deletedAt: null,
+          isLatest: true,
+        },
+      });
+
+      await expect(
+        validateExtendedFieldsInRequest({
+          updateReq: {
+            id: 'case-1',
+            version: '1',
+            template: { id: 'tpl-1', version: 1 },
+            extended_fields: { summary_as_keyword: 'hi' },
+          },
+          originalCase: makeOriginalCase(),
+          templatesService: templatesService as unknown as TemplatesService,
+        })
+      ).rejects.toThrow('Template tpl-1 has an invalid definition');
     });
 
     it('uses template id from original case when not on update request', async () => {

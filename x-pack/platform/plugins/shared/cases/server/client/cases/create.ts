@@ -61,24 +61,6 @@ export const create = async (
 
     validateCustomFields(customFieldsValidationParams);
 
-    if (query.extended_fields) {
-      if (!query.template?.id) {
-        throw Boom.badRequest('extended_fields require a template to be specified');
-      }
-      const templateSO = await templatesService.getTemplate(query.template.id);
-      if (!templateSO) {
-        throw Boom.badRequest(`Template ${query.template.id} not found`);
-      }
-      const parsedTemplate = parseTemplate(templateSO.attributes);
-      const extendedFieldErrors = validateExtendedFields(
-        query.extended_fields,
-        parsedTemplate.definition.fields
-      );
-      if (extendedFieldErrors.length) {
-        throw Boom.badRequest(`Invalid extended_fields: ${extendedFieldErrors.join('; ')}`);
-      }
-    }
-
     const savedObjectID = SavedObjectsUtils.generateId();
     if (query.assignees && query.assignees.length > 0) {
       await auth.ensureAuthorized({
@@ -90,6 +72,29 @@ export const create = async (
         operation: Operations.createCase,
         entities: [{ owner: query.owner, id: savedObjectID }],
       });
+    }
+
+    if (query.extended_fields) {
+      if (!query.template?.id) {
+        throw Boom.badRequest('extended_fields require a template to be specified');
+      }
+      const templateSO = await templatesService.getTemplate(query.template.id);
+      if (!templateSO) {
+        throw Boom.badRequest(`Template ${query.template.id} not found`);
+      }
+      let parsedTemplate;
+      try {
+        parsedTemplate = parseTemplate(templateSO.attributes);
+      } catch (err) {
+        throw Boom.badRequest(`Template ${query.template.id} has an invalid definition`);
+      }
+      const extendedFieldErrors = validateExtendedFields(
+        query.extended_fields,
+        parsedTemplate.definition.fields
+      );
+      if (extendedFieldErrors.length) {
+        throw Boom.badRequest(`Invalid extended_fields: ${extendedFieldErrors.join('; ')}`);
+      }
     }
 
     /**

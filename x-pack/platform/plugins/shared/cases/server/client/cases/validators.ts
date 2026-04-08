@@ -174,7 +174,12 @@ export const validateExtendedFieldsInRequest = async ({
   if (!templateSO) {
     throw Boom.badRequest(`Template ${templateId} not found`);
   }
-  const parsedTemplate = parseTemplate(templateSO.attributes);
+  let parsedTemplate;
+  try {
+    parsedTemplate = parseTemplate(templateSO.attributes);
+  } catch (err) {
+    throw Boom.badRequest(`Template ${templateId} has an invalid definition`);
+  }
   const errors = validateExtendedFields(
     updateReq.extended_fields,
     parsedTemplate.definition.fields
