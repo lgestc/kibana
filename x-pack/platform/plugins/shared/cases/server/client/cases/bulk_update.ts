@@ -18,6 +18,7 @@ import { isEqual } from 'lodash';
 
 import { nodeBuilder } from '@kbn/es-query';
 
+import { load as parseYaml } from 'js-yaml';
 import type { AlertService, CasesService, CaseUserActionService } from '../../services';
 import type { UpdateAlertStatusRequest } from '../alerts/types';
 import type { CasesClient, CasesClientArgs } from '..';
@@ -25,11 +26,18 @@ import type { OwnerEntity, OperationDetails } from '../../authorization';
 import type { PatchCasesArgs } from '../../services/cases/types';
 import type { UserActionEvent, UserActionsDict } from '../../services/user_actions/types';
 
-import type { CasePatchRequest, CasesPatchRequest } from '../../../common/types/api';
+import type {
+  CasePatchRequest,
+  CasesPatchRequest,
+  CasesPatchResponse,
+  CaseWithUpdateSummary,
+} from '../../../common/types/api';
+import { PatchCasesResponseRt, CasesPatchRequestRt } from '../../../common/types/api';
 import {
   CASE_COMMENT_SAVED_OBJECT,
   CASE_SAVED_OBJECT,
   MAX_USER_ACTIONS_PER_CASE,
+  CASE_EXTENDED_FIELDS,
 } from '../../../common/constants';
 import { Operations } from '../../authorization';
 import { createCaseError, isSOError } from '../../common/error';
@@ -42,14 +50,13 @@ import { arraysDifference, getCaseToUpdate } from '../utils';
 import {
   dedupAssignees,
   fillMissingCustomFields,
+  getCloseReasonIfValid,
   getClosedInfoForUpdate,
   getDurationForUpdate,
   getInProgressInfoForUpdate,
   getTimingMetricsForUpdate,
 } from './utils';
 import { LICENSING_CASE_ASSIGNMENT_FEATURE } from '../../common/constants';
-import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
-import { load as parseYaml } from 'js-yaml';
 import { ParsedTemplateDefinitionSchema } from '../../../common/types/domain/template/v1';
 import { applySystemFieldMappings } from '../../../common/utils/apply_system_field_mappings';
 import type { FieldDefinition } from '../../../common/types/domain/template/fields';
@@ -57,16 +64,13 @@ import type { LicensingService } from '../../services/licensing';
 import type { CaseSavedObjectTransformed } from '../../common/types/case';
 import { decodeWithExcessOrThrow, decodeOrThrow } from '../../common/runtime_types';
 import type {
-  Cases,
-  Case,
   CaseAttributes,
   User,
   CaseAssignees,
   AttachmentAttributes,
   CustomFieldsConfiguration,
 } from '../../../common/types/domain';
-import { CasesPatchRequestRt } from '../../../common/types/api';
-import { CasesRt, CaseStatuses, AttachmentType } from '../../../common/types/domain';
+import { AttachmentType, CaseStatuses } from '../../../common/types/domain';
 import { validateCustomFields } from './validators';
 import { emptyCasesAssigneesSanitizer } from './sanitizers';
 
@@ -211,19 +215,20 @@ function getSyncStatusForComment({
   casesToSyncToStatus,
 }: {
   alertComment: SavedObjectsFindResult<AttachmentAttributes>;
-  casesToSyncToStatus: Map<string, CaseStatuses>;
-}): CaseStatuses {
+  casesToSyncToStatus: Map<string, [CaseStatuses, string?]>;
+}): [CaseStatuses, string?] {
   const id = getID(alertComment, CASE_SAVED_OBJECT);
 
   if (!id) {
-    return CaseStatuses.open;
+    return [CaseStatuses.open, undefined];
   }
 
-  return casesToSyncToStatus.get(id) ?? CaseStatuses.open;
+  return casesToSyncToStatus.get(id) ?? [CaseStatuses.open, undefined];
 }
 
 /**
  * Updates the alert ID's status field based on the patch requests
+ * Returns a map of case ids to the number of alerts synced
  */
 async function updateAlerts({
   casesWithSyncSettingChangedToOn,
@@ -235,18 +240,26 @@ async function updateAlerts({
   casesWithStatusChangedAndSynced: UpdateRequestWithOriginalCase[];
   caseService: CasesService;
   alertsService: AlertService;
-}) {
+}): Promise<Map<string, number>> {
   /**
    * It's possible that a case ID can appear multiple times in each array. I'm intentionally placing the status changes
    * last so when the map is built we will use the last status change as the source of truth.
    */
   const casesToSync = [...casesWithSyncSettingChangedToOn, ...casesWithStatusChangedAndSynced];
 
-  // build a map of case id to the status it has
+  // build a map of case id to the status it has, and optionally a closing reason
   const casesToSyncToStatus = casesToSync.reduce((acc, { updateReq, originalCase }) => {
-    acc.set(updateReq.id, updateReq.status ?? originalCase.attributes.status ?? CaseStatuses.open);
+    const closeReason =
+      updateReq.status === CaseStatuses.closed
+        ? getCloseReasonIfValid(updateReq.closeReason)
+        : undefined;
+
+    acc.set(updateReq.id, [
+      updateReq.status ?? originalCase.attributes.status ?? CaseStatuses.open,
+      closeReason,
+    ]);
     return acc;
-  }, new Map<string, CaseStatuses>());
+  }, new Map<string, [CaseStatuses, string?]>());
 
   // get all the alerts for all the alert comments for all cases
   const totalAlerts = await getAlertComments({
@@ -254,24 +267,48 @@ async function updateAlerts({
     caseService,
   });
 
-  // create an array of requests that indicate the id, index, and status to update an alert
-  const alertsToUpdate = totalAlerts.saved_objects.reduce(
-    (acc: UpdateAlertStatusRequest[], alertComment) => {
+  const alertsToUpdateByCaseId = totalAlerts.saved_objects.reduce(
+    (acc: Map<string, UpdateAlertStatusRequest[]>, alertComment) => {
       if (isCommentRequestTypeAlert(alertComment.attributes)) {
-        const status = getSyncStatusForComment({
+        const caseId = getID(alertComment, CASE_SAVED_OBJECT);
+        if (caseId == null) {
+          return acc;
+        }
+
+        const statusAndReason = getSyncStatusForComment({
           alertComment,
           casesToSyncToStatus,
         });
 
-        acc.push(...createAlertUpdateStatusRequest({ comment: alertComment.attributes, status }));
+        const existingAlerts = acc.get(caseId) ?? [];
+        const alertsToUpdate = createAlertUpdateStatusRequest({
+          comment: alertComment.attributes,
+          status: statusAndReason[0],
+          closingReason: statusAndReason[1],
+        });
+
+        acc.set(caseId, [...existingAlerts, ...alertsToUpdate]);
       }
 
       return acc;
     },
-    []
+    new Map<string, UpdateAlertStatusRequest[]>()
   );
 
-  await alertsService.updateAlertsStatus(alertsToUpdate);
+  if (alertsToUpdateByCaseId.size === 0) {
+    return new Map<string, number>();
+  }
+
+  const syncedAlertCountCountByCaseId = new Map<string, number>();
+
+  await Promise.all(
+    Array.from(alertsToUpdateByCaseId.entries()).map(async ([caseId, alertsToUpdate]) => {
+      const updatedAlertsCount = await alertsService.updateAlertsStatus(alertsToUpdate);
+      syncedAlertCountCountByCaseId.set(caseId, updatedAlertsCount);
+    })
+  );
+
+  return syncedAlertCountCountByCaseId;
 }
 
 function partitionPatchRequest(
@@ -377,7 +414,7 @@ export const bulkUpdate = async (
   cases: CasesPatchRequest,
   clientArgs: CasesClientArgs,
   casesClient: CasesClient
-): Promise<Cases> => {
+): Promise<CasesPatchResponse> => {
   const {
     services: {
       caseService,
@@ -391,6 +428,7 @@ export const bulkUpdate = async (
     user,
     logger,
     authorization,
+    closeReasonValidator,
   } = clientArgs;
 
   try {
@@ -455,11 +493,17 @@ export const bulkUpdate = async (
         }
 
         const fieldsToUpdate = getCaseToUpdate(originalCase.attributes, updateCase);
+        const closeReason = getCloseReasonIfValid(updateCase.closeReason);
+        // Explicitly add the closing reason if it exists in the request
+        const fieldsToUpdateIncludingCloseReason =
+          fieldsToUpdate.status === CaseStatuses.closed && closeReason != null
+            ? { ...fieldsToUpdate, closeReason }
+            : fieldsToUpdate;
 
-        const { id, version, ...restFields } = fieldsToUpdate;
+        const { id, version, ...restFields } = fieldsToUpdateIncludingCloseReason;
 
         if (Object.keys(restFields).length > 0) {
-          acc.push({ originalCase, updateReq: fieldsToUpdate });
+          acc.push({ originalCase, updateReq: fieldsToUpdateIncludingCloseReason });
         }
 
         return acc;
@@ -480,12 +524,12 @@ export const bulkUpdate = async (
       casesToUpdate
         .filter(({ updateReq, originalCase }) => {
           const hasExtendedFields = updateReq[CASE_EXTENDED_FIELDS] != null;
-          const templateId =
-            updateReq.template?.id ?? originalCase.attributes.template?.id ?? null;
+          const templateId = updateReq.template?.id ?? originalCase.attributes.template?.id ?? null;
           return hasExtendedFields && templateId != null;
         })
         .map(
           ({ updateReq, originalCase }) =>
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             updateReq.template?.id ?? originalCase.attributes.template?.id!
         )
     );
@@ -515,8 +559,7 @@ export const bulkUpdate = async (
       const extendedFields = updateReq[CASE_EXTENDED_FIELDS];
       if (extendedFields == null) return { updateReq, originalCase };
 
-      const templateId =
-        updateReq.template?.id ?? originalCase.attributes.template?.id ?? null;
+      const templateId = updateReq.template?.id ?? originalCase.attributes.template?.id ?? null;
       if (templateId == null) return { updateReq, originalCase };
 
       const fields = templateFieldsMap.get(templateId);
@@ -534,6 +577,32 @@ export const bulkUpdate = async (
     throwIfUpdateOwner(casesToUpdateWithMappings);
     throwIfUpdateAssigneesWithoutValidLicense(casesToUpdateWithMappings, hasPlatinumLicense);
 
+    // Validate close reasons
+    await Promise.all(
+      casesToUpdateWithMappings.map(async ({ updateReq, originalCase }) => {
+        const { closeReason } = updateReq;
+        if (closeReason == null) {
+          return;
+        }
+
+        const syncAlertsAfterUpdate =
+          updateReq.settings?.syncAlerts ?? originalCase.attributes.settings.syncAlerts;
+        if (!syncAlertsAfterUpdate) {
+          throw Boom.badRequest(
+            `Cannot provide a close reason for case ${updateReq.id} when sync alerts is disabled.`
+          );
+        }
+        // The validator is used by specific owners (e.g., securitySolution) to restrict valid close reasons.
+        // If no validator is registered, all close reasons are accepted.
+        if (closeReasonValidator != null) {
+          const isValid = await closeReasonValidator(closeReason, originalCase.attributes.owner);
+          if (!isValid) {
+            throw Boom.badRequest(`Invalid close reason: "${closeReason}"`);
+          }
+        }
+      })
+    );
+
     await validateCustomFieldsInRequest({
       casesToUpdate: casesToUpdateWithMappings,
       customFieldsConfigurationMap,
@@ -544,7 +613,7 @@ export const bulkUpdate = async (
       casesToUpdate: casesToUpdateWithMappings,
       customFieldsConfigurationMap,
     });
-    const userActionsDict = userActionService.creator.buildUserActions({
+    let userActionsDict = userActionService.creator.buildUserActions({
       updatedCases: patchCasesPayload,
       user,
     });
@@ -577,44 +646,56 @@ export const bulkUpdate = async (
     });
 
     // Update the alert's status to match any case status or sync settings changes
-    await updateAlerts({
+    const syncedAlertCountCountByCaseId = await updateAlerts({
       casesWithStatusChangedAndSynced,
       casesWithSyncSettingChangedToOn,
       caseService,
       alertsService,
     });
 
+    userActionsDict = userActionService.creator.addSyncedAlertsCountToUserActions({
+      userActionsDict,
+      syncedAlertCountCountByCaseId,
+    });
+
     const commentsMap = await attachmentService.getter.getCaseAttatchmentStats({
       caseIds,
     });
 
-    const returnUpdatedCase = updatedCases.saved_objects.reduce((flattenCases, updatedCase) => {
-      const originalCase = casesMap.get(updatedCase.id);
+    const returnUpdatedCase = updatedCases.saved_objects.reduce<CasesPatchResponse>(
+      (flattenCases, updatedCase) => {
+        const originalCase = casesMap.get(updatedCase.id);
 
-      if (!originalCase) {
+        if (!originalCase) {
+          return flattenCases;
+        }
+
+        const {
+          userComments: totalComment,
+          alerts: totalAlerts,
+          events: totalEvents,
+        } = commentsMap.get(updatedCase.id) ?? {
+          userComments: 0,
+          alerts: 0,
+          events: 0,
+        };
+
+        const syncedAlertCount = syncedAlertCountCountByCaseId.get(updatedCase.id) ?? 0;
+        const updatedCaseWithStats: CaseWithUpdateSummary = {
+          ...flattenCaseSavedObject({
+            savedObject: mergeOriginalSOWithUpdatedSO(originalCase, updatedCase),
+            totalComment,
+            totalAlerts,
+            totalEvents,
+          }),
+          ...(syncedAlertCount > 0 ? { updateSummary: { syncedAlertCount } } : {}),
+        };
+
+        flattenCases.push(updatedCaseWithStats);
         return flattenCases;
-      }
-
-      const {
-        userComments: totalComment,
-        alerts: totalAlerts,
-        events: totalEvents,
-      } = commentsMap.get(updatedCase.id) ?? {
-        userComments: 0,
-        alerts: 0,
-        events: 0,
-      };
-
-      flattenCases.push(
-        flattenCaseSavedObject({
-          savedObject: mergeOriginalSOWithUpdatedSO(originalCase, updatedCase),
-          totalComment,
-          totalAlerts,
-          totalEvents,
-        })
-      );
-      return flattenCases;
-    }, [] as Case[]);
+      },
+      []
+    );
 
     const builtUserActions =
       userActionsDict != null
@@ -635,7 +716,7 @@ export const bulkUpdate = async (
 
     await notificationService.bulkNotifyAssignees(casesAndAssigneesToNotifyForAssignment);
 
-    return decodeOrThrow(CasesRt)(returnUpdatedCase);
+    return decodeOrThrow(PatchCasesResponseRt)(returnUpdatedCase);
   } catch (error) {
     const idVersions = cases.cases.map((caseInfo) => ({
       id: caseInfo.id,
@@ -651,7 +732,10 @@ export const bulkUpdate = async (
 };
 
 const normalizeCaseAttributes = (
-  updateCaseAttributes: Omit<CasePatchRequest, 'id' | 'version' | 'owner' | 'assignees'>,
+  updateCaseAttributes: Omit<
+    CasePatchRequest,
+    'id' | 'version' | 'owner' | 'assignees' | 'closeReason'
+  >,
   customFieldsConfiguration?: CustomFieldsConfiguration
 ) => {
   let trimmedAttributes = { ...updateCaseAttributes };
@@ -704,8 +788,15 @@ const createPatchCasesPayload = ({
 
   return {
     cases: casesToUpdate.map(({ updateReq, originalCase }) => {
-      // intentionally removing owner from the case so that we don't accidentally allow it to be updated
-      const { id: caseId, version, owner, assignees, ...updateCaseAttributes } = updateReq;
+      // intentionally removing owner and closeReason from the case so that we don't accidentally allow it to be updated
+      const {
+        id: caseId,
+        version,
+        owner,
+        assignees,
+        closeReason: _closeReason,
+        ...updateCaseAttributes
+      } = updateReq;
 
       const dedupedAssignees = dedupAssignees(assignees);
 
@@ -717,6 +808,7 @@ const createPatchCasesPayload = ({
       return {
         caseId,
         originalCase,
+        closeReason: updateReq.closeReason,
         updatedAttributes: {
           ...trimmedCaseAttributes,
           ...(dedupedAssignees && { assignees: dedupedAssignees }),
