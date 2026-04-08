@@ -30,22 +30,25 @@ export const applySystemFieldMappings = (
 ): SystemFieldOverrides => {
   const overrides: SystemFieldOverrides = {};
 
-  for (const field of fields.filter((f) => f.system)) {
+  for (const field of fields) {
+    const { system } = field;
+    if (!system) continue;
+
     const extendedKey = `${field.name}_as_${field.type}`;
     const rawValue = extendedFields[extendedKey];
     if (rawValue != null) {
       const rawString = String(rawValue);
 
-      if (field.system.maps_to === 'severity') {
-        const mapped = field.system.value_map[rawString];
+      if (system.maps_to === 'severity') {
+        const mapped = system.value_map[rawString];
         if (mapped != null) {
           overrides.severity = mapped;
         }
-      } else if (field.system.maps_to === 'title') {
+      } else if (system.maps_to === 'title') {
         overrides.title = rawString;
-      } else if (field.system.maps_to === 'description') {
+      } else if (system.maps_to === 'description') {
         overrides.description = rawString;
-      } else if (field.system.maps_to === 'category') {
+      } else if (system.maps_to === 'category') {
         overrides.category = rawString;
       }
     }
