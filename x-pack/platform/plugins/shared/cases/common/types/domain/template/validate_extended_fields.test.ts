@@ -5,9 +5,10 @@
  * 2.0.
  */
 
-import { z } from '@kbn/zod/v4';
+import type { z } from '@kbn/zod/v4';
 import { validateExtendedFields } from './validate_extended_fields';
-import { FieldSchema, FieldType } from './fields';
+import type { FieldSchema } from './fields';
+import { FieldType } from './fields';
 
 type FieldSchemaType = z.infer<typeof FieldSchema>;
 
@@ -80,17 +81,13 @@ describe('validateExtendedFields', () => {
 
   describe('required fields', () => {
     it('reports error when required field is missing', () => {
-      const fields: FieldSchemaType[] = [
-        makeInputTextField({ validation: { required: true } }),
-      ];
+      const fields: FieldSchemaType[] = [makeInputTextField({ validation: { required: true } })];
       const errors = validateExtendedFields({}, fields);
       expect(errors).toContain('Field "Summary" is required');
     });
 
     it('reports error when required field is empty string', () => {
-      const fields: FieldSchemaType[] = [
-        makeInputTextField({ validation: { required: true } }),
-      ];
+      const fields: FieldSchemaType[] = [makeInputTextField({ validation: { required: true } })];
       const errors = validateExtendedFields({ summary_as_keyword: '' }, fields);
       expect(errors).toContain('Field "Summary" is required');
     });
@@ -244,18 +241,14 @@ describe('validateExtendedFields', () => {
 
   describe('min_length / max_length for INPUT_TEXT', () => {
     it('reports error when value is shorter than min_length', () => {
-      const fields: FieldSchemaType[] = [
-        makeInputTextField({ validation: { min_length: 5 } }),
-      ];
+      const fields: FieldSchemaType[] = [makeInputTextField({ validation: { min_length: 5 } })];
       const extendedFields = { summary_as_keyword: 'hi' };
       const errors = validateExtendedFields(extendedFields, fields);
       expect(errors).toContain('Field "Summary" must be at least 5 characters');
     });
 
     it('reports error when value exceeds max_length', () => {
-      const fields: FieldSchemaType[] = [
-        makeInputTextField({ validation: { max_length: 3 } }),
-      ];
+      const fields: FieldSchemaType[] = [makeInputTextField({ validation: { max_length: 3 } })];
       const extendedFields = { summary_as_keyword: 'toolong' };
       const errors = validateExtendedFields(extendedFields, fields);
       expect(errors).toContain('Field "Summary" must be at most 3 characters');
@@ -272,9 +265,7 @@ describe('validateExtendedFields', () => {
 
   describe('min_length / max_length for TEXTAREA', () => {
     it('reports error when textarea value is shorter than min_length', () => {
-      const fields: FieldSchemaType[] = [
-        makeTextareaField({ validation: { min_length: 10 } }),
-      ];
+      const fields: FieldSchemaType[] = [makeTextareaField({ validation: { min_length: 10 } })];
       const extendedFields = { notes_as_keyword: 'short' };
       const errors = validateExtendedFields(extendedFields, fields);
       expect(errors).toContain('Field "Notes" must be at least 10 characters');
@@ -290,18 +281,14 @@ describe('validateExtendedFields', () => {
     });
 
     it('reports error when value is below min', () => {
-      const fields: FieldSchemaType[] = [
-        makeInputNumberField({ validation: { min: 0 } }),
-      ];
+      const fields: FieldSchemaType[] = [makeInputNumberField({ validation: { min: 0 } })];
       const extendedFields = { score_as_long: '-5' };
       const errors = validateExtendedFields(extendedFields, fields);
       expect(errors).toContain('Field "Score" must be >= 0');
     });
 
     it('reports error when value exceeds max', () => {
-      const fields: FieldSchemaType[] = [
-        makeInputNumberField({ validation: { max: 100 } }),
-      ];
+      const fields: FieldSchemaType[] = [makeInputNumberField({ validation: { max: 100 } })];
       const extendedFields = { score_as_long: '150' };
       const errors = validateExtendedFields(extendedFields, fields);
       expect(errors).toContain('Field "Score" must be <= 100');
