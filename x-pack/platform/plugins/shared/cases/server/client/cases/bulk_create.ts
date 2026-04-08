@@ -84,9 +84,7 @@ export const bulkCreate = async (
 
     // Pre-fetch template definitions for system field mapping
     const uniqueTemplateIds = [
-      ...new Set(
-        casesWithIds.map((c) => c.template?.id).filter((id): id is string => id != null)
-      ),
+      ...new Set(casesWithIds.map((c) => c.template?.id).filter((id): id is string => id != null)),
     ];
     const templateFieldsMap = new Map<string, FieldDefinition[]>();
     await Promise.all(

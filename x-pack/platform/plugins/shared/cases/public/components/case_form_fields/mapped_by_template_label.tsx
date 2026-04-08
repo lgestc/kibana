@@ -20,3 +20,4 @@ export const MappedByTemplateLabel: React.FC = () => (
     />
   </EuiToolTip>
 );
+MappedByTemplateLabel.displayName = 'MappedByTemplateLabel';

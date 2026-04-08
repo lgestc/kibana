@@ -42,7 +42,7 @@ const CaseFormFieldsComponent: React.FC<Props> = ({
   const [{ mappedSystemFields }] = useFormData<{ mappedSystemFields?: string[] }>({
     watch: ['mappedSystemFields'],
   });
-  const mappedFields = new Set(isTemplatesV2Enabled ? (mappedSystemFields ?? []) : []);
+  const mappedFields = new Set(isTemplatesV2Enabled ? mappedSystemFields ?? [] : []);
 
   return (
     <EuiFlexGroup data-test-subj="case-form-fields" direction="column" gutterSize="none">
