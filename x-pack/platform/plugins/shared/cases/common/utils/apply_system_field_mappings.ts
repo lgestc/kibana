@@ -32,24 +32,24 @@ export const applySystemFieldMappings = (
 
   for (const field of fields) {
     const { system } = field;
-    if (!system) continue;
+    if (system) {
+      const extendedKey = `${field.name}_as_${field.type}`;
+      const rawValue = extendedFields[extendedKey];
+      if (rawValue != null) {
+        const rawString = String(rawValue);
 
-    const extendedKey = `${field.name}_as_${field.type}`;
-    const rawValue = extendedFields[extendedKey];
-    if (rawValue != null) {
-      const rawString = String(rawValue);
-
-      if (system.maps_to === 'severity') {
-        const mapped = system.value_map[rawString];
-        if (mapped != null) {
-          overrides.severity = mapped;
+        if (system.maps_to === 'severity') {
+          const mapped = system.value_map[rawString];
+          if (mapped != null) {
+            overrides.severity = mapped;
+          }
+        } else if (system.maps_to === 'title') {
+          overrides.title = rawString;
+        } else if (system.maps_to === 'description') {
+          overrides.description = rawString;
+        } else if (system.maps_to === 'category') {
+          overrides.category = rawString;
         }
-      } else if (system.maps_to === 'title') {
-        overrides.title = rawString;
-      } else if (system.maps_to === 'description') {
-        overrides.description = rawString;
-      } else if (system.maps_to === 'category') {
-        overrides.category = rawString;
       }
     }
   }
