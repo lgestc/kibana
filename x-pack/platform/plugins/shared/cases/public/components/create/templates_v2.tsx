@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   EuiFlexItem,
   EuiFormRow,
@@ -22,6 +22,8 @@ import { OptionalFieldLabel } from '../optional_field_label';
 import { useCasesContext } from '../cases_context/use_cases_context';
 import { TEMPLATE_HELP_TEXT, TEMPLATE_LABEL, TEMPLATE_SELECT_PLACEHOLDER } from './translations';
 import { useGetTemplates } from '../templates_v2/hooks/use_get_templates';
+import { useGetTemplate } from '../templates_v2/hooks/use_get_template';
+import { getMappedSystemFields } from '../../../common/utils/get_mapped_system_fields';
 
 const EMPTY_TEMPLATE_OPTION: EuiComboBoxOptionOption<string> = { label: 'None', value: '' };
 
@@ -42,6 +44,22 @@ export const TemplateSelectorComponent: React.FC<Props> = ({ isLoading, isDisabl
   const [selectedTemplate, setSelectedTemplate] = useState<EuiComboBoxOptionOption<string> | null>(
     null
   );
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>();
+  const [selectedTemplateVersion, setSelectedTemplateVersion] = useState<number | undefined>();
+
+  const { data: selectedTemplateData } = useGetTemplate(
+    selectedTemplateId,
+    selectedTemplateVersion
+  );
+
+  useEffect(() => {
+    if (selectedTemplateData) {
+      setFieldValue(
+        'mappedSystemFields',
+        getMappedSystemFields(selectedTemplateData.definition.fields)
+      );
+    }
+  }, [selectedTemplateData, setFieldValue]);
 
   const options: Array<EuiComboBoxOptionOption<string>> = useMemo(
     () => [
@@ -64,7 +82,15 @@ export const TemplateSelectorComponent: React.FC<Props> = ({ isLoading, isDisabl
 
       const matched = (templatesData?.templates ?? []).find((t) => t.templateId === templateId);
       setFieldValue('templateVersion', matched?.templateVersion ?? '');
-      setFieldValue('mappedSystemFields', matched?.mappedSystemFields ?? []);
+
+      if (templateId) {
+        setSelectedTemplateId(templateId);
+        setSelectedTemplateVersion(matched?.templateVersion);
+      } else {
+        setSelectedTemplateId(undefined);
+        setSelectedTemplateVersion(undefined);
+        setFieldValue('mappedSystemFields', []);
+      }
     },
     [setFieldValue, templatesData?.templates]
   );

@@ -28,6 +28,7 @@ import { CaseViewAttachments } from './components/case_view_attachments';
 import { filterCaseAttachmentsBySearchTerm } from './components/helpers';
 import { KibanaServices } from '../../common/lib/kibana';
 import { useGetTemplate } from '../templates_v2/hooks/use_get_template';
+import { getMappedSystemFields } from '../../../common/utils/get_mapped_system_fields';
 
 const getActiveTabId = (tabId?: string) => {
   if (tabId && Object.values(CASE_VIEW_PAGE_TABS).includes(tabId as CASE_VIEW_PAGE_TABS)) {
@@ -108,7 +109,9 @@ export const CaseViewPage = React.memo<CaseViewPageProps>(
       caseData.template?.version
     );
     const titleMappedByTemplate = useMemo(
-      () => isTemplatesV2Enabled && (templateData?.mappedSystemFields?.includes('title') ?? false),
+      () =>
+        isTemplatesV2Enabled &&
+        getMappedSystemFields(templateData?.definition?.fields ?? []).includes('title'),
       [isTemplatesV2Enabled, templateData]
     );
 

@@ -34,6 +34,5 @@ export const parseTemplate = (template: Template): ParsedTemplate => {
     isLatest: template.isLatest ?? false,
     isEnabled: template.isEnabled ?? true,
     latestVersion: 1,
-    mappedSystemFields: template.mappedSystemFields,
   };
 };

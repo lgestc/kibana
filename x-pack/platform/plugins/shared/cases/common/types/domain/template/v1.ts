@@ -90,13 +90,6 @@ export const TemplateSchema = z.object({
    * Whether this template is enabled. Disabled templates are not shown in the case creation flow.
    */
   isEnabled: z.boolean().optional(),
-
-  /**
-   * System field names (title, description, severity, category) that are mapped
-   * by fields in this template's definition. Computed from the definition on
-   * create/update so callers don't need to re-parse the YAML.
-   */
-  mappedSystemFields: z.array(z.string()).optional(),
 });
 
 export type Template = z.infer<typeof TemplateSchema>;

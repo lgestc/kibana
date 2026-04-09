@@ -56,6 +56,7 @@ import { useReplaceCustomField } from '../../../containers/use_replace_custom_fi
 import { KibanaServices } from '../../../common/lib/kibana';
 import { TemplateFields } from './template_fields';
 import { useGetTemplate } from '../../templates_v2/hooks/use_get_template';
+import { getMappedSystemFields } from '../../../../common/utils/get_mapped_system_fields';
 import { useStatusAction } from '../../actions/status/use_status_action';
 import { useRefreshCaseViewPage } from '../use_on_refresh_case_view_page';
 
@@ -110,7 +111,7 @@ export const CaseViewActivity = ({
     caseData.template?.version
   );
   const mappedFields = useMemo(
-    () => new Set(templateData?.mappedSystemFields ?? []),
+    () => new Set(getMappedSystemFields(templateData?.definition?.fields ?? [])),
     [templateData]
   );
 

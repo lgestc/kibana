@@ -64,9 +64,6 @@ const mappings = {
     isEnabled: {
       type: 'boolean',
     },
-    mappedSystemFields: {
-      type: 'keyword',
-    },
   },
 } as const;
 
