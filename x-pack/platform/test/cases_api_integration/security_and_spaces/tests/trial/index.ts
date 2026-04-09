@@ -31,6 +31,7 @@ export default ({ loadTestFile, getService }: FtrProviderContext): void => {
     loadTestFile(require.resolve('./cases/find_cases'));
     loadTestFile(require.resolve('./cases/post_case'));
     loadTestFile(require.resolve('./cases/patch_case'));
+    loadTestFile(require.resolve('./cases/system_field_mappings'));
     loadTestFile(require.resolve('./configure'));
     loadTestFile(require.resolve('./attachments_framework/registered_persistable_state_trial'));
     // sub privileges are only available with a license above basic
