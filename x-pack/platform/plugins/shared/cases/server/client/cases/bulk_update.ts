@@ -625,25 +625,29 @@ export const bulkUpdate = async (
 
     // If a status update occurred and the case is synced then we need to update all alerts' status
     // attached to the case to the new status.
-    const casesWithStatusChangedAndSynced = casesToUpdate.filter(({ updateReq, originalCase }) => {
-      return (
-        originalCase != null &&
-        updateReq.status != null &&
-        originalCase.attributes.status !== updateReq.status &&
-        originalCase.attributes.settings.syncAlerts
-      );
-    });
+    const casesWithStatusChangedAndSynced = casesToUpdateWithMappings.filter(
+      ({ updateReq, originalCase }) => {
+        return (
+          originalCase != null &&
+          updateReq.status != null &&
+          originalCase.attributes.status !== updateReq.status &&
+          originalCase.attributes.settings.syncAlerts
+        );
+      }
+    );
 
     // If syncAlerts setting turned on we need to update all alerts' status
     // attached to the case to the current status.
-    const casesWithSyncSettingChangedToOn = casesToUpdate.filter(({ updateReq, originalCase }) => {
-      return (
-        originalCase != null &&
-        updateReq.settings?.syncAlerts != null &&
-        originalCase.attributes.settings.syncAlerts !== updateReq.settings.syncAlerts &&
-        updateReq.settings.syncAlerts
-      );
-    });
+    const casesWithSyncSettingChangedToOn = casesToUpdateWithMappings.filter(
+      ({ updateReq, originalCase }) => {
+        return (
+          originalCase != null &&
+          updateReq.settings?.syncAlerts != null &&
+          originalCase.attributes.settings.syncAlerts !== updateReq.settings.syncAlerts &&
+          updateReq.settings.syncAlerts
+        );
+      }
+    );
 
     // Update the alert's status to match any case status or sync settings changes
     const syncedAlertCountCountByCaseId = await updateAlerts({

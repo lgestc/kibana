@@ -51,6 +51,16 @@ fields:
     type: keyword
     metadata:
       default: Enter details here...
+  - name: priority
+    control: SELECT_BASIC
+    label: Priority
+    type: keyword
+    metadata:
+      options:
+        - low
+        - medium
+        - high
+        - urgent
   # display.show_when hides this field unless priority is urgent
   - name: urgency_reason
     control: TEXTAREA

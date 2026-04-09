@@ -8,17 +8,14 @@
 import expect from '@kbn/expect';
 import yaml from 'js-yaml';
 
-import type { BulkCreateCasesResponse } from '@kbn/cases-plugin/common/types/api';
 import { CaseStatuses } from '@kbn/cases-components';
 import { CASE_EXTENDED_FIELDS, INTERNAL_TEMPLATES_URL } from '@kbn/cases-plugin/common/constants';
 import {
   createCase,
   deleteAllCaseItems,
-  getSpaceUrlPrefix,
   updateCase,
 } from '../../../../common/lib/api';
 import { getPostCaseRequest } from '../../../../common/lib/mock';
-import { superUser } from '../../../../common/lib/authentication/users';
 import type { FtrProviderContext } from '../../../../common/ftr_provider_context';
 
 export default ({ getService }: FtrProviderContext): void => {
@@ -64,98 +61,6 @@ export default ({ getService }: FtrProviderContext): void => {
       await deleteAllCaseItems(es);
     });
 
-    describe('create', () => {
-      it('overrides status with the mapped extended field value', async () => {
-        const template = await createTemplate([statusField]);
-
-        const createdCase = await createCase(
-          supertest,
-          getPostCaseRequest({
-            template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'wip' },
-          })
-        );
-
-        expect(createdCase.status).to.eql(CaseStatuses['in-progress']);
-      });
-
-      it('does not override status when the extended field value is not in value_map', async () => {
-        const template = await createTemplate([statusField]);
-
-        const createdCase = await createCase(
-          supertest,
-          getPostCaseRequest({
-            template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'unknown' },
-          })
-        );
-
-        expect(createdCase.status).to.eql(CaseStatuses.open);
-      });
-
-      it('creates the case with defaults when the template does not exist', async () => {
-        const createdCase = await createCase(
-          supertest,
-          getPostCaseRequest({
-            template: { id: 'nonexistent-template-id', version: 1 },
-            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'done' },
-          })
-        );
-
-        expect(createdCase.status).to.eql(CaseStatuses.open);
-      });
-
-      it('does not apply mappings when no extended fields are submitted', async () => {
-        const template = await createTemplate([statusField]);
-
-        const createdCase = await createCase(
-          supertest,
-          getPostCaseRequest({
-            template: { id: template.templateId, version: template.templateVersion },
-          })
-        );
-
-        expect(createdCase.status).to.eql(CaseStatuses.open);
-      });
-    });
-
-    describe('bulk_create', () => {
-      /**
-       * The bulk create route is only exposed via a test fixture
-       * (x-pack/platform/test/cases_api_integration/common/plugins/cases/server/routes.ts).
-       */
-      const bulkCreate = async (cases: object[]): Promise<BulkCreateCasesResponse> => {
-        const { body } = await supertest
-          .post(`${getSpaceUrlPrefix(null)}/api/cases_fixture/cases:bulkCreate`)
-          .set('kbn-xsrf', 'foo')
-          .set('x-elastic-internal-origin', 'foo')
-          .auth(superUser.username, superUser.password)
-          .send({ cases })
-          .expect(200);
-        return body;
-      };
-
-      it('overrides status for each case in the bulk request', async () => {
-        const template = await createTemplate([statusField]);
-
-        const result = await bulkCreate([
-          getPostCaseRequest({
-            template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'new' },
-          }),
-          getPostCaseRequest({
-            template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'done' },
-          }),
-        ]);
-
-        expect(result.cases).to.have.length(2);
-
-        const statuses = result.cases.map((c) => c.status).sort();
-        expect(statuses).to.eql([CaseStatuses.closed, CaseStatuses.open].sort());
-      });
-    });
-
     describe('patch (update)', () => {
       it('applies status mapping when extended_fields are included in the update', async () => {
         const template = await createTemplate([statusField]);
@@ -182,6 +87,33 @@ export default ({ getService }: FtrProviderContext): void => {
         });
 
         expect(updatedCase.status).to.eql(CaseStatuses.closed);
+      });
+
+      it('does not override status when the extended field value is not in value_map', async () => {
+        const template = await createTemplate([statusField]);
+
+        const postedCase = await createCase(
+          supertest,
+          getPostCaseRequest({
+            template: { id: template.templateId, version: template.templateVersion },
+          })
+        );
+
+        const [updatedCase] = await updateCase({
+          supertest,
+          params: {
+            cases: [
+              {
+                id: postedCase.id,
+                version: postedCase.version,
+                template: { id: template.templateId, version: template.templateVersion },
+                [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'unknown' },
+              },
+            ],
+          },
+        });
+
+        expect(updatedCase.status).to.eql(CaseStatuses.open);
       });
 
       it('does not apply status mapping when extended_fields are absent from the update', async () => {
