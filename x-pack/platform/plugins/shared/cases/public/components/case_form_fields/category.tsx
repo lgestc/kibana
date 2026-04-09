@@ -21,9 +21,7 @@ const CategoryComponent: React.FC<Props> = ({ isLoading }) => {
     <CategoryFormField
       isLoading={isLoading || isLoadingCategories}
       availableCategories={categories}
-      formRowProps={{
-        labelAppend: OptionalFieldLabel,
-      }}
+      formRowProps={{ labelAppend: OptionalFieldLabel }}
     />
   );
 };
