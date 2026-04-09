@@ -9,22 +9,20 @@ import React, { memo } from 'react';
 import { useGetCategories } from '../../containers/use_get_categories';
 import { CategoryFormField } from '../category/category_form_field';
 import { OptionalFieldLabel } from '../optional_field_label';
-import { MappedByTemplateLabel } from './mapped_by_template_label';
 
 interface Props {
   isLoading: boolean;
-  isMappedByTemplate?: boolean;
 }
 
-const CategoryComponent: React.FC<Props> = ({ isLoading, isMappedByTemplate = false }) => {
+const CategoryComponent: React.FC<Props> = ({ isLoading }) => {
   const { isLoading: isLoadingCategories, data: categories = [] } = useGetCategories();
 
   return (
     <CategoryFormField
-      isLoading={isLoading || isLoadingCategories || isMappedByTemplate}
+      isLoading={isLoading || isLoadingCategories}
       availableCategories={categories}
       formRowProps={{
-        labelAppend: isMappedByTemplate ? <MappedByTemplateLabel /> : OptionalFieldLabel,
+        labelAppend: OptionalFieldLabel,
       }}
     />
   );

@@ -8,24 +8,14 @@
 import { applySystemFieldMappings } from './apply_system_field_mappings';
 import type { FieldDefinition } from '../types/domain/template/fields';
 
-const makeTextField = (
+const makeStatusField = (
   name: string,
-  mapsTo: 'title' | 'description' | 'category'
-): FieldDefinition => ({
-  name,
-  control: 'INPUT_TEXT',
-  type: 'keyword',
-  system: { maps_to: mapsTo },
-});
-
-const makeSeverityField = (
-  name: string,
-  valueMap: Record<string, 'low' | 'medium' | 'high' | 'critical'>
+  valueMap: Record<string, 'open' | 'in-progress' | 'closed'>
 ): FieldDefinition => ({
   name,
   control: 'SELECT_BASIC',
   type: 'keyword',
-  system: { maps_to: 'severity', value_map: valueMap },
+  system: { maps_to: 'status', value_map: valueMap },
   metadata: { options: Object.keys(valueMap) },
 });
 
@@ -36,66 +26,36 @@ const makeUnmappedField = (name: string): FieldDefinition => ({
 });
 
 describe('applySystemFieldMappings', () => {
-  it('maps a text field value to the system title field', () => {
-    const fields = [makeTextField('case_name', 'title')];
-    const extendedFields = { case_name_as_keyword: 'My incident' };
+  it('maps a field value to status via value_map', () => {
+    const fields = [makeStatusField('state', { new: 'open', wip: 'in-progress', done: 'closed' })];
 
-    expect(applySystemFieldMappings(fields, extendedFields)).toEqual({ title: 'My incident' });
-  });
-
-  it('maps a text field value to the system description field', () => {
-    const fields = [makeTextField('summary', 'description')];
-    const extendedFields = { summary_as_keyword: 'Brief summary' };
-
-    expect(applySystemFieldMappings(fields, extendedFields)).toEqual({
-      description: 'Brief summary',
+    expect(applySystemFieldMappings(fields, { state_as_keyword: 'new' })).toEqual({
+      status: 'open',
+    });
+    expect(applySystemFieldMappings(fields, { state_as_keyword: 'wip' })).toEqual({
+      status: 'in-progress',
+    });
+    expect(applySystemFieldMappings(fields, { state_as_keyword: 'done' })).toEqual({
+      status: 'closed',
     });
   });
 
-  it('maps a text field value to the system category field', () => {
-    const fields = [makeTextField('area', 'category')];
-    const extendedFields = { area_as_keyword: 'Infrastructure' };
-
-    expect(applySystemFieldMappings(fields, extendedFields)).toEqual({
-      category: 'Infrastructure',
-    });
-  });
-
-  it('applies value_map when mapping to severity', () => {
-    const fields = [
-      makeSeverityField('priority', {
-        P1: 'critical',
-        P2: 'high',
-        P3: 'medium',
-        P4: 'low',
-      }),
-    ];
-
-    expect(applySystemFieldMappings(fields, { priority_as_keyword: 'P1' })).toEqual({
-      severity: 'critical',
-    });
-    expect(applySystemFieldMappings(fields, { priority_as_keyword: 'P4' })).toEqual({
-      severity: 'low',
-    });
-  });
-
-  it('omits severity override when raw value is not in value_map', () => {
-    const fields = [makeSeverityField('priority', { P1: 'critical' })];
-    const extendedFields = { priority_as_keyword: 'unknown' };
+  it('omits status override when raw value is not in value_map', () => {
+    const fields = [makeStatusField('state', { new: 'open' })];
+    const extendedFields = { state_as_keyword: 'unknown' };
 
     expect(applySystemFieldMappings(fields, extendedFields)).toEqual({});
   });
 
   it('returns empty object when the extended field key is absent', () => {
-    const fields = [makeTextField('case_name', 'title')];
-    const extendedFields = {}; // key missing
+    const fields = [makeStatusField('state', { new: 'open' })];
 
-    expect(applySystemFieldMappings(fields, extendedFields)).toEqual({});
+    expect(applySystemFieldMappings(fields, {})).toEqual({});
   });
 
   it('returns empty object when the extended field value is null', () => {
-    const fields = [makeTextField('case_name', 'title')];
-    const extendedFields = { case_name_as_keyword: null };
+    const fields = [makeStatusField('state', { new: 'open' })];
+    const extendedFields = { state_as_keyword: null };
 
     expect(applySystemFieldMappings(fields, extendedFields)).toEqual({});
   });
@@ -107,27 +67,8 @@ describe('applySystemFieldMappings', () => {
     expect(applySystemFieldMappings(fields, extendedFields)).toEqual({});
   });
 
-  it('handles multiple mapped fields at once', () => {
-    const fields = [
-      makeTextField('case_name', 'title'),
-      makeTextField('details', 'description'),
-      makeSeverityField('priority', { P1: 'critical', P2: 'high', P3: 'medium', P4: 'low' }),
-    ];
-    const extendedFields = {
-      case_name_as_keyword: 'Outage',
-      details_as_keyword: 'DB went down',
-      priority_as_keyword: 'P2',
-    };
-
-    expect(applySystemFieldMappings(fields, extendedFields)).toEqual({
-      title: 'Outage',
-      description: 'DB went down',
-      severity: 'high',
-    });
-  });
-
   it('returns empty object when extendedFields is empty', () => {
-    const fields = [makeTextField('case_name', 'title')];
+    const fields = [makeStatusField('state', { new: 'open' })];
 
     expect(applySystemFieldMappings(fields, {})).toEqual({});
   });

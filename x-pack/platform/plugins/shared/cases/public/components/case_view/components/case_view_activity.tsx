@@ -55,8 +55,6 @@ import { CustomFields } from './custom_fields';
 import { useReplaceCustomField } from '../../../containers/use_replace_custom_field';
 import { KibanaServices } from '../../../common/lib/kibana';
 import { TemplateFields } from './template_fields';
-import { useGetTemplate } from '../../templates_v2/hooks/use_get_template';
-import { getMappedSystemFields } from '../../../../common/utils/get_mapped_system_fields';
 import { useStatusAction } from '../../actions/status/use_status_action';
 import { useRefreshCaseViewPage } from '../use_on_refresh_case_view_page';
 
@@ -105,15 +103,6 @@ export const CaseViewActivity = ({
   const { data: casesConfiguration } = useGetCaseConfiguration();
 
   const isTemplatesV2Enabled = KibanaServices.getConfig()?.templates?.enabled ?? false;
-
-  const { data: templateData } = useGetTemplate(
-    isTemplatesV2Enabled ? caseData.template?.id : undefined,
-    caseData.template?.version
-  );
-  const mappedFields = useMemo(
-    () => new Set(getMappedSystemFields(templateData?.definition?.fields ?? [])),
-    [templateData]
-  );
 
   const { userProfiles, reporterAsArray } = parseCaseUsers({
     caseUsers,
@@ -253,7 +242,6 @@ export const CaseViewActivity = ({
           isLoadingDescription={isLoadingDescription}
           caseData={caseData}
           onUpdateField={onUpdateField}
-          isMappedByTemplate={mappedFields.has('description')}
         />
         <EuiSpacer size="l" />
         <EuiFlexItem grow={false}>
@@ -324,7 +312,6 @@ export const CaseViewActivity = ({
             isLoading={isLoading && loadingKey === 'severity'}
             selectedSeverity={caseData.severity}
             onSeverityChange={onUpdateSeverity}
-            isMappedByTemplate={mappedFields.has('severity')}
           />
           <UserList
             dataTestSubj="case-view-user-list-reporter"
@@ -353,7 +340,6 @@ export const CaseViewActivity = ({
             category={caseData.category}
             onSubmit={onSubmitCategory}
             isLoading={isLoading && loadingKey === 'category'}
-            isMappedByTemplate={mappedFields.has('category')}
           />
           {showConnectorSidebar ? (
             <EditConnector

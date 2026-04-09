@@ -9,7 +9,7 @@ import expect from '@kbn/expect';
 import yaml from 'js-yaml';
 
 import type { BulkCreateCasesResponse } from '@kbn/cases-plugin/common/types/api';
-import { CaseSeverity } from '@kbn/cases-plugin/common/types/domain';
+import { CaseStatuses } from '@kbn/cases-components';
 import { CASE_EXTENDED_FIELDS, INTERNAL_TEMPLATES_URL } from '@kbn/cases-plugin/common/constants';
 import {
   createCase,
@@ -47,208 +47,75 @@ export default ({ getService }: FtrProviderContext): void => {
     return body as { templateId: string; templateVersion: number };
   };
 
+  const statusField = {
+    name: 'state',
+    control: 'SELECT_BASIC',
+    label: 'State',
+    type: 'keyword',
+    system: {
+      maps_to: 'status',
+      value_map: { new: 'open', wip: 'in-progress', done: 'closed' },
+    },
+    metadata: { options: ['new', 'wip', 'done'] },
+  };
+
   describe('system field mappings', () => {
     afterEach(async () => {
       await deleteAllCaseItems(es);
     });
 
     describe('create', () => {
-      it('overrides title with the mapped extended field value', async () => {
-        const template = await createTemplate([
-          {
-            name: 'case_name',
-            control: 'INPUT_TEXT',
-            label: 'Case name',
-            type: 'keyword',
-            system: { maps_to: 'title' },
-          },
-        ]);
+      it('overrides status with the mapped extended field value', async () => {
+        const template = await createTemplate([statusField]);
 
         const createdCase = await createCase(
           supertest,
           getPostCaseRequest({
-            title: 'default title',
             template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { case_name_as_keyword: 'Mapped title' },
+            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'wip' },
           })
         );
 
-        expect(createdCase.title).to.eql('Mapped title');
+        expect(createdCase.status).to.eql(CaseStatuses['in-progress']);
       });
 
-      it('overrides description with the mapped extended field value', async () => {
-        const template = await createTemplate([
-          {
-            name: 'summary',
-            control: 'TEXTAREA',
-            label: 'Summary',
-            type: 'keyword',
-            system: { maps_to: 'description' },
-          },
-        ]);
-
-        const createdCase = await createCase(
-          supertest,
-          getPostCaseRequest({
-            description: 'default description',
-            template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { summary_as_keyword: 'Mapped description' },
-          })
-        );
-
-        expect(createdCase.description).to.eql('Mapped description');
-      });
-
-      it('overrides category with the mapped extended field value', async () => {
-        const template = await createTemplate([
-          {
-            name: 'area',
-            control: 'INPUT_TEXT',
-            label: 'Area',
-            type: 'keyword',
-            system: { maps_to: 'category' },
-          },
-        ]);
+      it('does not override status when the extended field value is not in value_map', async () => {
+        const template = await createTemplate([statusField]);
 
         const createdCase = await createCase(
           supertest,
           getPostCaseRequest({
             template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { area_as_keyword: 'Infrastructure' },
+            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'unknown' },
           })
         );
 
-        expect(createdCase.category).to.eql('Infrastructure');
-      });
-
-      it('overrides severity via value_map', async () => {
-        const template = await createTemplate([
-          {
-            name: 'priority',
-            control: 'SELECT_BASIC',
-            label: 'Priority',
-            type: 'keyword',
-            system: {
-              maps_to: 'severity',
-              value_map: { P1: 'critical', P2: 'high', P3: 'medium', P4: 'low' },
-            },
-            metadata: { options: ['P1', 'P2', 'P3', 'P4'] },
-          },
-        ]);
-
-        const createdCase = await createCase(
-          supertest,
-          getPostCaseRequest({
-            severity: CaseSeverity.LOW,
-            template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { priority_as_keyword: 'P1' },
-          })
-        );
-
-        expect(createdCase.severity).to.eql(CaseSeverity.CRITICAL);
-      });
-
-      it('maps multiple system fields at once', async () => {
-        const template = await createTemplate([
-          {
-            name: 'case_name',
-            control: 'INPUT_TEXT',
-            label: 'Case name',
-            type: 'keyword',
-            system: { maps_to: 'title' },
-          },
-          {
-            name: 'priority',
-            control: 'SELECT_BASIC',
-            label: 'Priority',
-            type: 'keyword',
-            system: {
-              maps_to: 'severity',
-              value_map: { P1: 'critical', P2: 'high', P3: 'medium', P4: 'low' },
-            },
-            metadata: { options: ['P1', 'P2', 'P3', 'P4'] },
-          },
-        ]);
-
-        const createdCase = await createCase(
-          supertest,
-          getPostCaseRequest({
-            title: 'default title',
-            severity: CaseSeverity.LOW,
-            template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: {
-              case_name_as_keyword: 'Multi-mapped title',
-              priority_as_keyword: 'P2',
-            },
-          })
-        );
-
-        expect(createdCase.title).to.eql('Multi-mapped title');
-        expect(createdCase.severity).to.eql(CaseSeverity.HIGH);
-      });
-
-      it('does not override severity when the extended field value is not in value_map', async () => {
-        const template = await createTemplate([
-          {
-            name: 'priority',
-            control: 'SELECT_BASIC',
-            label: 'Priority',
-            type: 'keyword',
-            system: {
-              maps_to: 'severity',
-              value_map: { P1: 'critical' },
-            },
-            metadata: { options: ['P1', 'UNKNOWN'] },
-          },
-        ]);
-
-        const createdCase = await createCase(
-          supertest,
-          getPostCaseRequest({
-            severity: CaseSeverity.MEDIUM,
-            template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: { priority_as_keyword: 'UNKNOWN' },
-          })
-        );
-
-        expect(createdCase.severity).to.eql(CaseSeverity.MEDIUM);
+        expect(createdCase.status).to.eql(CaseStatuses.open);
       });
 
       it('creates the case with defaults when the template does not exist', async () => {
         const createdCase = await createCase(
           supertest,
           getPostCaseRequest({
-            title: 'default title',
-            severity: CaseSeverity.LOW,
             template: { id: 'nonexistent-template-id', version: 1 },
-            [CASE_EXTENDED_FIELDS]: { case_name_as_keyword: 'Should be ignored' },
+            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'done' },
           })
         );
 
-        expect(createdCase.title).to.eql('default title');
-        expect(createdCase.severity).to.eql(CaseSeverity.LOW);
+        expect(createdCase.status).to.eql(CaseStatuses.open);
       });
 
       it('does not apply mappings when no extended fields are submitted', async () => {
-        const template = await createTemplate([
-          {
-            name: 'case_name',
-            control: 'INPUT_TEXT',
-            label: 'Case name',
-            type: 'keyword',
-            system: { maps_to: 'title' },
-          },
-        ]);
+        const template = await createTemplate([statusField]);
 
         const createdCase = await createCase(
           supertest,
           getPostCaseRequest({
-            title: 'default title',
             template: { id: template.templateId, version: template.templateVersion },
           })
         );
 
-        expect(createdCase.title).to.eql('default title');
+        expect(createdCase.status).to.eql(CaseStatuses.open);
       });
     });
 
@@ -268,84 +135,30 @@ export default ({ getService }: FtrProviderContext): void => {
         return body;
       };
 
-      it('overrides system fields for each case in the bulk request', async () => {
-        const template = await createTemplate([
-          {
-            name: 'case_name',
-            control: 'INPUT_TEXT',
-            label: 'Case name',
-            type: 'keyword',
-            system: { maps_to: 'title' },
-          },
-          {
-            name: 'priority',
-            control: 'SELECT_BASIC',
-            label: 'Priority',
-            type: 'keyword',
-            system: {
-              maps_to: 'severity',
-              value_map: { P1: 'critical', P2: 'high', P3: 'medium', P4: 'low' },
-            },
-            metadata: { options: ['P1', 'P2', 'P3', 'P4'] },
-          },
-        ]);
+      it('overrides status for each case in the bulk request', async () => {
+        const template = await createTemplate([statusField]);
 
         const result = await bulkCreate([
           getPostCaseRequest({
-            title: 'case A default',
-            severity: CaseSeverity.LOW,
             template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: {
-              case_name_as_keyword: 'Case A mapped',
-              priority_as_keyword: 'P1',
-            },
+            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'new' },
           }),
           getPostCaseRequest({
-            title: 'case B default',
-            severity: CaseSeverity.LOW,
             template: { id: template.templateId, version: template.templateVersion },
-            [CASE_EXTENDED_FIELDS]: {
-              case_name_as_keyword: 'Case B mapped',
-              priority_as_keyword: 'P3',
-            },
+            [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'done' },
           }),
         ]);
 
         expect(result.cases).to.have.length(2);
 
-        const caseA = result.cases.find((c) => c.title === 'Case A mapped');
-        const caseB = result.cases.find((c) => c.title === 'Case B mapped');
-
-        expect(caseA).to.be.ok();
-        expect(caseA!.severity).to.eql(CaseSeverity.CRITICAL);
-
-        expect(caseB).to.be.ok();
-        expect(caseB!.severity).to.eql(CaseSeverity.MEDIUM);
+        const statuses = result.cases.map((c) => c.status).sort();
+        expect(statuses).to.eql([CaseStatuses.closed, CaseStatuses.open].sort());
       });
     });
 
     describe('patch (update)', () => {
-      it('applies system field mappings when extended_fields are included in the update', async () => {
-        const template = await createTemplate([
-          {
-            name: 'case_name',
-            control: 'INPUT_TEXT',
-            label: 'Case name',
-            type: 'keyword',
-            system: { maps_to: 'title' },
-          },
-          {
-            name: 'priority',
-            control: 'SELECT_BASIC',
-            label: 'Priority',
-            type: 'keyword',
-            system: {
-              maps_to: 'severity',
-              value_map: { P1: 'critical', P2: 'high', P3: 'medium', P4: 'low' },
-            },
-            metadata: { options: ['P1', 'P2', 'P3', 'P4'] },
-          },
-        ]);
+      it('applies status mapping when extended_fields are included in the update', async () => {
+        const template = await createTemplate([statusField]);
 
         const postedCase = await createCase(
           supertest,
@@ -362,34 +175,21 @@ export default ({ getService }: FtrProviderContext): void => {
                 id: postedCase.id,
                 version: postedCase.version,
                 template: { id: template.templateId, version: template.templateVersion },
-                [CASE_EXTENDED_FIELDS]: {
-                  case_name_as_keyword: 'Updated via mapping',
-                  priority_as_keyword: 'P2',
-                },
+                [CASE_EXTENDED_FIELDS]: { state_as_keyword: 'done' },
               },
             ],
           },
         });
 
-        expect(updatedCase.title).to.eql('Updated via mapping');
-        expect(updatedCase.severity).to.eql(CaseSeverity.HIGH);
+        expect(updatedCase.status).to.eql(CaseStatuses.closed);
       });
 
-      it('does not apply system field mappings when extended_fields are absent from the update', async () => {
-        const template = await createTemplate([
-          {
-            name: 'case_name',
-            control: 'INPUT_TEXT',
-            label: 'Case name',
-            type: 'keyword',
-            system: { maps_to: 'title' },
-          },
-        ]);
+      it('does not apply status mapping when extended_fields are absent from the update', async () => {
+        const template = await createTemplate([statusField]);
 
         const postedCase = await createCase(
           supertest,
           getPostCaseRequest({
-            title: 'original title',
             template: { id: template.templateId, version: template.templateVersion },
           })
         );
@@ -407,7 +207,7 @@ export default ({ getService }: FtrProviderContext): void => {
           },
         });
 
-        expect(updatedCase.title).to.eql('original title');
+        expect(updatedCase.status).to.eql(CaseStatuses.open);
       });
     });
   });

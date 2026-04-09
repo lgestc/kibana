@@ -26,9 +26,6 @@ import { CaseViewSimilarCases } from './components/case_view_similar_cases';
 import { CaseViewEvents } from './components/case_view_events';
 import { CaseViewAttachments } from './components/case_view_attachments';
 import { filterCaseAttachmentsBySearchTerm } from './components/helpers';
-import { KibanaServices } from '../../common/lib/kibana';
-import { useGetTemplate } from '../templates_v2/hooks/use_get_template';
-import { getMappedSystemFields } from '../../../common/utils/get_mapped_system_fields';
 
 const getActiveTabId = (tabId?: string) => {
   if (tabId && Object.values(CASE_VIEW_PAGE_TABS).includes(tabId as CASE_VIEW_PAGE_TABS)) {
@@ -103,18 +100,6 @@ export const CaseViewPage = React.memo<CaseViewPageProps>(
       }
     }, [isLoading, refreshRef, refreshCaseViewPage]);
 
-    const isTemplatesV2Enabled = KibanaServices.getConfig()?.templates?.enabled ?? false;
-    const { data: templateData } = useGetTemplate(
-      isTemplatesV2Enabled ? caseData.template?.id : undefined,
-      caseData.template?.version
-    );
-    const titleMappedByTemplate = useMemo(
-      () =>
-        isTemplatesV2Enabled &&
-        getMappedSystemFields(templateData?.definition?.fields ?? []).includes('title'),
-      [isTemplatesV2Enabled, templateData]
-    );
-
     const onSubmitTitle = useCallback(
       (newTitle: string) =>
         onUpdateField({
@@ -135,7 +120,6 @@ export const CaseViewPage = React.memo<CaseViewPageProps>(
               isLoading={isLoading && loadingKey === 'title'}
               title={caseData.title}
               onSubmit={onSubmitTitle}
-              isMappedByTemplate={titleMappedByTemplate}
             />
           }
           title={caseData.title}

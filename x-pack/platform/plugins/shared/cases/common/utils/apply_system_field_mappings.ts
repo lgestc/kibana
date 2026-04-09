@@ -8,10 +8,7 @@
 import type { FieldDefinition } from '../types/domain/template/fields';
 
 export interface SystemFieldOverrides {
-  title?: string;
-  description?: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-  category?: string | null;
+  status?: 'open' | 'in-progress' | 'closed';
 }
 
 /**
@@ -38,17 +35,9 @@ export const applySystemFieldMappings = (
       if (rawValue != null) {
         const rawString = String(rawValue);
 
-        if (system.maps_to === 'severity') {
-          const mapped = system.value_map[rawString];
-          if (mapped != null) {
-            overrides.severity = mapped;
-          }
-        } else if (system.maps_to === 'title') {
-          overrides.title = rawString;
-        } else if (system.maps_to === 'description') {
-          overrides.description = rawString;
-        } else if (system.maps_to === 'category') {
-          overrides.category = rawString;
+        const mapped = system.value_map[rawString];
+        if (mapped != null) {
+          overrides.status = mapped;
         }
       }
     }

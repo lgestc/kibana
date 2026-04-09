@@ -109,34 +109,22 @@ fields:
         field: scheduled_at
         operator: eq
         value: "2024-06-01T09:00:00.000Z"
-  # system.maps_to: title — this field's value becomes the case title.
-  # The standard title input is hidden when this mapping is active.
-  - name: case_name
-    control: INPUT_TEXT
-    label: Case name
-    type: keyword
-    system:
-      maps_to: title
-    validation:
-      required: true
-  # system.maps_to: severity with value_map — maps template-specific labels
-  # (P1..P4) to the system severity enum (critical, high, medium, low).
-  # value_map is required when maps_to is 'severity'.
-  - name: priority
+  # system.maps_to: status with value_map — maps template-specific labels
+  # to the case status enum (open, in-progress, closed).
+  # value_map is required when maps_to is 'status'.
+  - name: state
     control: SELECT_BASIC
-    label: Priority
+    label: State
     type: keyword
     system:
-      maps_to: severity
+      maps_to: status
       value_map:
-        P1: critical
-        P2: high
-        P3: medium
-        P4: low
+        new: open
+        wip: in-progress
+        done: closed
     metadata:
       options:
-        - P1
-        - P2
-        - P3
-        - P4
+        - new
+        - wip
+        - done
 `.trimStart();

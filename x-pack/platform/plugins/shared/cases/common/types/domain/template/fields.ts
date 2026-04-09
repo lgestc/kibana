@@ -8,27 +8,15 @@
 import { z } from '@kbn/zod/v4';
 
 export const SystemField = {
-  TITLE: 'title',
-  DESCRIPTION: 'description',
-  SEVERITY: 'severity',
-  CATEGORY: 'category',
+  STATUS: 'status',
 } as const;
 
 export type SystemField = (typeof SystemField)[keyof typeof SystemField];
 
-const SystemFieldMappingSeveritySchema = z.object({
-  maps_to: z.literal('severity'),
-  value_map: z.record(z.string(), z.enum(['low', 'medium', 'high', 'critical'])),
+export const SystemFieldMappingSchema = z.object({
+  maps_to: z.literal('status'),
+  value_map: z.record(z.string(), z.enum(['open', 'in-progress', 'closed'])),
 });
-
-const SystemFieldMappingTextSchema = z.object({
-  maps_to: z.enum(['title', 'description', 'category']),
-});
-
-export const SystemFieldMappingSchema = z.discriminatedUnion('maps_to', [
-  SystemFieldMappingSeveritySchema,
-  SystemFieldMappingTextSchema,
-]);
 
 export type SystemFieldMapping = z.infer<typeof SystemFieldMappingSchema>;
 

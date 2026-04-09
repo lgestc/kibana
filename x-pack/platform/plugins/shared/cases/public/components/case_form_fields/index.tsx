@@ -7,7 +7,6 @@
 
 import React, { memo } from 'react';
 import { EuiFlexGroup } from '@elastic/eui';
-import { useFormData } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import { Title } from './title';
 import { Tags } from './tags';
 import { Category } from './category';
@@ -39,23 +38,14 @@ const CaseFormFieldsComponent: React.FC<Props> = ({
   const config = KibanaServices.getConfig();
   const isTemplatesV2Enabled = config?.templates?.enabled ?? false;
 
-  const [{ mappedSystemFields }] = useFormData<{ mappedSystemFields?: string[] }>({
-    watch: ['mappedSystemFields'],
-  });
-  const mappedFields = new Set(isTemplatesV2Enabled ? mappedSystemFields ?? [] : []);
-
   return (
     <EuiFlexGroup data-test-subj="case-form-fields" direction="column" gutterSize="none">
-      <Title isLoading={isLoading} isMappedByTemplate={mappedFields.has('title')} />
+      <Title isLoading={isLoading} />
       {caseAssignmentAuthorized ? <Assignees isLoading={isLoading} /> : null}
       <Tags isLoading={isLoading} />
-      <Category isLoading={isLoading} isMappedByTemplate={mappedFields.has('category')} />
-      <Severity isLoading={isLoading} isMappedByTemplate={mappedFields.has('severity')} />
-      <Description
-        isLoading={isLoading}
-        draftStorageKey={draftStorageKey}
-        isMappedByTemplate={mappedFields.has('description')}
-      />
+      <Category isLoading={isLoading} />
+      <Severity isLoading={isLoading} />
+      <Description isLoading={isLoading} draftStorageKey={draftStorageKey} />
       <CustomFields
         isLoading={isLoading}
         setCustomFieldsOptional={setCustomFieldsOptional}

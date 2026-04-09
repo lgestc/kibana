@@ -78,7 +78,6 @@ export const createFormSerializer = (
     customFields,
     templateId,
     templateVersion,
-    mappedSystemFields: _mappedSystemFields,
     [CASE_EXTENDED_FIELDS]: extendedFields,
     ...restData
   } = data;

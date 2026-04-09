@@ -15,14 +15,12 @@ import { isEmpty } from 'lodash';
 import { CaseSeverity } from '../../../common/types/domain';
 import { SeveritySelector } from '../severity/selector';
 import { SEVERITY_TITLE } from '../severity/translations';
-import { MappedByTemplateLabel } from './mapped_by_template_label';
 
 interface Props {
   isLoading: boolean;
-  isMappedByTemplate?: boolean;
 }
 
-const SeverityComponent: React.FC<Props> = ({ isLoading, isMappedByTemplate = false }) => (
+const SeverityComponent: React.FC<Props> = ({ isLoading }) => (
   <UseField<CaseSeverity>
     path={'severity'}
     componentProps={{
@@ -41,13 +39,12 @@ const SeverityComponent: React.FC<Props> = ({ isLoading, isMappedByTemplate = fa
           data-test-subj="caseSeverity"
           fullWidth
           label={SEVERITY_TITLE}
-          labelAppend={isMappedByTemplate ? <MappedByTemplateLabel /> : undefined}
           error={errorMessage}
           isInvalid={isInvalid}
         >
           <SeveritySelector
             isLoading={isLoading}
-            isDisabled={isLoading || isMappedByTemplate}
+            isDisabled={isLoading}
             selectedSeverity={isEmpty(field.value) ? CaseSeverity.LOW : field.value}
             onSeverityChange={onChange}
           />
