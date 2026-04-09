@@ -10,11 +10,7 @@ import yaml from 'js-yaml';
 
 import { CaseStatuses } from '@kbn/cases-components';
 import { CASE_EXTENDED_FIELDS, INTERNAL_TEMPLATES_URL } from '@kbn/cases-plugin/common/constants';
-import {
-  createCase,
-  deleteAllCaseItems,
-  updateCase,
-} from '../../../../common/lib/api';
+import { createCase, deleteAllCaseItems, updateCase } from '../../../../common/lib/api';
 import { getPostCaseRequest } from '../../../../common/lib/mock';
 import type { FtrProviderContext } from '../../../../common/ftr_provider_context';
 
