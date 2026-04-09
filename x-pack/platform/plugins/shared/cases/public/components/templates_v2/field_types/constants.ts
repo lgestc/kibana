@@ -37,6 +37,7 @@ fields:
         wip: in-progress
         done: closed
     metadata:
+      default: new
       options:
         - new
         - wip
