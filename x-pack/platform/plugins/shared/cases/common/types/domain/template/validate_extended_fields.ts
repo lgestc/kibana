@@ -53,7 +53,10 @@ const validateField = (field: FieldSchemaType, value: string, errors: string[]):
   }
 
   // Options
-  if (field.control === FieldType.SELECT_BASIC) {
+  if (
+    field.control === FieldType.SELECT_BASIC ||
+    field.control === FieldType.RADIO_GROUP
+  ) {
     const options = field.metadata?.options ?? [];
     if (!options.includes(value)) {
       errors.push(`Field "${label}" must be one of: ${options.join(', ')}`);
