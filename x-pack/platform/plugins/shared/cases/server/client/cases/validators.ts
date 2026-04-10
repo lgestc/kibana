@@ -166,6 +166,9 @@ export const validateExtendedFieldsInRequest = async ({
   templatesService: TemplatesService;
 }): Promise<void> => {
   if (!updateReq.extended_fields) return;
+  if (updateReq.template === null) {
+    throw Boom.badRequest('extended_fields cannot be set when template is being cleared');
+  }
   const templateId = updateReq.template?.id ?? originalCase.attributes.template?.id;
   if (!templateId) {
     throw Boom.badRequest('extended_fields require a template to be specified on the case');

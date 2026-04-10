@@ -843,6 +843,23 @@ describe('validators', () => {
       ).rejects.toThrow('Template tpl-1 has an invalid definition');
     });
 
+    it('throws when template is explicitly null and extended_fields are provided', async () => {
+      await expect(
+        validateExtendedFieldsInRequest({
+          updateReq: {
+            id: 'case-1',
+            version: '1',
+            template: null,
+            extended_fields: { summary_as_keyword: 'hi' },
+          },
+          originalCase: makeOriginalCase('tpl-from-original'),
+          templatesService: templatesService as unknown as TemplatesService,
+        })
+      ).rejects.toThrow('extended_fields cannot be set when template is being cleared');
+
+      expect(templatesService.getTemplate).not.toHaveBeenCalled();
+    });
+
     it('uses template id from original case when not on update request', async () => {
       await expect(
         validateExtendedFieldsInRequest({
