@@ -78,7 +78,10 @@ export const create = async (
       if (!query.template?.id) {
         throw Boom.badRequest('extended_fields require a template to be specified');
       }
-      const templateSO = await templatesService.getTemplate(query.template.id, query.template.version);
+      const templateSO = await templatesService.getTemplate(
+        query.template.id,
+        String(query.template.version)
+      );
       if (!templateSO) {
         throw Boom.badRequest(`Template ${query.template.id} not found`);
       }
