@@ -172,6 +172,7 @@ dependsOn:
   - '@kbn/product-doc-common'
   - '@kbn/lens-common'
   - '@kbn/alerting-v2-episodes-ui'
+  - '@kbn/cases-components'
 tags:
   - test-helper
   - package
