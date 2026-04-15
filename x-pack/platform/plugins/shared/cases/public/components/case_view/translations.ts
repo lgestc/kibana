@@ -287,34 +287,6 @@ export const FIELD_SUBMISSION_ERROR = i18n.translate('xpack.cases.caseView.field
   defaultMessage: 'Error submitting field',
 });
 
-export const APPLIED_TEMPLATE_LABEL = i18n.translate(
-  'xpack.cases.caseView.changeAppliedTemplate.label',
-  {
-    defaultMessage: 'Applied template',
-  }
-);
-
-export const APPLIED_TEMPLATE_PLACEHOLDER = i18n.translate(
-  'xpack.cases.caseView.changeAppliedTemplate.placeholder',
-  {
-    defaultMessage: 'Select a template',
-  }
-);
-
-export const APPLIED_TEMPLATE_NONE = i18n.translate(
-  'xpack.cases.caseView.changeAppliedTemplate.none',
-  {
-    defaultMessage: 'None',
-  }
-);
-
-export const APPLIED_TEMPLATE_APPLY = i18n.translate(
-  'xpack.cases.caseView.changeAppliedTemplate.apply',
-  {
-    defaultMessage: 'Apply',
-  }
-);
-
 export const TEMPLATE_CHANGED_SUCCESSFULLY = i18n.translate(
   'xpack.cases.caseView.changeAppliedTemplate.successToast',
   {

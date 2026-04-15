@@ -40,30 +40,45 @@ const caseWithTemplate = {
 };
 
 const templateFields = [
-  { name: 'priority', type: 'keyword', control: 'INPUT_TEXT' as const, metadata: { default: 'low' } },
-  { name: 'notes', type: 'keyword', control: 'TEXTAREA' as const, metadata: { default: 'N/A' } },
-  { name: 'score', type: 'long', control: 'INPUT_NUMBER' as const, metadata: { default: 0 } },
+  {
+    name: 'priority',
+    type: 'keyword' as const,
+    control: 'INPUT_TEXT' as const,
+    metadata: { default: 'low' },
+  },
+  {
+    name: 'notes',
+    type: 'keyword' as const,
+    control: 'TEXTAREA' as const,
+    metadata: { default: 'N/A' },
+  },
+  {
+    name: 'score',
+    type: 'long' as const,
+    control: 'INPUT_NUMBER' as const,
+    metadata: { default: 0 },
+  },
 ];
 
 describe('computeNewExtendedFields', () => {
   it('keeps existing populated values for fields in the new template', () => {
     const result = computeNewExtendedFields(templateFields, { priorityAsKeyword: 'high' });
 
-    expect(result['priority_as_keyword']).toBe('high');
+    expect(result.priority_as_keyword).toBe('high');
   });
 
   it('uses the template default for fields with an empty string value', () => {
     const result = computeNewExtendedFields(templateFields, { notesAsKeyword: '' });
 
-    expect(result['notes_as_keyword']).toBe('N/A');
+    expect(result.notes_as_keyword).toBe('N/A');
   });
 
   it('uses the template default for fields missing from current extended_fields', () => {
     const result = computeNewExtendedFields(templateFields, {});
 
-    expect(result['priority_as_keyword']).toBe('low');
-    expect(result['notes_as_keyword']).toBe('N/A');
-    expect(result['score_as_long']).toBe('0');
+    expect(result.priority_as_keyword).toBe('low');
+    expect(result.notes_as_keyword).toBe('N/A');
+    expect(result.score_as_long).toBe('0');
   });
 
   it('only includes fields from the new template (drops orphaned old fields)', () => {

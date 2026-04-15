@@ -72,21 +72,18 @@ export const ApplyTemplateModal: FC<ApplyTemplateModalProps> = ({ caseData, onCl
   const onApply = useCallback(() => {
     if (!selectedTemplateId || !selectedTemplateData) return;
 
-    const matched = templatesData?.templates.find((t) => t.templateId === selectedTemplateId);
-    if (!matched) return;
-
     changeTemplate(
       {
         caseData,
         newTemplate: {
-          id: matched.templateId,
-          version: matched.templateVersion,
+          id: selectedTemplateData.templateId,
+          version: selectedTemplateData.templateVersion,
           fields: selectedTemplateData.definition.fields,
         },
       },
       { onSuccess: onClose }
     );
-  }, [selectedTemplateId, selectedTemplateData, templatesData?.templates, changeTemplate, caseData, onClose]);
+  }, [selectedTemplateId, selectedTemplateData, changeTemplate, caseData, onClose]);
 
   const isApplyDisabled =
     !selectedTemplateId ||
