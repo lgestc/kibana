@@ -66,9 +66,7 @@ describe('TemplateUserActionRt', () => {
   });
 
   it('strips extra top-level fields', () => {
-    expect(
-      TemplateUserActionRt.decode({ ...validApplyRequest, extra: 'drop' })
-    ).toStrictEqual({
+    expect(TemplateUserActionRt.decode({ ...validApplyRequest, extra: 'drop' })).toStrictEqual({
       _tag: 'Right',
       right: validApplyRequest,
     });

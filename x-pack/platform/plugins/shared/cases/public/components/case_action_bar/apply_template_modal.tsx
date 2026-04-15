@@ -86,10 +86,7 @@ export const ApplyTemplateModal: FC<ApplyTemplateModalProps> = ({ caseData, onCl
   }, [selectedTemplateId, selectedTemplateData, changeTemplate, caseData, onClose]);
 
   const isApplyDisabled =
-    !selectedTemplateId ||
-    isFetchingDefinition ||
-    !selectedTemplateData ||
-    isApplying;
+    !selectedTemplateId || isFetchingDefinition || !selectedTemplateData || isApplying;
 
   return (
     <EuiModal onClose={onClose} aria-labelledby={titleId} data-test-subj="apply-template-modal">

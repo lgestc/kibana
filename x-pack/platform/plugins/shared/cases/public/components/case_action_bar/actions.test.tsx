@@ -189,9 +189,7 @@ describe('CaseView actions', () => {
         .find('button[data-test-subj="property-actions-case-ellipses"]')
         .first()
         .simulate('click');
-      wrapper
-        .find('button[data-test-subj="property-actions-case-indexEdit"]')
-        .simulate('click');
+      wrapper.find('button[data-test-subj="property-actions-case-indexEdit"]').simulate('click');
 
       expect(wrapper.find('[data-test-subj="apply-template-modal"]').exists()).toBeTruthy();
     });
