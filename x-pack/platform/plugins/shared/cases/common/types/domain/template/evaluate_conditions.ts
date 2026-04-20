@@ -8,19 +8,21 @@
 import type { ConditionRule, CompoundCondition } from './fields';
 import { FieldType } from './fields';
 
-const parseCheckboxValue = (value: unknown): string[] => {
+const isScalarEmpty = (value: unknown): boolean =>
+  value === null || value === undefined || value === '';
+
+const parseJsonArray = (value: unknown): unknown[] => {
   if (typeof value !== 'string' || value === '') return [];
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === 'string')
-      : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 };
 
-const evaluateCheckboxRule = (arr: string[], rule: ConditionRule): boolean | null => {
+const evaluateJsonArrayRule = (value: unknown, rule: ConditionRule): boolean | null => {
+  const arr = parseJsonArray(value);
   switch (rule.operator) {
     case 'contains':
       return arr.includes(String(rule.value ?? ''));
@@ -42,9 +44,9 @@ const evaluateScalarRule = (current: unknown, rule: ConditionRule): boolean => {
     case 'contains':
       return typeof current === 'string' && current.includes(String(rule.value ?? ''));
     case 'empty':
-      return current === null || current === undefined || current === '';
+      return isScalarEmpty(current);
     case 'not_empty':
-      return current !== null && current !== undefined && current !== '';
+      return !isScalarEmpty(current);
     default:
       return true;
   }
@@ -60,9 +62,10 @@ const evaluateRule = (
   if (fieldTypeMap[rule.field] === undefined) return true;
 
   const current = fieldValues[rule.field];
+  const control = fieldControlMap[rule.field];
 
-  if (fieldControlMap[rule.field] === FieldType.CHECKBOX_GROUP) {
-    const result = evaluateCheckboxRule(parseCheckboxValue(current), rule);
+  if (control === FieldType.CHECKBOX_GROUP || control === FieldType.USER_PICKER) {
+    const result = evaluateJsonArrayRule(current, rule);
     if (result !== null) return result;
   }
 
