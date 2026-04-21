@@ -12,52 +12,108 @@ import { evaluateCondition } from './evaluate_conditions';
 
 type FieldSchemaType = z.infer<typeof FieldSchema>;
 
+const validatePattern = (
+  label: string,
+  value: string,
+  validation: FieldSchemaType['validation'],
+  errors: string[]
+): void => {
+  if (!validation?.pattern) return;
+  const { regex, message } = validation.pattern;
+  try {
+    if (!new RegExp(regex).test(value)) {
+      errors.push(message ?? `Field "${label}" does not match pattern ${regex}`);
+    }
+  } catch {
+    // invalid regex in template definition — skip silently
+  }
+};
+
+const validateLengthConstraints = (
+  label: string,
+  value: string,
+  validation: FieldSchemaType['validation'],
+  errors: string[]
+): void => {
+  if (validation?.min_length !== undefined && value.length < validation.min_length) {
+    errors.push(`Field "${label}" must be at least ${validation.min_length} characters`);
+  }
+  if (validation?.max_length !== undefined && value.length > validation.max_length) {
+    errors.push(`Field "${label}" must be at most ${validation.max_length} characters`);
+  }
+};
+
+const validateNumericConstraints = (
+  label: string,
+  value: string,
+  validation: FieldSchemaType['validation'],
+  errors: string[]
+): void => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    errors.push(`Field "${label}" must be a number`);
+    return;
+  }
+  if (validation?.min !== undefined && num < validation.min) {
+    errors.push(`Field "${label}" must be >= ${validation.min}`);
+  }
+  if (validation?.max !== undefined && num > validation.max) {
+    errors.push(`Field "${label}" must be <= ${validation.max}`);
+  }
+};
+
+const validateOptions = (
+  label: string,
+  value: string,
+  options: string[],
+  errors: string[]
+): void => {
+  if (!options.includes(value)) {
+    errors.push(`Field "${label}" must be one of: ${options.join(', ')}`);
+  }
+};
+
+const validateCheckboxGroupOptions = (
+  label: string,
+  value: string,
+  options: string[],
+  errors: string[]
+): void => {
+  try {
+    const selected: unknown = JSON.parse(value);
+    if (!Array.isArray(selected)) return;
+    const invalid = (selected as unknown[]).filter((v) => !options.includes(String(v)));
+    if (invalid.length > 0) {
+      errors.push(`Field "${label}" contains invalid options: ${invalid.join(', ')}`);
+    }
+  } catch {
+    // malformed JSON — skip silently
+  }
+};
+
 const validateField = (field: FieldSchemaType, value: string, errors: string[]): void => {
   const label = field.label ?? field.name;
 
-  // Pattern
-  if (field.validation?.pattern) {
-    const { regex, message } = field.validation.pattern;
-    try {
-      if (!new RegExp(regex).test(value)) {
-        errors.push(message ?? `Field "${label}" does not match pattern ${regex}`);
-      }
-    } catch {
-      // invalid regex in template definition — skip silently
-    }
-  }
+  validatePattern(label, value, field.validation, errors);
 
-  // Length (text/textarea)
   if (field.control === FieldType.INPUT_TEXT || field.control === FieldType.TEXTAREA) {
-    if (field.validation?.min_length !== undefined && value.length < field.validation.min_length) {
-      errors.push(`Field "${label}" must be at least ${field.validation.min_length} characters`);
-    }
-    if (field.validation?.max_length !== undefined && value.length > field.validation.max_length) {
-      errors.push(`Field "${label}" must be at most ${field.validation.max_length} characters`);
-    }
-  }
-
-  // Numeric range
-  if (field.control === FieldType.INPUT_NUMBER) {
-    const num = Number(value);
-    if (!Number.isFinite(num)) {
-      errors.push(`Field "${label}" must be a number`);
-    } else {
-      if (field.validation?.min !== undefined && num < field.validation.min) {
-        errors.push(`Field "${label}" must be >= ${field.validation.min}`);
-      }
-      if (field.validation?.max !== undefined && num > field.validation.max) {
-        errors.push(`Field "${label}" must be <= ${field.validation.max}`);
-      }
-    }
-  }
-
-  // Options
-  if (field.control === FieldType.SELECT_BASIC || field.control === FieldType.RADIO_GROUP) {
-    const options = field.metadata?.options ?? [];
-    if (!options.includes(value)) {
-      errors.push(`Field "${label}" must be one of: ${options.join(', ')}`);
-    }
+    validateLengthConstraints(label, value, field.validation, errors);
+  } else if (field.control === FieldType.INPUT_NUMBER) {
+    validateNumericConstraints(label, value, field.validation, errors);
+  } else if (field.control === FieldType.SELECT_BASIC || field.control === FieldType.RADIO_GROUP) {
+    validateOptions(
+      label,
+      value,
+      (field.metadata as { options?: string[] })?.options ?? [],
+      errors
+    );
+  } else if (field.control === FieldType.CHECKBOX_GROUP) {
+    validateCheckboxGroupOptions(
+      label,
+      value,
+      (field.metadata as { options?: string[] })?.options ?? [],
+      errors
+    );
   }
 };
 
@@ -93,7 +149,10 @@ export const validateExtendedFields = (
 
     if (!isHidden) {
       const value = fieldValues[field.name];
-      const isEmpty = value === undefined || value === null || value === '';
+      const isArrayField =
+        field.control === FieldType.CHECKBOX_GROUP || field.control === FieldType.USER_PICKER;
+      const isEmpty =
+        value === undefined || value === null || value === '' || (isArrayField && value === '[]');
 
       const isRequired =
         field.validation?.required === true ||

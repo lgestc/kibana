@@ -49,6 +49,25 @@ const makeTextareaField = (overrides: Partial<FieldSchemaType> = {}): FieldSchem
     ...overrides,
   } as FieldSchemaType);
 
+const makeCheckboxGroupField = (overrides: Partial<FieldSchemaType> = {}): FieldSchemaType =>
+  ({
+    name: 'systems',
+    label: 'Systems',
+    type: 'keyword',
+    control: FieldType.CHECKBOX_GROUP,
+    metadata: { options: ['api', 'database', 'cache'] },
+    ...overrides,
+  } as FieldSchemaType);
+
+const makeUserPickerField = (overrides: Partial<FieldSchemaType> = {}): FieldSchemaType =>
+  ({
+    name: 'assignee',
+    label: 'Assignee',
+    type: 'keyword',
+    control: FieldType.USER_PICKER,
+    ...overrides,
+  } as FieldSchemaType);
+
 describe('validateExtendedFields', () => {
   describe('valid payload', () => {
     it('returns empty array for valid payload', () => {
@@ -315,6 +334,59 @@ describe('validateExtendedFields', () => {
       const fields: FieldSchemaType[] = [makeSelectField()];
       const extendedFields = { priority_as_keyword: 'medium' };
       expect(validateExtendedFields(extendedFields, fields)).toEqual([]);
+    });
+  });
+
+  describe('CHECKBOX_GROUP validation', () => {
+    it('reports error when required field is empty array', () => {
+      const fields: FieldSchemaType[] = [
+        makeCheckboxGroupField({ validation: { required: true } }),
+      ];
+      const errors = validateExtendedFields({ systems_as_keyword: '[]' }, fields);
+      expect(errors).toContain('Field "Systems" is required');
+    });
+
+    it('does not report required error when field has selections', () => {
+      const fields: FieldSchemaType[] = [
+        makeCheckboxGroupField({ validation: { required: true } }),
+      ];
+      const errors = validateExtendedFields({ systems_as_keyword: '["api","database"]' }, fields);
+      expect(errors).toEqual([]);
+    });
+
+    it('reports error for values not in options', () => {
+      const fields: FieldSchemaType[] = [makeCheckboxGroupField()];
+      const errors = validateExtendedFields({ systems_as_keyword: '["api","unknown"]' }, fields);
+      expect(errors).toContain('Field "Systems" contains invalid options: unknown');
+    });
+
+    it('does not report error when all selected values are valid options', () => {
+      const fields: FieldSchemaType[] = [makeCheckboxGroupField()];
+      const errors = validateExtendedFields({ systems_as_keyword: '["api","cache"]' }, fields);
+      expect(errors).toEqual([]);
+    });
+
+    it('does not report error when optional and empty', () => {
+      const fields: FieldSchemaType[] = [makeCheckboxGroupField()];
+      const errors = validateExtendedFields({ systems_as_keyword: '[]' }, fields);
+      expect(errors).toEqual([]);
+    });
+  });
+
+  describe('USER_PICKER empty-array check', () => {
+    it('reports required error when value is empty JSON array', () => {
+      const fields: FieldSchemaType[] = [makeUserPickerField({ validation: { required: true } })];
+      const errors = validateExtendedFields({ assignee_as_keyword: '[]' }, fields);
+      expect(errors).toContain('Field "Assignee" is required');
+    });
+
+    it('does not report required error when users are selected', () => {
+      const fields: FieldSchemaType[] = [makeUserPickerField({ validation: { required: true } })];
+      const errors = validateExtendedFields(
+        { assignee_as_keyword: '[{"uid":"u1","name":"Alice"}]' },
+        fields
+      );
+      expect(errors).toEqual([]);
     });
   });
 

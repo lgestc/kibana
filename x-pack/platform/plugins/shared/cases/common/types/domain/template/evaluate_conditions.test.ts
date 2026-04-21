@@ -78,6 +78,66 @@ describe('evaluateCondition', () => {
     });
   });
 
+  describe('USER_PICKER field', () => {
+    const typeMapWithUser = { ...fieldTypeMap, assignee: 'keyword' };
+    const controlMapWithUser = { assignee: 'USER_PICKER' };
+
+    it('contains: returns true when a user uid matches', () => {
+      const rule: ConditionRule = { field: 'assignee', operator: 'contains', value: 'user-1' };
+      expect(
+        evaluateCondition(
+          rule,
+          { assignee: '[{"uid":"user-1","name":"Alice"},{"uid":"user-2","name":"Bob"}]' },
+          typeMapWithUser,
+          controlMapWithUser
+        )
+      ).toBe(true);
+    });
+
+    it('contains: returns false when no user uid matches', () => {
+      const rule: ConditionRule = { field: 'assignee', operator: 'contains', value: 'user-99' };
+      expect(
+        evaluateCondition(
+          rule,
+          { assignee: '[{"uid":"user-1","name":"Alice"}]' },
+          typeMapWithUser,
+          controlMapWithUser
+        )
+      ).toBe(false);
+    });
+
+    it('contains: does not match on name field', () => {
+      const rule: ConditionRule = { field: 'assignee', operator: 'contains', value: 'Alice' };
+      expect(
+        evaluateCondition(
+          rule,
+          { assignee: '[{"uid":"user-1","name":"Alice"}]' },
+          typeMapWithUser,
+          controlMapWithUser
+        )
+      ).toBe(false);
+    });
+
+    it('empty: returns true when no users are selected', () => {
+      const rule: ConditionRule = { field: 'assignee', operator: 'empty' };
+      expect(evaluateCondition(rule, { assignee: '[]' }, typeMapWithUser, controlMapWithUser)).toBe(
+        true
+      );
+    });
+
+    it('not_empty: returns true when at least one user is selected', () => {
+      const rule: ConditionRule = { field: 'assignee', operator: 'not_empty' };
+      expect(
+        evaluateCondition(
+          rule,
+          { assignee: '[{"uid":"user-1","name":"Alice"}]' },
+          typeMapWithUser,
+          controlMapWithUser
+        )
+      ).toBe(true);
+    });
+  });
+
   describe('CompoundCondition (all / any)', () => {
     const ruleRed: ConditionRule = { field: 'color', operator: 'eq', value: 'red' };
     const ruleNotEmpty: ConditionRule = { field: 'color', operator: 'not_empty' };
