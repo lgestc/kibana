@@ -661,3 +661,45 @@ export const TEMPLATE_VALIDATION_ERROR = (fileName: string, index: number, issue
 export const TEMPLATE_TITLE = i18n.translate('xpack.cases.templates.title', {
   defaultMessage: 'Templates',
 });
+
+export const LEGACY_MIGRATION_BANNER_TITLE = (count: number) =>
+  i18n.translate('xpack.cases.templates.legacyMigration.title', {
+    values: { count },
+    defaultMessage:
+      'You have {count, plural, one {# legacy template} other {# legacy templates}} that can be migrated to the new system',
+  });
+
+export const LEGACY_MIGRATION_BANNER_BODY = i18n.translate(
+  'xpack.cases.templates.legacyMigration.body',
+  {
+    defaultMessage:
+      'Migrating will convert your existing templates to the new format so they can be used when creating cases. Your original templates are preserved and the system can fall back to them if needed. Custom field pre-fills will be carried over as template fields.',
+  }
+);
+
+export const LEGACY_MIGRATION_BUTTON = i18n.translate(
+  'xpack.cases.templates.legacyMigration.button',
+  {
+    defaultMessage: 'Migrate to new templates',
+  }
+);
+
+export const LEGACY_MIGRATION_SUCCESS = (count: number) =>
+  i18n.translate('xpack.cases.templates.legacyMigration.success', {
+    values: { count },
+    defaultMessage: '{count, plural, one {# template} other {# templates}} migrated successfully',
+  });
+
+export const LEGACY_MIGRATION_PARTIAL_FAILURE = (created: number, failed: number) =>
+  i18n.translate('xpack.cases.templates.legacyMigration.partialFailure', {
+    values: { created, failed },
+    defaultMessage:
+      '{created, plural, one {# template} other {# templates}} migrated, {failed, plural, one {# template} other {# templates}} failed',
+  });
+
+export const LEGACY_MIGRATION_ERROR = i18n.translate(
+  'xpack.cases.templates.legacyMigration.error',
+  {
+    defaultMessage: 'Failed to migrate legacy templates',
+  }
+);

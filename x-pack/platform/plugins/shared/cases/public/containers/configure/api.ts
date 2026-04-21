@@ -13,6 +13,7 @@ import type {
   ConfigurationRequest,
   CreateConfigureResponse,
   GetConfigureResponse,
+  MigrateTemplatesResponse,
   UpdateConfigureResponse,
 } from '../../../common/types/api';
 import type {
@@ -22,7 +23,11 @@ import type {
 } from '../../../common/types/domain';
 import { getAllConnectorTypesUrl } from '../../../common/utils/connectors_api';
 import { getCaseConfigurationDetailsUrl } from '../../../common/api';
-import { CASE_CONFIGURE_CONNECTORS_URL, CASE_CONFIGURE_URL } from '../../../common/constants';
+import {
+  CASE_CONFIGURE_CONNECTORS_URL,
+  CASE_CONFIGURE_URL,
+  INTERNAL_CONFIGURE_MIGRATE_TEMPLATES_URL,
+} from '../../../common/constants';
 import { KibanaServices } from '../../common/lib/kibana';
 import { convertToCamelCase, convertArrayToCamelCase } from '../../api/utils';
 import type { ApiProps, CasesConfigurationUI } from '../types';
@@ -103,6 +108,15 @@ export const patchCaseConfigure = async (
   return convertConfigureResponseToCasesConfigure(configuration);
 };
 
+export const migrateTemplatesToV2 = async ({
+  signal,
+}: ApiProps): Promise<MigrateTemplatesResponse> => {
+  return KibanaServices.get().http.fetch<MigrateTemplatesResponse>(
+    INTERNAL_CONFIGURE_MIGRATE_TEMPLATES_URL,
+    { method: 'POST', signal }
+  );
+};
+
 export const fetchActionTypes = async ({ signal }: ApiProps): Promise<ActionTypeConnector[]> => {
   const response = await KibanaServices.get().http.fetch<ActionTypeConnector[]>(
     getAllConnectorTypesUrl(),
@@ -125,6 +139,7 @@ const convertConfigureResponseToCasesConfigure = (
     connector,
     owner,
     observableTypes,
+    legacyTemplatesMigrated,
   } = configuration;
 
   return {
@@ -137,5 +152,6 @@ const convertConfigureResponseToCasesConfigure = (
     connector,
     owner,
     observableTypes,
+    legacyTemplatesMigrated,
   };
 };

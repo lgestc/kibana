@@ -138,6 +138,15 @@ export const CasesConfigureBasicRt = rt.intersection([
      */
     owner: rt.string,
   }),
+  rt.exact(
+    rt.partial({
+      /**
+       * Indicates that legacy templates (stored in cases-configure) have been migrated to the new templates system.
+       * Legacy templates are preserved for rollback when the feature flag is disabled.
+       */
+      legacyTemplatesMigrated: rt.boolean,
+    })
+  ),
 ]);
 
 export const ConfigurationActivityFieldsRt = rt.strict({

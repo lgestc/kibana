@@ -166,6 +166,7 @@ export type CasesConfigurationUI = Pick<
   | 'version'
   | 'owner'
   | 'observableTypes'
+  | 'legacyTemplatesMigrated'
 >;
 
 export type CasesConfigurationUICustomField = CasesConfigurationUI['customFields'][number];

@@ -215,10 +215,16 @@ export const ConfigurationPatchRequestRt = rt.intersection([
       customFields: CustomFieldsConfigurationRt,
       templates: TemplatesConfigurationRt,
       observableTypes: ObservableTypesConfigurationRt,
+      legacyTemplatesMigrated: rt.boolean,
     })
   ),
   rt.strict({ version: rt.string }),
 ]);
+
+export const MigrateTemplatesResponseRt = rt.strict({
+  created: rt.number,
+  failed: rt.array(rt.strict({ name: rt.string, error: rt.string })),
+});
 
 export type ConfigurationRequest = rt.TypeOf<typeof ConfigurationRequestRt>;
 export type ConfigurationPatchRequest = rt.TypeOf<typeof ConfigurationPatchRequestRt>;
@@ -226,3 +232,4 @@ export type GetConfigurationFindRequest = rt.TypeOf<typeof GetConfigurationFindR
 export type GetConfigureResponse = Configurations;
 export type CreateConfigureResponse = Configuration;
 export type UpdateConfigureResponse = Configuration;
+export type MigrateTemplatesResponse = rt.TypeOf<typeof MigrateTemplatesResponseRt>;

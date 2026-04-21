@@ -25,12 +25,39 @@ import { TemplatesInfoPanel } from '../components/templates_info_panel';
 import { TemplatesTableSettings } from '../components/templates_table_settings';
 import { TemplatesTableEmptyPrompt } from '../components/templates_table_empty_prompt';
 import { DeleteConfirmationModal } from '../../configure_cases/delete_confirmation_modal';
+import { LegacyTemplatesMigrationBanner } from '../components/templates_migration_banner';
+import { useGetCaseConfiguration } from '../../../containers/configure/use_get_case_configuration';
+import { useMigrateLegacyTemplates } from '../hooks/use_migrate_templates';
+import { useCasesToast } from '../../../common/use_cases_toast';
 
 export const AllTemplatesPage: React.FC = () => {
   useCasesTemplatesBreadcrumbs();
   const { owner } = useCasesContext();
   const { getCasesCreateTemplateUrl, navigateToCasesCreateTemplate } =
     useCasesCreateTemplateNavigation();
+  const { showSuccessToast, showErrorToast } = useCasesToast();
+
+  const { data: configuration } = useGetCaseConfiguration();
+  const legacyTemplates = configuration?.templates ?? [];
+  const showMigrationBanner = !configuration?.legacyTemplatesMigrated && legacyTemplates.length > 0;
+
+  const { mutate: migrateLegacyTemplates, isLoading: isMigrating } = useMigrateLegacyTemplates();
+
+  const handleMigrate = useCallback(() => {
+    migrateLegacyTemplates(undefined, {
+      onSuccess: ({ created, failed }) => {
+        if (failed.length > 0 && created > 0) {
+          showSuccessToast(i18n.LEGACY_MIGRATION_PARTIAL_FAILURE(created, failed.length));
+        } else if (failed.length > 0) {
+          showErrorToast(new Error(i18n.LEGACY_MIGRATION_ERROR), {
+            title: i18n.LEGACY_MIGRATION_ERROR,
+          });
+        } else {
+          showSuccessToast(i18n.LEGACY_MIGRATION_SUCCESS(created));
+        }
+      },
+    });
+  }, [migrateLegacyTemplates, showSuccessToast, showErrorToast]);
 
   const { queryParams, setQueryParams, sorting, selectedTemplates, selection, deselectTemplates } =
     useTemplatesState();
@@ -99,6 +126,13 @@ export const AllTemplatesPage: React.FC = () => {
   return (
     <>
       <TemplatesListHeader />
+      {showMigrationBanner && (
+        <LegacyTemplatesMigrationBanner
+          legacyTemplateCount={legacyTemplates.length}
+          onMigrate={handleMigrate}
+          isLoading={isMigrating}
+        />
+      )}
       <TemplatesInfoPanel />
       <TemplatesTableFilters
         queryParams={queryParams}
