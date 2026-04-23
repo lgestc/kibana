@@ -110,10 +110,11 @@ export const patchCaseConfigure = async (
 
 export const migrateTemplatesToV2 = async ({
   signal,
-}: ApiProps): Promise<MigrateTemplatesResponse> => {
+  owner,
+}: ApiProps & { owner: string }): Promise<MigrateTemplatesResponse> => {
   return KibanaServices.get().http.fetch<MigrateTemplatesResponse>(
     INTERNAL_CONFIGURE_MIGRATE_TEMPLATES_URL,
-    { method: 'POST', signal }
+    { method: 'POST', signal, body: JSON.stringify({ owner }) }
   );
 };
 

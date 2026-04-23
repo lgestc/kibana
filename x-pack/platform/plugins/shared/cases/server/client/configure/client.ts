@@ -7,6 +7,7 @@
 
 import pMap from 'p-map';
 import Boom from '@hapi/boom';
+import { v4 as uuidv4 } from 'uuid';
 
 import type { SavedObject } from '@kbn/core/server';
 import { SavedObjectsUtils } from '@kbn/core/server';
@@ -26,6 +27,7 @@ import type {
   ConfigurationRequest,
   ConnectorMappingResponse,
   GetConfigurationFindRequest,
+  MigrateTemplatesResponse,
 } from '../../../common/types/api';
 import {
   ConfigurationPatchRequestRt,
@@ -58,6 +60,7 @@ import {
   validateTemplatesCustomFieldsInRequest,
 } from './validators';
 import { LICENSING_CASE_ASSIGNMENT_FEATURE } from '../../common/constants';
+import { buildYamlDefinition } from '../templates/utils';
 
 /**
  * Defines the internal helper functions.
@@ -98,6 +101,12 @@ export interface ConfigureSubClient {
    * Creates a configuration if one does not already exist. If one exists it is deleted and a new one is created.
    */
   create(configuration: ConfigurationRequest): Promise<Configuration>;
+
+  /**
+   * Migrates legacy templates stored in cases-configure to the new cases-templates saved object system.
+   * The operation is idempotent: templates whose name already exists in the new system are skipped.
+   */
+  migrateLegacyTemplates(owner: string): Promise<MigrateTemplatesResponse>;
 }
 
 /**
@@ -180,6 +189,8 @@ export const createConfigurationSubClient = (
       update(configurationId, configuration, clientArgs, casesInternalClient),
     create: (configuration: ConfigurationRequest) =>
       create(configuration, clientArgs, casesInternalClient),
+    migrateLegacyTemplates: (owner: string) =>
+      migrateLegacyTemplates(owner, clientArgs, casesInternalClient),
   });
 };
 
@@ -551,6 +562,135 @@ export async function create(
   } catch (error) {
     throw createCaseError({
       message: `Failed to create case configuration: ${error}`,
+      error,
+      logger,
+    });
+  }
+}
+
+export async function migrateLegacyTemplates(
+  owner: string,
+  clientArgs: CasesClientArgs,
+  casesClientInternal: CasesClientInternal
+): Promise<MigrateTemplatesResponse> {
+  const {
+    services: { caseConfigureService, templatesService },
+    unsecuredSavedObjectsClient,
+    authorization,
+    user,
+    logger,
+  } = clientArgs;
+
+  try {
+    const configurations = await get({ owner: [owner] }, clientArgs, casesClientInternal);
+
+    if (!configurations.length) {
+      return { created: 0, failed: [] };
+    }
+
+    const config = configurations[0];
+
+    if (!config.templates?.length || config.legacyTemplatesMigrated) {
+      return { created: 0, failed: [] };
+    }
+
+    // Fetch existing templates to skip duplicates on retry
+    const { templates: existingTemplates } = await templatesService.getAllTemplates({
+      owner: [owner],
+      page: 1,
+      perPage: 10000,
+      sortField: 'name',
+      sortOrder: 'asc',
+      search: '',
+      tags: [],
+      author: [],
+      isDeleted: false,
+    });
+    const existingNames = new Set(existingTemplates.map((t) => t.name));
+
+    const toMigrate = config.templates.filter((t) => !existingNames.has(t.name));
+
+    const patchConfigMigrated = async () => {
+      const configSO = await caseConfigureService.get({
+        unsecuredSavedObjectsClient,
+        configurationId: config.id,
+      });
+      await authorization.ensureAuthorized({
+        operation: Operations.updateConfiguration,
+        entities: [{ owner: config.owner, id: config.id }],
+      });
+      await caseConfigureService.patch({
+        unsecuredSavedObjectsClient,
+        configurationId: config.id,
+        updatedAttributes: {
+          legacyTemplatesMigrated: true,
+          updated_at: new Date().toISOString(),
+          updated_by: user,
+        },
+        originalConfiguration: configSO,
+      });
+    };
+
+    // All templates were already migrated on a previous run — just set the flag
+    if (!toMigrate.length) {
+      await patchConfigMigrated();
+      return { created: 0, failed: [] };
+    }
+
+    await authorization.ensureAuthorized({
+      operation: Operations.manageTemplate,
+      entities: [{ owner, id: uuidv4() }],
+    });
+
+    type MigrationResult = { status: 'fulfilled' } | { status: 'rejected'; name: string; error: string };
+
+    const results = await pMap(
+      toMigrate,
+      async (legacyTemplate): Promise<MigrationResult> => {
+        try {
+          const id = uuidv4();
+          const definition = buildYamlDefinition(legacyTemplate, config.customFields ?? []);
+          await templatesService.createTemplate(
+            {
+              owner,
+              definition,
+              ...(legacyTemplate.description ? { description: legacyTemplate.description } : {}),
+              ...(legacyTemplate.tags?.length ? { tags: legacyTemplate.tags } : {}),
+              isEnabled: true,
+            },
+            user.username ?? 'unknown',
+            id
+          );
+          return { status: 'fulfilled' };
+        } catch (err) {
+          return {
+            status: 'rejected',
+            name: legacyTemplate.name,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      },
+      { concurrency: MAX_CONCURRENT_SEARCHES }
+    );
+
+    let created = 0;
+    const failed: MigrateTemplatesResponse['failed'] = [];
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        created++;
+      } else {
+        failed.push({ name: result.name, error: result.error });
+      }
+    }
+
+    if (created > 0) {
+      await patchConfigMigrated();
+    }
+
+    return { created, failed };
+  } catch (error) {
+    throw createCaseError({
+      message: `Failed to migrate legacy templates: ${error}`,
       error,
       logger,
     });

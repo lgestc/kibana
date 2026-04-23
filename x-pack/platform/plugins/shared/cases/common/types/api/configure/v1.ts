@@ -221,6 +221,8 @@ export const ConfigurationPatchRequestRt = rt.intersection([
   rt.strict({ version: rt.string }),
 ]);
 
+export const MigrateTemplatesRequestRt = rt.strict({ owner: rt.string });
+
 export const MigrateTemplatesResponseRt = rt.strict({
   created: rt.number,
   failed: rt.array(rt.strict({ name: rt.string, error: rt.string })),
@@ -232,4 +234,5 @@ export type GetConfigurationFindRequest = rt.TypeOf<typeof GetConfigurationFindR
 export type GetConfigureResponse = Configurations;
 export type CreateConfigureResponse = Configuration;
 export type UpdateConfigureResponse = Configuration;
+export type MigrateTemplatesRequest = rt.TypeOf<typeof MigrateTemplatesRequestRt>;
 export type MigrateTemplatesResponse = rt.TypeOf<typeof MigrateTemplatesResponseRt>;

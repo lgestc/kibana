@@ -10,15 +10,26 @@ import type { MigrateTemplatesResponse } from '../../../../common/types/api';
 import { migrateTemplatesToV2 } from '../../../containers/configure/api';
 import { casesQueriesKeys, casesMutationsKeys } from '../../../containers/constants';
 import type { ServerError } from '../../../types';
+import { useCasesContext } from '../../cases_context/use_cases_context';
 
 export const useMigrateLegacyTemplates = () => {
   const queryClient = useQueryClient();
+  const { owner } = useCasesContext();
+  const resolvedOwner = owner[0];
 
-  return useMutation<MigrateTemplatesResponse, ServerError>(() => migrateTemplatesToV2({}), {
-    mutationKey: casesMutationsKeys.migrateLegacyTemplates,
-    onSuccess: () => {
-      queryClient.invalidateQueries(casesQueriesKeys.templates);
-      queryClient.invalidateQueries(casesQueriesKeys.configuration({}));
+  return useMutation<MigrateTemplatesResponse, ServerError>(
+    () => {
+      if (!resolvedOwner) {
+        return Promise.reject(new Error('No owner available in cases context'));
+      }
+      return migrateTemplatesToV2({ owner: resolvedOwner });
     },
-  });
+    {
+      mutationKey: casesMutationsKeys.migrateLegacyTemplates,
+      onSuccess: () => {
+        queryClient.invalidateQueries(casesQueriesKeys.templates);
+        queryClient.invalidateQueries(casesQueriesKeys.configuration({}));
+      },
+    }
+  );
 };
