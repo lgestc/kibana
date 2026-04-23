@@ -99,6 +99,7 @@ export const StepReview: React.FunctionComponent<Props> = React.memo(
       priority,
       allowAutoCreate,
       composedOf,
+      extends: extendsTemplate,
       _meta,
       _kbnMeta: { isLegacy },
     } = template!;
@@ -255,6 +256,21 @@ export const StepReview: React.FunctionComponent<Props> = React.memo(
                     ) : (
                       <NoneDescriptionText />
                     )}
+                  </EuiDescriptionListDescription>
+                </>
+              )}
+
+              {/* Extends */}
+              {isLegacy !== true && extendsTemplate && (
+                <>
+                  <EuiDescriptionListTitle>
+                    <FormattedMessage
+                      id="xpack.idxMgmt.templateForm.stepReview.summaryTab.extendsLabel"
+                      defaultMessage="Extends"
+                    />
+                  </EuiDescriptionListTitle>
+                  <EuiDescriptionListDescription data-test-subj="extendsValue">
+                    {extendsTemplate}
                   </EuiDescriptionListDescription>
                 </>
               )}

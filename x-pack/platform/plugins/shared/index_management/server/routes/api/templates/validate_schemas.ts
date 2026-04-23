@@ -54,4 +54,5 @@ export const templateSchema = schema.object({
     isLegacy: schema.maybe(schema.boolean()),
   }),
   deprecated: schema.maybe(schema.boolean()),
+  extends: schema.maybe(schema.string({ maxLength: 1000 })),
 });

@@ -54,6 +54,7 @@ export const TabSummary: React.FunctionComponent<Props> = ({ templateDetails }) 
     version,
     priority,
     composedOf,
+    extends: extendsTemplate,
     order,
     indexPatterns = [],
     indexMode,
@@ -166,6 +167,21 @@ export const TabSummary: React.FunctionComponent<Props> = ({ templateDetails }) 
                   ) : (
                     i18nTexts.none
                   )}
+                </EuiDescriptionListDescription>
+              </>
+            )}
+
+            {/* Extends */}
+            {isLegacy !== true && extendsTemplate && (
+              <>
+                <EuiDescriptionListTitle data-test-subj="extendsTitle">
+                  <FormattedMessage
+                    id="xpack.idxMgmt.templateDetails.summaryTab.extendsDescriptionListTitle"
+                    defaultMessage="Extends"
+                  />
+                </EuiDescriptionListTitle>
+                <EuiDescriptionListDescription data-test-subj="extendsValue">
+                  {extendsTemplate}
                 </EuiDescriptionListDescription>
               </>
             )}

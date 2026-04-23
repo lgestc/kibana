@@ -40,6 +40,7 @@ export function serializeTemplate(
     _meta,
     allowAutoCreate,
     deprecated,
+    extends: extendsTemplate,
   } = templateDeserialized;
 
   // Build settings object, properly handling index mode source mode.
@@ -72,6 +73,13 @@ export function serializeTemplate(
     ...(dataStreamOptions && { data_stream_options: dataStreamOptions }),
   };
 
+  const { _kbn_template_extends: _ignored, ...restMeta } = _meta ?? {};
+  const serializedMeta = extendsTemplate
+    ? { ...restMeta, _kbn_template_extends: extendsTemplate }
+    : Object.keys(restMeta).length > 0
+    ? restMeta
+    : undefined;
+
   return {
     version,
     priority,
@@ -81,7 +89,7 @@ export function serializeTemplate(
     composed_of: composedOf,
     ignore_missing_component_templates: ignoreMissingComponentTemplates,
     allow_auto_create: allowAutoCreateRadioValues?.[allowAutoCreate],
-    _meta,
+    _meta: serializedMeta,
     deprecated,
   };
 }
@@ -106,12 +114,15 @@ export function deserializeTemplate(
   } = templateEs;
   const { settings } = template;
 
+  const { _kbn_template_extends: extendsTemplate, ...publicMeta } = _meta ?? {};
+  const cleanedMeta = Object.keys(publicMeta).length > 0 ? publicMeta : undefined;
+
   let type: TemplateType = 'default';
   if (Boolean(cloudManagedTemplatePrefix && name.startsWith(cloudManagedTemplatePrefix))) {
     type = 'cloudManaged';
   } else if (name.startsWith('.')) {
     type = 'system';
-  } else if (Boolean(_meta?.managed === true)) {
+  } else if (Boolean(publicMeta?.managed === true)) {
     type = 'managed';
   }
 
@@ -151,8 +162,9 @@ export function deserializeTemplate(
         : allowAutoCreate === false
         ? allowAutoCreateRadioIds.FALSE_RADIO_OPTION
         : allowAutoCreateRadioIds.NO_OVERWRITE_RADIO_OPTION,
-    _meta,
+    _meta: cleanedMeta,
     deprecated,
+    extends: extendsTemplate as string | undefined,
     _kbnMeta: {
       type,
       hasDatastream: Boolean(dataStream),

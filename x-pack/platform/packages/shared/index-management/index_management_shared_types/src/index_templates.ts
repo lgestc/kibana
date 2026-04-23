@@ -44,6 +44,7 @@ export interface TemplateListItem {
     name: string;
   };
   composedOf?: string[]; // Composable template only
+  extends?: string; // Composable template only
   _kbnMeta: {
     type: TemplateType;
     hasDatastream: boolean;

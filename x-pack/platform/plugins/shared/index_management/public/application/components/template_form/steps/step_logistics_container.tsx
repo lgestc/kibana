@@ -8,6 +8,7 @@
 import React from 'react';
 
 import { Forms } from '../../../../shared_imports';
+import { useLoadIndexTemplates } from '../../../services/api';
 import type { WizardContent } from '../template_form';
 import { StepLogistics } from './step_logistics';
 
@@ -18,6 +19,12 @@ interface Props {
 
 export const StepLogisticsContainer = ({ isEditing, isLegacy }: Props) => {
   const { defaultValue, updateContent } = Forms.useContent<WizardContent, 'logistics'>('logistics');
+  const { data: templateData } = useLoadIndexTemplates();
+
+  const currentName = defaultValue?.name as string | undefined;
+  const availableTemplates = (templateData?.templates ?? [])
+    .filter(({ name, extends: ext }) => name !== currentName && !ext)
+    .map(({ name }) => name);
 
   return (
     <StepLogistics
@@ -25,6 +32,7 @@ export const StepLogisticsContainer = ({ isEditing, isLegacy }: Props) => {
       onChange={updateContent}
       isEditing={isEditing}
       isLegacy={isLegacy}
+      availableTemplates={availableTemplates}
     />
   );
 };
