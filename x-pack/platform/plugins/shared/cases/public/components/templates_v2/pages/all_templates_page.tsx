@@ -56,6 +56,11 @@ export const AllTemplatesPage: React.FC = () => {
           showSuccessToast(i18n.LEGACY_MIGRATION_SUCCESS(created));
         }
       },
+      onError: () => {
+        showErrorToast(new Error(i18n.LEGACY_MIGRATION_ERROR), {
+          title: i18n.LEGACY_MIGRATION_ERROR,
+        });
+      },
     });
   }, [migrateLegacyTemplates, showSuccessToast, showErrorToast]);
 

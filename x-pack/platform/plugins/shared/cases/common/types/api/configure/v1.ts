@@ -215,7 +215,6 @@ export const ConfigurationPatchRequestRt = rt.intersection([
       customFields: CustomFieldsConfigurationRt,
       templates: TemplatesConfigurationRt,
       observableTypes: ObservableTypesConfigurationRt,
-      legacyTemplatesMigrated: rt.boolean,
     })
   ),
   rt.strict({ version: rt.string }),
