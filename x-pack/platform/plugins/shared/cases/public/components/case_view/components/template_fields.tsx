@@ -16,6 +16,7 @@ import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/latest';
 import { useGetTemplate } from '../../templates_v2/hooks/use_get_template';
 import { FieldsRenderer } from '../../templates_v2/field_types/field_renderer';
+import { useResolvedFields } from '../../field_library/hooks/use_resolved_fields';
 import type { OnUpdateFields } from '../types';
 import { SAVE } from '../../../common/translations';
 
@@ -30,20 +31,26 @@ interface TemplateFieldsProps {
 
 const TemplateFieldsForm: FC<{
   parsedTemplate: ParsedTemplateDefinition;
+  owner: string;
   extendedFields: Record<string, unknown>;
   onUpdateField: (args: OnUpdateFields) => void;
   isLoading: boolean;
-}> = ({ parsedTemplate, extendedFields, onUpdateField, isLoading }) => {
-  const templateKey = parsedTemplate.fields.map((f) => `${f.name}:${f.type}`).join('|');
+}> = ({ parsedTemplate, owner, extendedFields, onUpdateField, isLoading }) => {
+  const { resolvedFields, isLoading: isResolvingFields } = useResolvedFields(
+    parsedTemplate.fields,
+    owner
+  );
+
+  const templateKey = resolvedFields.map((f) => `${f.name}:${f.type}`).join('|');
 
   const initialDefaultValues = useMemo(() => {
     const defaults: Record<string, Record<string, unknown>> = { [CASE_EXTENDED_FIELDS]: {} };
-    for (const field of parsedTemplate.fields) {
+    for (const field of resolvedFields) {
       const fieldKey = `${field.name}_as_${field.type}`;
       defaults[CASE_EXTENDED_FIELDS][fieldKey] = extendedFields[camelCase(fieldKey)] ?? '';
     }
     return defaults;
-  }, [parsedTemplate.fields, extendedFields]);
+  }, [resolvedFields, extendedFields]);
 
   const { form } = useForm<{}>({
     defaultValue: initialDefaultValues,
@@ -58,9 +65,11 @@ const TemplateFieldsForm: FC<{
     onUpdateField({ key: CASE_EXTENDED_FIELDS, value: fields });
   };
 
+  if (isResolvingFields) return null;
+
   return (
     <FormProvider key={templateKey} form={form}>
-      <FieldsRenderer parsedTemplate={parsedTemplate} form={form} />
+      <FieldsRenderer resolvedFields={resolvedFields} form={form} />
       <EuiFlexGroup alignItems="center" responsive={false}>
         <EuiFlexItem grow={false}>
           <EuiButton
@@ -90,11 +99,12 @@ export const TemplateFields = React.memo<TemplateFieldsProps>(
     );
 
     const parsedTemplate = templateData?.definition;
-    if (!parsedTemplate || parsedTemplate.fields.length === 0) return null;
+    if (!templateData || !parsedTemplate || parsedTemplate.fields.length === 0) return null;
 
     return (
       <TemplateFieldsForm
         parsedTemplate={parsedTemplate}
+        owner={templateData.owner}
         extendedFields={caseData.extendedFields ?? {}}
         onUpdateField={onUpdateField}
         isLoading={isLoading}

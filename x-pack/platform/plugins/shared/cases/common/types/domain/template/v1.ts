@@ -6,7 +6,7 @@
  */
 
 import { z } from '@kbn/zod/v4';
-import { FieldSchema } from './fields';
+import { FieldSchema, isRefField } from './fields';
 
 /**
  * Template schema for case templates
@@ -105,7 +105,9 @@ export const ParsedTemplateDefinitionSchema = z.object({
   category: z.string().nullable().optional(),
   fields: z.array(FieldSchema).refine(
     (fields) => {
-      const fieldNames = new Set(fields.map((field) => field.name));
+      const fieldNames = new Set(
+        fields.map((field) => (isRefField(field) ? field.name ?? field.$ref : field.name))
+      );
       return fieldNames.size === fields.length;
     },
     { message: 'Field names must be unique.' }

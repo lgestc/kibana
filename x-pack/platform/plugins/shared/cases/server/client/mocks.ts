@@ -36,6 +36,7 @@ import type { ConfigureSubClient, InternalConfigureSubClient } from './configure
 import type { CasesClientFactory } from './factory';
 import type { MetricsSubClient } from './metrics/client';
 import type { TemplatesSubClient } from './templates/client';
+import type { FieldDefinitionsSubClient } from './field_definitions/client';
 import type { UserActionsSubClient } from './user_actions/client';
 
 import { CaseSeverity, CaseStatuses } from '../../common/types/domain';
@@ -56,6 +57,7 @@ import {
   createUserActionServiceMock,
   createNotificationServiceMock,
   createTemplatesServiceMock,
+  createFieldDefinitionsServiceMock,
 } from '../services/mocks';
 import { ConfigSchema } from '../config';
 
@@ -152,6 +154,18 @@ const createTemplatesSubClientMock = (): TemplatesSubClientMock => {
   });
 };
 
+type FieldDefinitionsSubClientMock = jest.Mocked<FieldDefinitionsSubClient>;
+
+const createFieldDefinitionsSubClientMock = (): FieldDefinitionsSubClientMock => {
+  return lazyObject({
+    getFieldDefinitions: jest.fn(),
+    getFieldDefinition: jest.fn(),
+    createFieldDefinition: jest.fn(),
+    updateFieldDefinition: jest.fn(),
+    deleteFieldDefinition: jest.fn(),
+  });
+};
+
 type InternalConfigureSubClientMock = jest.Mocked<InternalConfigureSubClient>;
 
 const createInternalConfigureSubClientMock = (): InternalConfigureSubClientMock => {
@@ -167,6 +181,7 @@ export interface CasesClientMock extends CasesClient {
   attachments: AttachmentsSubClientMock;
   userActions: UserActionsSubClientMock;
   templates: TemplatesSubClientMock;
+  fieldDefinitions: FieldDefinitionsSubClientMock;
 }
 
 export const createCasesClientMock = (): CasesClientMock => {
@@ -177,6 +192,7 @@ export const createCasesClientMock = (): CasesClientMock => {
     configure: createConfigureSubClientMock(),
     metrics: createMetricsSubClientMock(),
     templates: createTemplatesSubClientMock(),
+    fieldDefinitions: createFieldDefinitionsSubClientMock(),
   });
   return client as unknown as CasesClientMock;
 };
@@ -228,6 +244,7 @@ export const createCasesClientMockArgs = () => {
       licensingService: createLicensingServiceMock(),
       notificationService: createNotificationServiceMock(),
       templatesService: createTemplatesServiceMock(),
+      fieldDefinitionsService: createFieldDefinitionsServiceMock(),
     },
     authorization: createAuthorizationMock(),
     logger: loggingSystemMock.createLogger(),

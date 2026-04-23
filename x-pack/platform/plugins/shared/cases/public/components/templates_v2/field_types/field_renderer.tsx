@@ -6,7 +6,6 @@
  */
 
 import type { FC } from 'react';
-import type { z } from '@kbn/zod/v4';
 import React, { useMemo } from 'react';
 import type { FormHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import {
@@ -14,37 +13,41 @@ import {
   useForm,
   useFormData,
 } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import type { z } from '@kbn/zod/v4';
 import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/latest';
+import type { InlineField } from '../../../../common/types/domain/template/fields';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { controlRegistry } from './field_types_registry';
 import { evaluateCondition } from './evaluate_conditions';
 import { useYamlFormSync } from './hooks/use_yaml_form_sync';
 import { getYamlDefaultAsString } from '../utils';
+import { useResolvedFields } from '../../field_library/hooks/use_resolved_fields';
 
 type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
 
 export interface TemplateFieldRendererProps {
   parsedTemplate: ParsedTemplateDefinition;
+  owner: string;
   onFieldDefaultChange?: (fieldName: string, value: string, control: string) => void;
 }
 
 export const FieldsRenderer: FC<{
-  parsedTemplate: ParsedTemplateDefinition;
+  resolvedFields: InlineField[];
   form: FormHook<{}>;
-}> = ({ parsedTemplate, form }) => {
+}> = ({ resolvedFields, form }) => {
   const fieldTypeMap = useMemo(
-    () => Object.fromEntries(parsedTemplate.fields.map((f) => [f.name, f.type])),
-    [parsedTemplate.fields]
+    () => Object.fromEntries(resolvedFields.map((f) => [f.name, f.type])),
+    [resolvedFields]
   );
 
   const fieldControlMap = useMemo(
-    () => Object.fromEntries(parsedTemplate.fields.map((f) => [f.name, f.control])),
-    [parsedTemplate.fields]
+    () => Object.fromEntries(resolvedFields.map((f) => [f.name, f.control])),
+    [resolvedFields]
   );
 
   const allFieldPaths = useMemo(
-    () => parsedTemplate.fields.map((f) => `${CASE_EXTENDED_FIELDS}.${f.name}_as_${f.type}`),
-    [parsedTemplate.fields]
+    () => resolvedFields.map((f) => `${CASE_EXTENDED_FIELDS}.${f.name}_as_${f.type}`),
+    [resolvedFields]
   );
 
   const [formData] = useFormData({ form, watch: allFieldPaths });
@@ -53,14 +56,13 @@ export const FieldsRenderer: FC<{
     const extendedFields =
       (formData as Record<string, Record<string, unknown>>)?.[CASE_EXTENDED_FIELDS] ?? {};
     return Object.fromEntries(
-      parsedTemplate.fields.map((f) => [f.name, extendedFields[`${f.name}_as_${f.type}`]])
+      resolvedFields.map((f) => [f.name, extendedFields[`${f.name}_as_${f.type}`]])
     );
-  }, [formData, parsedTemplate.fields]);
+  }, [formData, resolvedFields]);
 
   return (
     <>
-      {parsedTemplate.fields.map((field) => {
-        // Evaluate display condition — skip rendering if false
+      {resolvedFields.map((field) => {
         if (field.display?.show_when) {
           const shouldShow = evaluateCondition(
             field.display.show_when,
@@ -71,7 +73,6 @@ export const FieldsRenderer: FC<{
           if (!shouldShow) return null;
         }
 
-        // Compute isRequired from static flag or conditional
         const isRequired =
           field.validation?.required === true ||
           (field.validation?.required_when
@@ -116,22 +117,21 @@ FieldsRenderer.displayName = 'FieldsRenderer';
  */
 export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
   parsedTemplate,
+  owner,
   onFieldDefaultChange,
 }) => {
-  // Derive a stable content key from field definitions. JSON.stringify covers all
-  // field properties (default, display, validation, etc.), so this string only changes
-  // when YAML content actually changes — not on every re-parse that produces a new
-  // array object with identical values.
-  const fieldsKey = parsedTemplate.fields.map((f) => JSON.stringify(f)).join('|');
+  const { resolvedFields, isLoading } = useResolvedFields(parsedTemplate.fields, owner);
+
+  // Content-based key to detect real field definition changes (vs same-content re-parses).
+  const fieldsKey = resolvedFields.map((f) => JSON.stringify(f)).join('|');
 
   // Stabilize the fields reference so useYamlFormSync's effect only fires when
-  // field definitions actually change (content-based equality), not on every
-  // re-parse of the same YAML which produces a new array object each time.
-  const stableFieldsRef = React.useRef(parsedTemplate.fields);
+  // field definitions actually change, not on every re-parse that produces a new array object.
+  const stableFieldsRef = React.useRef(resolvedFields);
   const prevKeyRef = React.useRef(fieldsKey);
   if (prevKeyRef.current !== fieldsKey) {
     prevKeyRef.current = fieldsKey;
-    stableFieldsRef.current = parsedTemplate.fields;
+    stableFieldsRef.current = resolvedFields;
   }
   const stableFields = stableFieldsRef.current;
 
@@ -154,9 +154,11 @@ export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
 
   useYamlFormSync(form, stableFields, onFieldDefaultChange);
 
+  if (isLoading) return null;
+
   return (
     <FormProvider key={parsedTemplate.name} form={form}>
-      <FieldsRenderer parsedTemplate={parsedTemplate} form={form} />
+      <FieldsRenderer resolvedFields={resolvedFields} form={form} />
     </FormProvider>
   );
 };

@@ -48,6 +48,7 @@ import {
   AttachmentService,
   AlertService,
   TemplatesService,
+  FieldDefinitionsService,
 } from '../services';
 
 import { AuthorizationAuditLogger } from '../authorization';
@@ -234,6 +235,10 @@ export class CasesClientFactory {
       namespace,
     });
 
+    const fieldDefinitionsService = new FieldDefinitionsService({
+      unsecuredSavedObjectsClient,
+    });
+
     const caseService = new CasesService({
       log: this.logger,
       unsecuredSavedObjectsClient,
@@ -261,6 +266,7 @@ export class CasesClientFactory {
 
     return {
       templatesService,
+      fieldDefinitionsService,
       alertsService: new AlertService(esClient, this.logger, alertsClient),
       caseService,
       caseConfigureService: new CaseConfigureService(this.logger),

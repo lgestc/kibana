@@ -22,6 +22,7 @@ import type {
   Template,
   UpdateTemplateInput,
 } from '../../../common/types/domain/template/v1';
+import { isRefField } from '../../../common/types/domain/template/fields';
 import { CASE_TEMPLATE_SAVED_OBJECT } from '../../../common/constants';
 import type {
   TemplatesFindRequest,
@@ -273,7 +274,7 @@ export class TemplatesService {
         tags: parsedDefinition.tags ?? input.tags,
         author,
         fieldCount: parsedDefinition.fields.length,
-        fieldNames: parsedDefinition.fields.map((f) => f.name),
+        fieldNames: parsedDefinition.fields.map((f) => (isRefField(f) ? f.name ?? f.$ref : f.name)),
         isEnabled: input.isEnabled ?? true,
       } as Template,
       { refresh: true, id }
@@ -308,7 +309,7 @@ export class TemplatesService {
         tags: parsedDefinition.tags ?? input.tags,
         author: currentTemplate.attributes.author,
         fieldCount: parsedDefinition.fields.length,
-        fieldNames: parsedDefinition.fields.map((f) => f.name),
+        fieldNames: parsedDefinition.fields.map((f) => (isRefField(f) ? f.name ?? f.$ref : f.name)),
         usageCount: currentTemplate.attributes.usageCount,
         lastUsedAt: currentTemplate.attributes.lastUsedAt,
         isEnabled: input.isEnabled ?? currentTemplate.attributes.isEnabled ?? true,

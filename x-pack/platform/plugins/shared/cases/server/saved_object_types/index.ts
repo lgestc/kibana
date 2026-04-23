@@ -18,6 +18,7 @@ import { caseIdIncrementerSavedObjectType } from './id_incrementer';
 import { createCaseAttachmentSavedObjectType } from './attachments';
 import type { PersistableStateAttachmentTypeRegistry } from '../attachment_framework/persistable_state_registry';
 import { caseTemplateSavedObjectType } from './templates';
+import { caseFieldDefinitionSavedObjectType } from './field_definitions';
 import type { ConfigType } from '../config';
 
 interface RegisterSavedObjectsArgs {
@@ -59,6 +60,7 @@ export const registerSavedObjects = ({
 
   if (config.templates?.enabled) {
     core.savedObjects.registerType(caseTemplateSavedObjectType);
+    core.savedObjects.registerType(caseFieldDefinitionSavedObjectType);
   }
   if (config.attachments?.enabled) {
     core.savedObjects.registerType(createCaseAttachmentSavedObjectType());
