@@ -151,7 +151,7 @@ const serializeUserPickerMetadata = (
   }
 };
 
-const serializeFieldMetadata = (out: string[], field: Field) => {
+const serializeFieldMetadata = (out: string[], field: InlineField) => {
   if (field.control === FieldType.SELECT_BASIC) {
     serializeSelectMetadata(out, field);
     return;

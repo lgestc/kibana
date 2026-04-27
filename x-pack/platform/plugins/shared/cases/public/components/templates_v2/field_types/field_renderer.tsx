@@ -28,7 +28,7 @@ type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
 
 export interface TemplateFieldRendererProps {
   parsedTemplate: ParsedTemplateDefinition;
-  owner: string;
+  owner?: string;
   onFieldDefaultChange?: (fieldName: string, value: string, control: string) => void;
 }
 
