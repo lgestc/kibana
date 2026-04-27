@@ -14,6 +14,7 @@ import {
   useForm,
   useFormData,
 } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { EuiIcon, EuiToolTip } from '@elastic/eui';
 import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/latest';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { controlRegistry } from './field_types_registry';
@@ -21,18 +22,23 @@ import { evaluateCondition } from '../../../../common/types/domain/template/eval
 import { useYamlFormSync } from './hooks/use_yaml_form_sync';
 import { getFieldSnakeKey } from '../../../../common/utils';
 import { getYamlDefaultAsString } from '../utils';
+import { INHERITED_FIELD_TOOLTIP } from '../translations';
 
 type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
 
 export interface TemplateFieldRendererProps {
   parsedTemplate: ParsedTemplateDefinition;
   onFieldDefaultChange?: (fieldName: string, value: string, control: string) => void;
+  parentFieldNames?: Set<string>;
+  parentTemplateName?: string;
 }
 
 export const FieldsRenderer: FC<{
   parsedTemplate: ParsedTemplateDefinition;
   form: FormHook<{}>;
-}> = ({ parsedTemplate, form }) => {
+  parentFieldNames?: Set<string>;
+  parentTemplateName?: string;
+}> = ({ parsedTemplate, form, parentFieldNames, parentTemplateName }) => {
   const fieldTypeMap = useMemo(
     () => Object.fromEntries(parsedTemplate.fields.map((f) => [f.name, f.type])),
     [parsedTemplate.fields]
@@ -102,9 +108,26 @@ export const FieldsRenderer: FC<{
           maxLength: field.validation?.max_length,
         };
 
+        const isInherited = parentFieldNames?.has(field.name) ?? false;
+
+        const fieldLabel =
+          isInherited && parentTemplateName ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              {field.label ?? field.name}
+              <EuiToolTip content={INHERITED_FIELD_TOOLTIP(parentTemplateName)}>
+                <EuiIcon
+                  type="info"
+                  size="s"
+                  color="subdued"
+                  data-test-subj={`inherited-field-icon-${field.name}`}
+                />
+              </EuiToolTip>
+            </span>
+          ) : (field.label ?? field.name);
+
         return (
           <div key={field.name} data-test-subj={`template-field-${field.name}`}>
-            <Control {...controlProps} />
+            <Control {...controlProps} label={fieldLabel} />
           </div>
         );
       })}
@@ -121,6 +144,8 @@ FieldsRenderer.displayName = 'FieldsRenderer';
 export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
   parsedTemplate,
   onFieldDefaultChange,
+  parentFieldNames,
+  parentTemplateName,
 }) => {
   // Derive a stable content key from field definitions. JSON.stringify covers all
   // field properties (default, display, validation, etc.), so this string only changes
@@ -160,7 +185,12 @@ export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
 
   return (
     <FormProvider key={parsedTemplate.name} form={form}>
-      <FieldsRenderer parsedTemplate={parsedTemplate} form={form} />
+      <FieldsRenderer
+        parsedTemplate={parsedTemplate}
+        form={form}
+        parentFieldNames={parentFieldNames}
+        parentTemplateName={parentTemplateName}
+      />
     </FormProvider>
   );
 };

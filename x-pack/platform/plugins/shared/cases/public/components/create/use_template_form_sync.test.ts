@@ -23,6 +23,11 @@ jest.mock('../templates_v2/hooks/use_get_template', () => ({
   useGetTemplate: (...args: unknown[]) => mockUseGetTemplate(...args),
 }));
 
+const mockUseParentTemplateDefinition = jest.fn<undefined, [string | undefined]>(() => undefined);
+jest.mock('../templates_v2/hooks/use_parent_template_definition', () => ({
+  useParentTemplateDefinition: (name: string | undefined) => mockUseParentTemplateDefinition(name),
+}));
+
 const mockTemplate = {
   templateId: 'template-1',
   templateVersion: 1,

@@ -308,14 +308,5 @@ export const schemas: Record<string, FormSchema> = {
         defaultMessage: 'Add metadata',
       }),
     },
-    extends: {
-      type: FIELD_TYPES.COMBO_BOX,
-      label: i18n.translate('xpack.idxMgmt.templateForm.stepLogistics.fieldExtendsLabel', {
-        defaultMessage: 'Extends template (optional)',
-      }),
-      defaultValue: [],
-      serializer: (value: string[]) => value[0] ?? undefined,
-      deserializer: (value: string | undefined) => (value ? [value] : []),
-    },
   },
 };

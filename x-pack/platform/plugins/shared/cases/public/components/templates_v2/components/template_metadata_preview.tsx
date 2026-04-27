@@ -16,6 +16,7 @@ import type { CaseSeverity } from '../../../../common/types/domain';
 import { SeverityHealth } from '../../severity/config';
 import * as commonI18n from '../../../common/translations';
 import { SEVERITY_TITLE } from '../../severity/translations';
+import { EXTENDS_LABEL } from '../translations';
 import { componentStyles } from './template_metadata_preview.styles';
 
 type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
@@ -26,7 +27,7 @@ export interface TemplateMetadataPreviewProps {
 
 export const TemplateMetadataPreview: FC<TemplateMetadataPreviewProps> = ({ parsedTemplate }) => {
   const styles = useMemoCss(componentStyles);
-  const { name, description, tags, severity, category } = parsedTemplate;
+  const { name, description, tags, severity, category, extends: extendsTemplate } = parsedTemplate;
   const { euiTheme } = useEuiTheme();
   return (
     <dl css={styles.list}>
@@ -51,6 +52,12 @@ export const TemplateMetadataPreview: FC<TemplateMetadataPreviewProps> = ({ pars
       {category && (
         <MetadataRow label={commonI18n.CATEGORY}>
           <EuiText size="s">{category}</EuiText>
+        </MetadataRow>
+      )}
+
+      {extendsTemplate && (
+        <MetadataRow label={EXTENDS_LABEL}>
+          <EuiText size="s">{extendsTemplate}</EuiText>
         </MetadataRow>
       )}
 

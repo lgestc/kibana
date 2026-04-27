@@ -220,16 +220,6 @@ function getFieldsMeta(esDocsBase: string) {
       ),
       testSubject: 'allowAutoCreateField',
     },
-    extends: {
-      title: i18n.translate('xpack.idxMgmt.templateForm.stepLogistics.extendsTitle', {
-        defaultMessage: 'Extends',
-      }),
-      description: i18n.translate('xpack.idxMgmt.templateForm.stepLogistics.extendsDescription', {
-        defaultMessage:
-          'Base this template on another template, inheriting its settings, mappings, and aliases.',
-      }),
-      testSubject: 'extendsField',
-    },
   };
 }
 
@@ -248,7 +238,6 @@ interface Props {
   onChange: (content: Forms.Content) => void;
   isEditing?: boolean;
   isLegacy?: boolean;
-  availableTemplates?: string[];
 }
 
 function formDeserializer(formData: LogisticsForm): LogisticsFormInternal {
@@ -276,7 +265,7 @@ function getformSerializer(initialTemplateData: LogisticsForm = {}) {
 }
 
 export const StepLogistics: React.FunctionComponent<Props> = React.memo(
-  ({ defaultValue, isEditing = false, onChange, isLegacy = false, availableTemplates = [] }) => {
+  ({ defaultValue, isEditing = false, onChange, isLegacy = false }) => {
     const { form } = useForm({
       schema: schemas.logistics,
       defaultValue,
@@ -364,7 +353,6 @@ export const StepLogistics: React.FunctionComponent<Props> = React.memo(
       version,
       dataRetention,
       allowAutoCreate,
-      extends: extendsMeta,
     } = getFieldsMeta(documentationService.getEsDocsBase());
 
     return (
@@ -577,27 +565,6 @@ export const StepLogistics: React.FunctionComponent<Props> = React.memo(
                   euiFieldProps: {
                     options: allowAutoCreateRadios,
                     name: 'allowAutoCreate radio group',
-                  },
-                }}
-              />
-            </FormRow>
-          )}
-
-          {/* Extends */}
-          {isLegacy === false && (
-            <FormRow title={extendsMeta.title} description={extendsMeta.description}>
-              <UseField
-                path="extends"
-                componentProps={{
-                  'data-test-subj': extendsMeta.testSubject,
-                  euiFieldProps: {
-                    singleSelection: { asPlainText: true },
-                    isClearable: true,
-                    options: availableTemplates.map((t) => ({ label: t })),
-                    placeholder: i18n.translate(
-                      'xpack.idxMgmt.templateForm.stepLogistics.extendsPlaceholder',
-                      { defaultMessage: 'Select a template' }
-                    ),
                   },
                 }}
               />

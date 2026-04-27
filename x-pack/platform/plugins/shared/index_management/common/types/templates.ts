@@ -60,7 +60,6 @@ export interface TemplateDeserialized {
     name: string;
   };
   deprecated?: boolean;
-  extends?: string;
   _meta?: { [key: string]: any }; // Composable template only
   // Composable template only
   dataStream?: {
@@ -100,7 +99,6 @@ export interface TemplateListItem {
     name: string;
   };
   composedOf?: string[];
-  extends?: string;
   _kbnMeta: {
     type: TemplateType;
     hasDatastream: boolean;
