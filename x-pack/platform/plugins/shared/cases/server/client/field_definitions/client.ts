@@ -58,6 +58,18 @@ export const createFieldDefinitionsSubClient = (
         operation: Operations.manageTemplate,
         entities: [{ owner: input.owner, id: input.name }],
       });
+
+      const existing = await fieldDefinitionsService.getFieldDefinitions([input.owner]);
+      const nameLower = input.name.toLowerCase();
+      const conflict = existing.fieldDefinitions.find(
+        (fd) => fd.name.toLowerCase() === nameLower
+      );
+      if (conflict) {
+        throw Boom.conflict(
+          `A field definition with name "${conflict.name}" already exists for this owner.`
+        );
+      }
+
       return fieldDefinitionsService.createFieldDefinition(input);
     },
 
@@ -72,6 +84,20 @@ export const createFieldDefinitionsSubClient = (
           `Cannot change the owner of a field definition. Current owner: ${fieldDef.attributes.owner}`
         );
       }
+
+      const existing = await fieldDefinitionsService.getFieldDefinitions([
+        fieldDef.attributes.owner,
+      ]);
+      const nameLower = input.name.toLowerCase();
+      const conflict = existing.fieldDefinitions.find(
+        (fd) => fd.name.toLowerCase() === nameLower && fd.fieldDefinitionId !== id
+      );
+      if (conflict) {
+        throw Boom.conflict(
+          `A field definition with name "${conflict.name}" already exists for this owner.`
+        );
+      }
+
       return fieldDefinitionsService.updateFieldDefinition(id, input);
     },
 
