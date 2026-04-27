@@ -18,8 +18,9 @@ import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/do
 import type { InlineField } from '../../../../common/types/domain/template/fields';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { controlRegistry } from './field_types_registry';
-import { evaluateCondition } from './evaluate_conditions';
+import { evaluateCondition } from '../../../../common/types/domain/template/evaluate_conditions';
 import { useYamlFormSync } from './hooks/use_yaml_form_sync';
+import { getFieldSnakeKey } from '../../../../common/utils';
 import { getYamlDefaultAsString } from '../utils';
 import { useResolvedFields } from '../../field_library/hooks/use_resolved_fields';
 
@@ -46,7 +47,7 @@ export const FieldsRenderer: FC<{
   );
 
   const allFieldPaths = useMemo(
-    () => resolvedFields.map((f) => `${CASE_EXTENDED_FIELDS}.${f.name}_as_${f.type}`),
+    () => resolvedFields.map((f) => `${CASE_EXTENDED_FIELDS}.${getFieldSnakeKey(f.name, f.type)}`),
     [resolvedFields]
   );
 
@@ -56,7 +57,7 @@ export const FieldsRenderer: FC<{
     const extendedFields =
       (formData as Record<string, Record<string, unknown>>)?.[CASE_EXTENDED_FIELDS] ?? {};
     return Object.fromEntries(
-      resolvedFields.map((f) => [f.name, extendedFields[`${f.name}_as_${f.type}`]])
+      resolvedFields.map((f) => [f.name, extendedFields[getFieldSnakeKey(f.name, f.type)]])
     );
   }, [formData, resolvedFields]);
 
@@ -141,7 +142,7 @@ export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
     };
     for (const field of stableFields) {
       const yamlDefault = getYamlDefaultAsString(field.metadata?.default);
-      const fieldKey = `${field.name}_as_${field.type}`;
+      const fieldKey = getFieldSnakeKey(field.name, field.type);
       defaults[CASE_EXTENDED_FIELDS][fieldKey] = yamlDefault;
     }
     return defaults;

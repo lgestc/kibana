@@ -7,7 +7,6 @@
 
 import type { FC } from 'react';
 import React, { useMemo } from 'react';
-import { camelCase } from 'lodash';
 import { EuiFlexGroup, EuiFlexItem, EuiButton } from '@elastic/eui';
 import type { z } from '@kbn/zod/v4';
 import { FormProvider, useForm } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
@@ -17,6 +16,7 @@ import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/do
 import { useGetTemplate } from '../../templates_v2/hooks/use_get_template';
 import { FieldsRenderer } from '../../templates_v2/field_types/field_renderer';
 import { useResolvedFields } from '../../field_library/hooks/use_resolved_fields';
+import { getFieldCamelKey, getFieldSnakeKey } from '../../../../common/utils';
 import type { OnUpdateFields } from '../types';
 import { SAVE } from '../../../common/translations';
 
@@ -46,8 +46,9 @@ const TemplateFieldsForm: FC<{
   const initialDefaultValues = useMemo(() => {
     const defaults: Record<string, Record<string, unknown>> = { [CASE_EXTENDED_FIELDS]: {} };
     for (const field of resolvedFields) {
-      const fieldKey = `${field.name}_as_${field.type}`;
-      defaults[CASE_EXTENDED_FIELDS][fieldKey] = extendedFields[camelCase(fieldKey)] ?? '';
+      const fieldKey = getFieldSnakeKey(field.name, field.type);
+      defaults[CASE_EXTENDED_FIELDS][fieldKey] =
+        extendedFields[getFieldCamelKey(field.name, field.type)] ?? '';
     }
     return defaults;
   }, [resolvedFields, extendedFields]);
