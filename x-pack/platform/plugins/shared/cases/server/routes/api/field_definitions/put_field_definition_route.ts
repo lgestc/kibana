@@ -33,7 +33,11 @@ export const putFieldDefinitionRoute = createCasesRoute({
         field_definition_id: string;
       };
 
-      const input = UpdateFieldDefinitionInputSchema.parse(request.body);
+      const parseResult = UpdateFieldDefinitionInputSchema.safeParse(request.body);
+      if (!parseResult.success) {
+        return response.badRequest({ body: { message: parseResult.error.message } });
+      }
+      const input = parseResult.data;
 
       // Validate that the definition YAML is valid
       try {

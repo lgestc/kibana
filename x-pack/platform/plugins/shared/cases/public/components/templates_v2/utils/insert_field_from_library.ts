@@ -71,7 +71,7 @@ export const insertFieldFromLibrary = (
     fieldsNode.add(fieldNode);
   } else {
     // Create a new fields sequence with this field
-    doc.setIn(['fields'], doc.createNode([parsedField]));
+    doc.setIn(['fields'], doc.createNode([fieldNode]));
   }
 
   return doc.toString();

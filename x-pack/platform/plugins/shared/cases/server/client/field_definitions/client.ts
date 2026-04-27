@@ -63,9 +63,6 @@ export const createFieldDefinitionsSubClient = (
 
     updateFieldDefinition: async (id: string, input: UpdateFieldDefinitionInput) => {
       const fieldDef = await fieldDefinitionsService.getFieldDefinition(id);
-      if (!fieldDef) {
-        throw Boom.notFound(`Field definition with id ${id} not found`);
-      }
       await authorization.ensureAuthorized({
         operation: Operations.manageTemplate,
         entities: [{ owner: fieldDef.attributes.owner, id: fieldDef.id }],
@@ -80,9 +77,6 @@ export const createFieldDefinitionsSubClient = (
 
     deleteFieldDefinition: async (id: string) => {
       const fieldDef = await fieldDefinitionsService.getFieldDefinition(id);
-      if (!fieldDef) {
-        throw Boom.notFound(`Field definition with id ${id} not found`);
-      }
       await authorization.ensureAuthorized({
         operation: Operations.manageTemplate,
         entities: [{ owner: fieldDef.attributes.owner, id: fieldDef.id }],

@@ -28,8 +28,7 @@ import { useDeleteFieldDefinition } from '../hooks/use_delete_field_definition';
 import { FieldDefinitionFlyout } from '../components/field_definition_flyout';
 import * as i18n from '../translations';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface AllFieldDefinitionsPageProps {}
+export type AllFieldDefinitionsPageProps = Record<string, never>;
 
 export const AllFieldDefinitionsPage: React.FC<AllFieldDefinitionsPageProps> = () => {
   const { owner } = useCasesContext();

@@ -40,7 +40,7 @@ export class FieldDefinitionsService {
     const result = await this.dependencies.unsecuredSavedObjectsClient.find<FieldDefinition>({
       type: CASE_FIELD_DEFINITION_SAVED_OBJECT,
       filter,
-      perPage: MAX_FIELD_DEFINITIONS_PER_OWNER,
+      perPage: MAX_FIELD_DEFINITIONS_PER_OWNER * owners.length,
     });
 
     return {

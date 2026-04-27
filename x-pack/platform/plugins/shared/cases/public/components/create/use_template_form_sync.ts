@@ -62,7 +62,6 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
     if (appliedRef.current === key) {
       return;
     }
-    appliedRef.current = key;
 
     const { definition } = template;
     const fieldMappings: Array<[string, unknown]> = [
@@ -79,7 +78,8 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
       }
     }
 
-    // Wait for field definitions to load before applying ref field defaults
+    // Wait for field definitions to load before applying extended field defaults.
+    // Do NOT set appliedRef.current yet — the effect must re-run once defs are available.
     if (isLoadingFieldDefs) return;
 
     // Resolve all fields — inline fields pass through, ref fields are looked up in the library
@@ -111,6 +111,7 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
       newAppliedFields.push(fieldPath);
     }
     appliedFieldsRef.current = newAppliedFields;
+    appliedRef.current = key;
   }, [templateId, template, setFieldValue, fieldDefsData, isLoadingFieldDefs]);
 
   return { template, isLoading };

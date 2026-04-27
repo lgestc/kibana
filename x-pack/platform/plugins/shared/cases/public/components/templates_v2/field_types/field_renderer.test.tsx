@@ -18,7 +18,7 @@ import { FieldsRenderer, TemplateFieldRenderer } from './field_renderer';
 
 jest.mock('../../field_library/hooks/use_resolved_fields', () => ({
   useResolvedFields: (fields: Array<Record<string, unknown>>) => ({
-    // Inline fields have `control`; ref fields have `ref` without `control`
+    // Inline fields have `control`; ref fields have `$ref` without `control`
     resolvedFields: fields.filter((f) => 'control' in f),
     isLoading: false,
   }),
