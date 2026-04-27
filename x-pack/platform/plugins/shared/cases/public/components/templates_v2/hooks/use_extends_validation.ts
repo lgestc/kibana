@@ -41,6 +41,7 @@ export const useExtendsValidation = (
     isFetched,
   } = useGetTemplate(extendsValue, undefined, {
     silent: true,
+    includeDeleted: true,
   });
 
   useEffect(() => {

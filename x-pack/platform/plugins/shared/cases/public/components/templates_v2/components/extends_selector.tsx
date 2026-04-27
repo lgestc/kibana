@@ -19,6 +19,7 @@ import { parse } from 'yaml';
 import { useCasesContext } from '../../cases_context/use_cases_context';
 import { useCasesEditTemplateNavigation } from '../../../common/navigation/hooks';
 import { useGetTemplates } from '../hooks/use_get_templates';
+import { useGetTemplate } from '../hooks/use_get_template';
 import { setYamlExtends, removeYamlExtends } from '../utils/update_yaml_extends';
 import { EXTENDS_LABEL, EXTENDS_SELECTOR_PLACEHOLDER, VIEW_PARENT_TEMPLATE } from '../translations';
 
@@ -63,13 +64,26 @@ export const ExtendsSelector: React.FC<ExtendsSelectorProps> = ({
     }
   }, [yamlValue]);
 
+  const isExtendsMissingFromOptions =
+    currentExtendsId !== undefined && !options.find((o) => o.value === currentExtendsId);
+
+  const { data: deletedParent } = useGetTemplate(
+    isExtendsMissingFromOptions ? currentExtendsId : undefined,
+    undefined,
+    { silent: true, includeDeleted: true }
+  );
+
   const selectedOptions = useMemo<TemplateOption[]>(() => {
     if (!currentExtendsId) {
       return [];
     }
     const match = options.find((o) => o.value === currentExtendsId);
-    return [match ?? { label: currentExtendsId, value: currentExtendsId }];
-  }, [currentExtendsId, options]);
+    if (match) {
+      return [match];
+    }
+    const fallbackLabel = deletedParent?.definition?.name ?? currentExtendsId;
+    return [{ label: fallbackLabel, value: currentExtendsId }];
+  }, [currentExtendsId, options, deletedParent]);
 
   const handleChange = useCallback(
     (selected: Array<EuiComboBoxOptionOption<string>>) => {

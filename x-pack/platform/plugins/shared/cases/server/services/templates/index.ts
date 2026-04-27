@@ -85,14 +85,16 @@ export class TemplatesService {
 
   async getTemplate(
     templateId: string,
-    version?: string
+    version?: string,
+    { includeDeleted = false }: { includeDeleted?: boolean } = {}
   ): Promise<SavedObject<Template> | undefined> {
-    return this._getTemplate(templateId, version);
+    return this._getTemplate(templateId, version, { includeDeleted });
   }
 
   private async _getTemplate(
     templateId: string,
-    version?: string
+    version?: string,
+    { includeDeleted = false }: { includeDeleted?: boolean } = {}
   ): Promise<SavedObject<Template> | undefined> {
     const { templates } = await this.searchTemplates({
       page: 1,
@@ -102,6 +104,7 @@ export class TemplatesService {
       templateId,
       version,
       ...(version === undefined ? { isLatest: true } : {}),
+      ...(includeDeleted ? { isDeleted: true } : {}),
     });
 
     return templates[0];

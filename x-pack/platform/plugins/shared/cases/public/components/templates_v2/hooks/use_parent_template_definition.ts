@@ -14,6 +14,9 @@ type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
 export const useParentTemplateDefinition = (
   parentId: string | undefined
 ): ParsedTemplateDefinition | undefined => {
-  const { data: template } = useGetTemplate(parentId, undefined, { silent: true });
+  const { data: template } = useGetTemplate(parentId, undefined, {
+    silent: true,
+    includeDeleted: true,
+  });
   return template?.definition;
 };
