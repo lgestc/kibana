@@ -51,17 +51,17 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
     }
 
     const { definition } = template;
-    const parentName = definition.extends;
+    const parentId = definition.extends;
     // Include whether parent resolved in the key so we re-apply once parent data loads
-    const parentResolved = parentName ? Boolean(parentDefinition) : true;
+    const parentResolved = parentId ? Boolean(parentDefinition) : true;
     const key = `${template.templateId}:${template.templateVersion}:${
-      parentName ?? ''
+      parentId ?? ''
     }:${parentResolved}`;
     if (appliedRef.current === key) {
       return;
     }
     // Don't apply yet if parent is still loading
-    if (parentName && !parentResolved) {
+    if (parentId && !parentResolved) {
       return;
     }
     appliedRef.current = key;

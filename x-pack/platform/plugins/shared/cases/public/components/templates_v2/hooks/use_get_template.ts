@@ -16,7 +16,8 @@ import { casesQueriesKeys } from '../../../containers/constants';
 
 export const useGetTemplate = (
   templateId?: string,
-  version?: number
+  version?: number,
+  { silent = false }: { silent?: boolean } = {}
 ): UseQueryResult<ParsedTemplate> => {
   const toasts = useToasts();
 
@@ -33,7 +34,7 @@ export const useGetTemplate = (
       enabled: Boolean(templateId),
       staleTime: 0,
       onError: (error: ServerError) => {
-        if (error.name !== 'AbortError') {
+        if (!silent && error.name !== 'AbortError') {
           toasts.addError(
             error.body && error.body.message ? new Error(error.body.message) : error,
             { title: i18n.ERROR_FETCHING_TEMPLATES }

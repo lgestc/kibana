@@ -25,7 +25,7 @@ jest.mock('../templates_v2/hooks/use_get_template', () => ({
 
 const mockUseParentTemplateDefinition = jest.fn<undefined, [string | undefined]>(() => undefined);
 jest.mock('../templates_v2/hooks/use_parent_template_definition', () => ({
-  useParentTemplateDefinition: (name: string | undefined) => mockUseParentTemplateDefinition(name),
+  useParentTemplateDefinition: (id: string | undefined) => mockUseParentTemplateDefinition(id),
 }));
 
 const mockTemplate = {
