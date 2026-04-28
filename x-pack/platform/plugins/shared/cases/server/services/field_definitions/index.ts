@@ -8,6 +8,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { SavedObject, SavedObjectsClientContract } from '@kbn/core/server';
 import { castArray } from 'lodash';
+import { escapeKuery } from '@kbn/es-query';
 import type {
   CreateFieldDefinitionInput,
   FieldDefinition,
@@ -34,7 +35,7 @@ export class FieldDefinitionsService {
     }
 
     const filter = owners
-      .map((o) => `${CASE_FIELD_DEFINITION_SAVED_OBJECT}.attributes.owner: "${o}"`)
+      .map((o) => `${CASE_FIELD_DEFINITION_SAVED_OBJECT}.attributes.owner: "${escapeKuery(o)}"`)
       .join(' OR ');
 
     const result = await this.dependencies.unsecuredSavedObjectsClient.find<FieldDefinition>({

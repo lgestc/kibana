@@ -112,6 +112,39 @@ export const FieldsRenderer: FC<{
 
 FieldsRenderer.displayName = 'FieldsRenderer';
 
+const TemplateFieldRendererInner: FC<{
+  resolvedFields: InlineField[];
+  parsedTemplate: ParsedTemplateDefinition;
+  onFieldDefaultChange?: (fieldName: string, value: string, control: string) => void;
+}> = ({ resolvedFields, parsedTemplate, onFieldDefaultChange }) => {
+  const initialDefaultValues = React.useMemo(() => {
+    const defaults: Record<string, Record<string, string>> = {
+      [CASE_EXTENDED_FIELDS]: {},
+    };
+    for (const field of resolvedFields) {
+      const yamlDefault = getYamlDefaultAsString(field.metadata?.default);
+      const fieldKey = getFieldSnakeKey(field.name, field.type);
+      defaults[CASE_EXTENDED_FIELDS][fieldKey] = yamlDefault;
+    }
+    return defaults;
+  }, [resolvedFields]);
+
+  const { form } = useForm<{}>({
+    defaultValue: initialDefaultValues,
+    options: { stripEmptyFields: false },
+  });
+
+  useYamlFormSync(form, resolvedFields, onFieldDefaultChange);
+
+  return (
+    <FormProvider key={parsedTemplate.name} form={form}>
+      <FieldsRenderer resolvedFields={resolvedFields} form={form} />
+    </FormProvider>
+  );
+};
+
+TemplateFieldRendererInner.displayName = 'TemplateFieldRendererInner';
+
 /**
  * WARN: this component uses shared-form renderer for Case form compatiblity.
  * Dont change this until we migrate everything to react hook form.
@@ -123,44 +156,18 @@ export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
 }) => {
   const { resolvedFields, isLoading } = useResolvedFields(parsedTemplate.fields, owner);
 
+  if (isLoading) return null;
+
   // Content-based key to detect real field definition changes (vs same-content re-parses).
   const fieldsKey = resolvedFields.map((f) => JSON.stringify(f)).join('|');
 
-  // Stabilize the fields reference so useYamlFormSync's effect only fires when
-  // field definitions actually change, not on every re-parse that produces a new array object.
-  const stableFieldsRef = React.useRef(resolvedFields);
-  const prevKeyRef = React.useRef(fieldsKey);
-  if (prevKeyRef.current !== fieldsKey) {
-    prevKeyRef.current = fieldsKey;
-    stableFieldsRef.current = resolvedFields;
-  }
-  const stableFields = stableFieldsRef.current;
-
-  const initialDefaultValues = React.useMemo(() => {
-    const defaults: Record<string, Record<string, string>> = {
-      [CASE_EXTENDED_FIELDS]: {},
-    };
-    for (const field of stableFields) {
-      const yamlDefault = getYamlDefaultAsString(field.metadata?.default);
-      const fieldKey = getFieldSnakeKey(field.name, field.type);
-      defaults[CASE_EXTENDED_FIELDS][fieldKey] = yamlDefault;
-    }
-    return defaults;
-  }, [stableFields]);
-
-  const { form } = useForm<{}>({
-    defaultValue: initialDefaultValues,
-    options: { stripEmptyFields: false },
-  });
-
-  useYamlFormSync(form, stableFields, onFieldDefaultChange);
-
-  if (isLoading) return null;
-
   return (
-    <FormProvider key={parsedTemplate.name} form={form}>
-      <FieldsRenderer resolvedFields={resolvedFields} form={form} />
-    </FormProvider>
+    <TemplateFieldRendererInner
+      key={fieldsKey}
+      resolvedFields={resolvedFields}
+      parsedTemplate={parsedTemplate}
+      onFieldDefaultChange={onFieldDefaultChange}
+    />
   );
 };
 

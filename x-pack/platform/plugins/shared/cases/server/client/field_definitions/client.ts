@@ -46,12 +46,23 @@ export const createFieldDefinitionsSubClient = (
   const { fieldDefinitionsService } = services;
 
   const fieldDefinitionsSubClient: FieldDefinitionsSubClient = {
-    getFieldDefinitions: (params: FieldDefinitionsFindRequest) => {
+    getFieldDefinitions: async (params: FieldDefinitionsFindRequest) => {
       const owners = params.owner ? castArray(params.owner) : [];
+      await authorization.ensureAuthorized({
+        operation: Operations.manageTemplate,
+        entities: owners.map((owner) => ({ owner, id: owner })),
+      });
       return fieldDefinitionsService.getFieldDefinitions(owners);
     },
 
-    getFieldDefinition: (id: string) => fieldDefinitionsService.getFieldDefinition(id),
+    getFieldDefinition: async (id: string) => {
+      const fieldDef = await fieldDefinitionsService.getFieldDefinition(id);
+      await authorization.ensureAuthorized({
+        operation: Operations.manageTemplate,
+        entities: [{ owner: fieldDef.attributes.owner, id: fieldDef.id }],
+      });
+      return fieldDef;
+    },
 
     createFieldDefinition: async (input: CreateFieldDefinitionInput) => {
       await authorization.ensureAuthorized({
@@ -61,9 +72,7 @@ export const createFieldDefinitionsSubClient = (
 
       const existing = await fieldDefinitionsService.getFieldDefinitions([input.owner]);
       const nameLower = input.name.toLowerCase();
-      const conflict = existing.fieldDefinitions.find(
-        (fd) => fd.name.toLowerCase() === nameLower
-      );
+      const conflict = existing.fieldDefinitions.find((fd) => fd.name.toLowerCase() === nameLower);
       if (conflict) {
         throw Boom.conflict(
           `A field definition with name "${conflict.name}" already exists for this owner.`

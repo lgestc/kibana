@@ -13,6 +13,7 @@ import { FormProvider, useForm } from '@kbn/es-ui-shared-plugin/static/forms/hoo
 import type { CaseUI } from '../../../../common';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/latest';
+import type { InlineField } from '../../../../common/types/domain/template/fields';
 import { useGetTemplate } from '../../templates_v2/hooks/use_get_template';
 import { FieldsRenderer } from '../../templates_v2/field_types/field_renderer';
 import { useResolvedFields } from '../../field_library/hooks/use_resolved_fields';
@@ -29,20 +30,12 @@ interface TemplateFieldsProps {
   loadingKey: string | null;
 }
 
-const TemplateFieldsForm: FC<{
-  parsedTemplate: ParsedTemplateDefinition;
-  owner: string;
+const TemplateFieldsFormReady: FC<{
+  resolvedFields: InlineField[];
   extendedFields: Record<string, unknown>;
   onUpdateField: (args: OnUpdateFields) => void;
   isLoading: boolean;
-}> = ({ parsedTemplate, owner, extendedFields, onUpdateField, isLoading }) => {
-  const { resolvedFields, isLoading: isResolvingFields } = useResolvedFields(
-    parsedTemplate.fields,
-    owner
-  );
-
-  const templateKey = resolvedFields.map((f) => `${f.name}:${f.type}`).join('|');
-
+}> = ({ resolvedFields, extendedFields, onUpdateField, isLoading }) => {
   const initialDefaultValues = useMemo(() => {
     const defaults: Record<string, Record<string, unknown>> = { [CASE_EXTENDED_FIELDS]: {} };
     for (const field of resolvedFields) {
@@ -66,10 +59,8 @@ const TemplateFieldsForm: FC<{
     onUpdateField({ key: CASE_EXTENDED_FIELDS, value: fields });
   };
 
-  if (isResolvingFields) return null;
-
   return (
-    <FormProvider key={templateKey} form={form}>
+    <FormProvider form={form}>
       <FieldsRenderer resolvedFields={resolvedFields} form={form} />
       <EuiFlexGroup alignItems="center" responsive={false}>
         <EuiFlexItem grow={false}>
@@ -87,6 +78,35 @@ const TemplateFieldsForm: FC<{
         </EuiFlexItem>
       </EuiFlexGroup>
     </FormProvider>
+  );
+};
+
+TemplateFieldsFormReady.displayName = 'TemplateFieldsFormReady';
+
+const TemplateFieldsForm: FC<{
+  parsedTemplate: ParsedTemplateDefinition;
+  owner: string;
+  extendedFields: Record<string, unknown>;
+  onUpdateField: (args: OnUpdateFields) => void;
+  isLoading: boolean;
+}> = ({ parsedTemplate, owner, extendedFields, onUpdateField, isLoading }) => {
+  const { resolvedFields, isLoading: isResolvingFields } = useResolvedFields(
+    parsedTemplate.fields,
+    owner
+  );
+
+  if (isResolvingFields) return null;
+
+  const templateKey = resolvedFields.map((f) => `${f.name}:${f.type}`).join('|');
+
+  return (
+    <TemplateFieldsFormReady
+      key={templateKey}
+      resolvedFields={resolvedFields}
+      extendedFields={extendedFields}
+      onUpdateField={onUpdateField}
+      isLoading={isLoading}
+    />
   );
 };
 
