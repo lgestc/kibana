@@ -57,9 +57,9 @@ describe('createFieldDefinitionsSubClient', () => {
       const result = await client.createFieldDefinition(input);
 
       expect(result).toBe(so);
-      expect(clientArgs.services.fieldDefinitionsService.createFieldDefinition).toHaveBeenCalledWith(
-        input
-      );
+      expect(
+        clientArgs.services.fieldDefinitionsService.createFieldDefinition
+      ).toHaveBeenCalledWith(input);
     });
 
     it('throws 409 when a field with the same name already exists', async () => {
@@ -79,9 +79,9 @@ describe('createFieldDefinitionsSubClient', () => {
         total: 1,
       });
 
-      await expect(
-        client.createFieldDefinition({ ...input, name: 'my_field' })
-      ).rejects.toThrow('A field definition with name "MY_FIELD" already exists for this owner.');
+      await expect(client.createFieldDefinition({ ...input, name: 'my_field' })).rejects.toThrow(
+        'A field definition with name "MY_FIELD" already exists for this owner.'
+      );
     });
   });
 
