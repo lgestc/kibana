@@ -9,7 +9,7 @@ import { parseDocument, isMap } from 'yaml';
 
 export const setYamlExtends = (yaml: string, templateId: string): string => {
   if (!yaml || yaml.trim() === '') {
-    return yaml;
+    return `extends: ${templateId}\n`;
   }
   try {
     const doc = parseDocument(yaml);

@@ -24,7 +24,9 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
   const { setFieldValue } = useFormContext();
   const [{ templateId }] = useFormData<{ templateId?: string }>({ watch: ['templateId'] });
   const { data: template, isLoading } = useGetTemplate(templateId || undefined);
-  const parentDefinition = useParentTemplateDefinition(template?.definition?.extends);
+  const { definition: parentDefinition, isFetched: parentFetched } = useParentTemplateDefinition(
+    template?.definition?.extends
+  );
   const appliedRef = useRef<string | undefined>(undefined);
   const appliedFieldsRef = useRef<string[]>([]);
 
@@ -52,16 +54,16 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
 
     const { definition } = template;
     const parentId = definition.extends;
-    // Include whether parent resolved in the key so we re-apply once parent data loads
-    const parentResolved = parentId ? Boolean(parentDefinition) : true;
-    const key = `${template.templateId}:${template.templateVersion}:${
-      parentId ?? ''
-    }:${parentResolved}`;
-    if (appliedRef.current === key) {
+    // Wait until the parent query settles (success or error) before applying.
+    // parentFetched is false only while the query is in-flight; once it resolves
+    // (even as a 404/error), we proceed — possibly without parent fields.
+    if (parentId && !parentFetched) {
       return;
     }
-    // Don't apply yet if parent is still loading
-    if (parentId && !parentResolved) {
+    const key = `${template.templateId}:${template.templateVersion}:${parentId ?? ''}:${String(
+      parentFetched
+    )}`;
+    if (appliedRef.current === key) {
       return;
     }
     appliedRef.current = key;

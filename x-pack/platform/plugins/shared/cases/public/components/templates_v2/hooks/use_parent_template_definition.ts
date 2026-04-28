@@ -11,12 +11,17 @@ import { useGetTemplate } from './use_get_template';
 
 type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
 
+export interface UseParentTemplateDefinitionResult {
+  definition: ParsedTemplateDefinition | undefined;
+  isFetched: boolean;
+}
+
 export const useParentTemplateDefinition = (
   parentId: string | undefined
-): ParsedTemplateDefinition | undefined => {
-  const { data: template } = useGetTemplate(parentId, undefined, {
+): UseParentTemplateDefinitionResult => {
+  const { data: template, isFetched } = useGetTemplate(parentId, undefined, {
     silent: true,
     includeDeleted: true,
   });
-  return template?.definition;
+  return { definition: template?.definition, isFetched };
 };

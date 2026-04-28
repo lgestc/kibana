@@ -23,7 +23,9 @@ jest.mock('../templates_v2/hooks/use_get_template', () => ({
   useGetTemplate: (...args: unknown[]) => mockUseGetTemplate(...args),
 }));
 
-const mockUseParentTemplateDefinition = jest.fn<undefined, [string | undefined]>(() => undefined);
+const mockUseParentTemplateDefinition = jest.fn(
+  (_id: string | undefined) => ({ definition: undefined, isFetched: true })
+);
 jest.mock('../templates_v2/hooks/use_parent_template_definition', () => ({
   useParentTemplateDefinition: (id: string | undefined) => mockUseParentTemplateDefinition(id),
 }));

@@ -8,6 +8,7 @@
 import type { FC } from 'react';
 import type { z } from '@kbn/zod/v4';
 import React, { useMemo } from 'react';
+import { css } from '@emotion/react';
 import type { FormHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import {
   FormProvider,
@@ -112,7 +113,7 @@ export const FieldsRenderer: FC<{
 
         const fieldLabel =
           isInherited && parentTemplateName ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <span css={css({ display: 'inline-flex', alignItems: 'center', gap: '4px' })}>
               {field.label ?? field.name}
               <EuiToolTip content={INHERITED_FIELD_TOOLTIP(parentTemplateName)}>
                 <EuiIcon

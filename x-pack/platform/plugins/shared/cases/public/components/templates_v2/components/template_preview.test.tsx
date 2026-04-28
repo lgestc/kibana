@@ -16,7 +16,7 @@ jest.mock('../field_types/field_renderer', () => ({
 }));
 
 jest.mock('../hooks/use_parent_template_definition', () => ({
-  useParentTemplateDefinition: jest.fn(() => undefined),
+  useParentTemplateDefinition: jest.fn(() => ({ definition: undefined, isFetched: true })),
 }));
 
 describe('CreateTemplatePreview', () => {
