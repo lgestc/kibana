@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import type { Document } from 'yaml';
+import type { Document, YAMLMap } from 'yaml';
 import { parseDocument, isMap, isSeq, isScalar } from 'yaml';
 import { load as parseYaml } from 'js-yaml';
 
@@ -170,6 +170,59 @@ export const removeYamlFieldDefault = (yaml: string, fieldName: string): string 
         if (metadataNode.items.length === 0) {
           fieldItem.delete('metadata');
         }
+      }
+    }
+
+    return doc.toString();
+  } catch {
+    return yaml;
+  }
+};
+
+/**
+ * Updates or adds `metadata.default` directly in a single field definition YAML.
+ * Unlike updateYamlFieldDefault, operates on the root level (no `fields` array wrapper).
+ */
+export const updateFieldDefinitionDefault = (yaml: string, newValue: FieldDefaultValue): string => {
+  if (!yaml || yaml.trim() === '') return yaml;
+  try {
+    const doc = parseDocument(yaml);
+    const root = doc.contents;
+    if (!isMap(root)) return yaml;
+
+    const defaultNode = toYamlDefaultNode(doc, newValue);
+    const rootMap = root as YAMLMap<unknown, unknown>;
+    const metadataNode = rootMap.get('metadata', true);
+
+    if (!isMap(metadataNode)) {
+      rootMap.set('metadata', doc.createNode({ default: defaultNode }));
+    } else {
+      metadataNode.set('default', defaultNode);
+    }
+
+    return doc.toString();
+  } catch {
+    return yaml;
+  }
+};
+
+/**
+ * Removes `metadata.default` from a single field definition YAML.
+ * Unlike removeYamlFieldDefault, operates on the root level (no `fields` array wrapper).
+ */
+export const removeFieldDefinitionDefault = (yaml: string): string => {
+  if (!yaml || yaml.trim() === '') return yaml;
+  try {
+    const doc = parseDocument(yaml);
+    const root = doc.contents;
+    if (!isMap(root)) return yaml;
+
+    const rootMap = root as YAMLMap<unknown, unknown>;
+    const metadataNode = rootMap.get('metadata', true);
+    if (isMap(metadataNode)) {
+      metadataNode.delete('default');
+      if (metadataNode.items.length === 0) {
+        rootMap.delete('metadata');
       }
     }
 

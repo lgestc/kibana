@@ -153,17 +153,19 @@ export const FIELD_DEFINITION_YAML_LABEL = i18n.translate(
   { defaultMessage: 'Field definition (YAML)' }
 );
 
-export const FIELD_DEFINITION_YAML_HELP = i18n.translate(
-  'xpack.cases.fieldLibrary.fieldDefinitionYamlHelp',
-  {
-    defaultMessage:
-      'Enter a single FieldSchema entry. The field name is derived from the YAML `name` property.',
-  }
-);
-
 export const FIELD_DEFINITION_YAML_MISSING_NAME = i18n.translate(
   'xpack.cases.fieldLibrary.fieldDefinitionYamlMissingName',
   { defaultMessage: 'The YAML definition must include a `name` property.' }
+);
+
+export const FIELD_DEFINITION_PREVIEW_LABEL = i18n.translate(
+  'xpack.cases.fieldLibrary.fieldDefinitionPreviewLabel',
+  { defaultMessage: 'Preview' }
+);
+
+export const FIELD_DEFINITION_PREVIEW_PLACEHOLDER = i18n.translate(
+  'xpack.cases.fieldLibrary.fieldDefinitionPreviewPlaceholder',
+  { defaultMessage: 'Enter a valid field definition above to see a live preview.' }
 );
 
 export const DELETE_CONFIRM_TITLE = i18n.translate('xpack.cases.fieldLibrary.deleteConfirmTitle', {
