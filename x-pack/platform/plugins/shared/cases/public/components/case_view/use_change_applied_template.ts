@@ -34,14 +34,15 @@ export const computeNewExtendedFields = (
 ): Record<string, string> => {
   const result: Record<string, string> = {};
   for (const field of newTemplateFields) {
-    if (!isInlineField(field)) continue;
-    const snakeKey = getFieldSnakeKey(field.name, field.type);
-    const camelKey = getFieldCamelKey(field.name, field.type);
-    const existingValue = currentExtendedFields[camelKey];
-    if (existingValue !== undefined && existingValue !== '') {
-      result[snakeKey] = String(existingValue);
-    } else {
-      result[snakeKey] = getYamlDefaultAsString(field.metadata?.default);
+    if (isInlineField(field)) {
+      const snakeKey = getFieldSnakeKey(field.name, field.type);
+      const camelKey = getFieldCamelKey(field.name, field.type);
+      const existingValue = currentExtendedFields[camelKey];
+      if (existingValue !== undefined && existingValue !== '') {
+        result[snakeKey] = String(existingValue);
+      } else {
+        result[snakeKey] = getYamlDefaultAsString(field.metadata?.default);
+      }
     }
   }
   return result;
