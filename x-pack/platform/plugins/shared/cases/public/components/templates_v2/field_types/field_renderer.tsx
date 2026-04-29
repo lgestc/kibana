@@ -124,7 +124,9 @@ export const FieldsRenderer: FC<{
                 />
               </EuiToolTip>
             </span>
-          ) : (field.label ?? field.name);
+          ) : (
+            field.label ?? field.name
+          );
 
         return (
           <div key={field.name} data-test-subj={`template-field-${field.name}`}>

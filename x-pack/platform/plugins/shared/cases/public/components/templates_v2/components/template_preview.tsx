@@ -85,9 +85,7 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ onFieldDefault
     ? parsedTemplate.data
     : lastValidTemplateRef.current;
 
-  const { definition: parentDefinition } = useParentTemplateDefinition(
-    parsedTemplateData?.extends
-  );
+  const { definition: parentDefinition } = useParentTemplateDefinition(parsedTemplateData?.extends);
 
   const effectiveTemplate = useMemo(() => {
     if (!parsedTemplateData) {
