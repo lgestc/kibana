@@ -5,11 +5,11 @@
  * 2.0.
  */
 
-import { parseDocument, isMap } from 'yaml';
+import { parseDocument, isMap, stringify } from 'yaml';
 
 export const setYamlExtends = (yaml: string, templateId: string): string => {
   if (!yaml || yaml.trim() === '') {
-    return `extends: ${templateId}\n`;
+    return stringify({ extends: templateId });
   }
   try {
     const doc = parseDocument(yaml);

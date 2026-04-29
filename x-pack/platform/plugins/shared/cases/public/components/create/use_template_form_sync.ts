@@ -97,7 +97,7 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
       }
     }
     appliedFieldsRef.current = newAppliedFields;
-  }, [templateId, template, parentDefinition, setFieldValue]);
+  }, [templateId, template, parentDefinition, parentFetched, setFieldValue]);
 
   return { template, isLoading };
 };

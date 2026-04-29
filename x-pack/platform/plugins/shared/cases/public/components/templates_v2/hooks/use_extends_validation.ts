@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { parse } from 'yaml';
+import { parse as parseYaml } from 'yaml';
 import { monaco } from '@kbn/monaco';
 import { useGetTemplate } from './use_get_template';
 import { EXTENDS_CHAINING_ERROR, EXTENDS_NOT_FOUND_ERROR } from '../translations';
@@ -22,7 +22,7 @@ export const useExtendsValidation = (
   useEffect(() => {
     const timeout = setTimeout(() => {
       try {
-        const parsed = parse(value);
+        const parsed = parseYaml(value);
         const ext =
           parsed && typeof parsed === 'object'
             ? (parsed as Record<string, unknown>).extends
@@ -55,6 +55,23 @@ export const useExtendsValidation = (
     }
 
     if (!extendsValue) {
+      monaco.editor.setModelMarkers(model, EXTENDS_VALIDATION_OWNER, []);
+      return;
+    }
+
+    // During the 300ms debounce window, value and extendsValue are out of sync.
+    // Clear markers until the debounced state catches up to avoid stale diagnostics.
+    try {
+      const parsed = parseYaml(value);
+      const liveExtends =
+        parsed && typeof parsed === 'object'
+          ? (parsed as Record<string, unknown>).extends
+          : undefined;
+      if (liveExtends !== extendsValue) {
+        monaco.editor.setModelMarkers(model, EXTENDS_VALIDATION_OWNER, []);
+        return;
+      }
+    } catch {
       monaco.editor.setModelMarkers(model, EXTENDS_VALIDATION_OWNER, []);
       return;
     }
