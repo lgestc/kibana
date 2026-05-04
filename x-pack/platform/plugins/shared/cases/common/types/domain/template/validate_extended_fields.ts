@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import type { InlineField } from './fields';
+import type { InlineField, RefField } from './fields';
 import { FieldType, isInlineField } from './fields';
 import { evaluateCondition } from './evaluate_conditions';
 import { getFieldSnakeKey } from '../../../utils';
@@ -117,7 +117,7 @@ const validateField = (field: InlineField, value: string, errors: string[]): voi
 
 export const validateExtendedFields = (
   extendedFields: Record<string, string>,
-  fields: Array<{ $ref: string; name?: string } | InlineField>
+  fields: Array<RefField | InlineField>
 ): string[] => {
   const errors: string[] = [];
   const inlineFields = fields.filter(isInlineField);

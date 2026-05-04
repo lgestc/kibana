@@ -156,10 +156,13 @@ export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
 }) => {
   const { resolvedFields, isLoading } = useResolvedFields(parsedTemplate.fields, owner);
 
-  if (isLoading) return null;
-
   // Content-based key to detect real field definition changes (vs same-content re-parses).
-  const fieldsKey = resolvedFields.map((f) => JSON.stringify(f)).join('|');
+  const fieldsKey = useMemo(
+    () => resolvedFields.map((f) => JSON.stringify(f)).join('|'),
+    [resolvedFields]
+  );
+
+  if (isLoading) return null;
 
   return (
     <TemplateFieldRendererInner

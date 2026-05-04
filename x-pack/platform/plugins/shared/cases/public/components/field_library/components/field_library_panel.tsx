@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   EuiAccordion,
   EuiButtonIcon,
@@ -50,23 +50,28 @@ export const FieldLibraryPanel: React.FC<FieldLibraryPanelProps> = ({
 
   const { data, isLoading } = useGetFieldDefinitions({ owner });
 
-  const fieldDefinitions = data?.fieldDefinitions ?? [];
+  const fieldDefinitions = useMemo(() => data?.fieldDefinitions ?? [], [data]);
   const hasReferenceMode = !!onReference;
-  const linkedFields =
-    activeRefNames && activeRefNames.length > 0
-      ? activeRefNames.flatMap((name) => {
-          const fd = fieldDefinitions.find((d) => d.name === name);
-          return fd ? [fd] : [];
-        })
-      : [];
 
-  const filtered = search.trim()
-    ? fieldDefinitions.filter(
-        (fd) =>
-          fd.name.toLowerCase().includes(search.toLowerCase()) ||
-          fd.description?.toLowerCase().includes(search.toLowerCase())
-      )
-    : fieldDefinitions;
+  const linkedFields = useMemo(
+    () =>
+      activeRefNames && activeRefNames.length > 0
+        ? activeRefNames.flatMap((name) => {
+            const fd = fieldDefinitions.find((d) => d.name === name);
+            return fd ? [fd] : [];
+          })
+        : [],
+    [activeRefNames, fieldDefinitions]
+  );
+
+  const filtered = useMemo(() => {
+    const trimmed = search.trim();
+    if (!trimmed) return fieldDefinitions;
+    const lower = trimmed.toLowerCase();
+    return fieldDefinitions.filter(
+      (fd) => fd.name.toLowerCase().includes(lower) || fd.description?.toLowerCase().includes(lower)
+    );
+  }, [search, fieldDefinitions]);
 
   const handleInsert = useCallback(
     (fd: FieldDefinition) => {

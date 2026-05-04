@@ -95,9 +95,12 @@ const TemplateFieldsForm: FC<{
     owner
   );
 
-  if (isResolvingFields) return null;
+  const templateKey = useMemo(
+    () => resolvedFields.map((f) => `${f.name}:${f.type}`).join('|'),
+    [resolvedFields]
+  );
 
-  const templateKey = resolvedFields.map((f) => `${f.name}:${f.type}`).join('|');
+  if (isResolvingFields) return null;
 
   return (
     <TemplateFieldsFormReady

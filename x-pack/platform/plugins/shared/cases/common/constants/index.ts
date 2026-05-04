@@ -126,7 +126,7 @@ export const INTERNAL_BULK_EXPORT_TEMPLATES_URL = `${INTERNAL_TEMPLATES_URL}/_bu
 export const INTERNAL_TEMPLATE_TAGS_URL = `${INTERNAL_TEMPLATES_URL}/tags` as const;
 export const INTERNAL_TEMPLATE_CREATORS_URL = `${INTERNAL_TEMPLATES_URL}/creators` as const;
 
-export const INTERNAL_FIELD_DEFINITIONS_URL = `${CASES_INTERNAL_URL}/field-definitions` as const;
+export const INTERNAL_FIELD_DEFINITIONS_URL = `${CASES_INTERNAL_URL}/field_definitions` as const;
 export const INTERNAL_FIELD_DEFINITION_DETAILS_URL =
   `${INTERNAL_FIELD_DEFINITIONS_URL}/{field_definition_id}` as const;
 
