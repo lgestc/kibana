@@ -40,7 +40,9 @@ const makeTemplate = (overrides: Partial<ParsedTemplate['definition']> = {}): Pa
 const makeEditor = () => {
   const mockModel = {} as monaco.editor.ITextModel;
   return {
-    editor: { getModel: jest.fn(() => mockModel) } as unknown as monaco.editor.IStandaloneCodeEditor,
+    editor: {
+      getModel: jest.fn(() => mockModel),
+    } as unknown as monaco.editor.IStandaloneCodeEditor,
     model: mockModel,
   };
 };
