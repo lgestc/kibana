@@ -122,7 +122,7 @@ describe('FieldDefinitionsService', () => {
 
       const input = {
         name: 'my_field',
-        owner: 'securitySolution',
+        owner: 'securitySolution' as const,
         definition: 'name: my_field\ncontrol: INPUT_TEXT\ntype: keyword\n',
       };
       const result = await service.createFieldDefinition(input);

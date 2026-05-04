@@ -19,6 +19,7 @@ import {
   EuiText,
 } from '@elastic/eui';
 import type { EuiBasicTableColumn } from '@elastic/eui';
+import type { Owner } from '../../../../common/bundled-types.gen';
 import type { FieldDefinition } from '../../../../common/types/domain/field_definition/v1';
 import { useCasesContext } from '../../cases_context/use_cases_context';
 import { useGetFieldDefinitions } from '../hooks/use_get_field_definitions';
@@ -71,7 +72,7 @@ export const AllFieldDefinitionsPage: React.FC<AllFieldDefinitionsPageProps> = (
       description: string;
       definition: string;
     }) => {
-      const ownerValue = Array.isArray(owner) ? owner[0] : owner;
+      const ownerValue = (Array.isArray(owner) ? owner[0] : owner) as Owner;
 
       if (editingFieldDef) {
         updateFieldDef({
