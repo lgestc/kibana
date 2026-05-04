@@ -31,6 +31,8 @@ interface ExtendsSelectorProps {
 
 type TemplateOption = EuiComboBoxOptionOption<string>;
 
+const SINGLE_SELECTION = { asPlainText: true };
+
 export const ExtendsSelector: React.FC<ExtendsSelectorProps> = ({
   yamlValue,
   onYamlChange,
@@ -46,9 +48,12 @@ export const ExtendsSelector: React.FC<ExtendsSelectorProps> = ({
     if (!templatesData?.templates) {
       return [];
     }
-    return templatesData.templates
-      .filter((t) => t.templateId !== currentTemplateId)
-      .map((t) => ({ label: t.name, value: t.templateId }));
+    return templatesData.templates.reduce<TemplateOption[]>((acc, t) => {
+      if (t.templateId !== currentTemplateId) {
+        acc.push({ label: t.name, value: t.templateId });
+      }
+      return acc;
+    }, []);
   }, [templatesData, currentTemplateId]);
 
   const currentExtendsId = useMemo(() => {
@@ -64,8 +69,12 @@ export const ExtendsSelector: React.FC<ExtendsSelectorProps> = ({
     }
   }, [yamlValue]);
 
-  const isExtendsMissingFromOptions =
-    currentExtendsId !== undefined && !options.find((o) => o.value === currentExtendsId);
+  const matchedOption = useMemo(
+    () => options.find((o) => o.value === currentExtendsId),
+    [options, currentExtendsId]
+  );
+
+  const isExtendsMissingFromOptions = currentExtendsId !== undefined && !matchedOption;
 
   const { data: deletedParent } = useGetTemplate(
     isExtendsMissingFromOptions ? currentExtendsId : undefined,
@@ -77,13 +86,12 @@ export const ExtendsSelector: React.FC<ExtendsSelectorProps> = ({
     if (!currentExtendsId) {
       return [];
     }
-    const match = options.find((o) => o.value === currentExtendsId);
-    if (match) {
-      return [match];
+    if (matchedOption) {
+      return [matchedOption];
     }
     const fallbackLabel = deletedParent?.definition?.name ?? currentExtendsId;
     return [{ label: fallbackLabel, value: currentExtendsId }];
-  }, [currentExtendsId, options, deletedParent]);
+  }, [currentExtendsId, matchedOption, deletedParent]);
 
   const handleChange = useCallback(
     (selected: Array<EuiComboBoxOptionOption<string>>) => {
@@ -106,7 +114,7 @@ export const ExtendsSelector: React.FC<ExtendsSelectorProps> = ({
               compressed
               fullWidth
               isClearable
-              singleSelection={{ asPlainText: true }}
+              singleSelection={SINGLE_SELECTION}
               isLoading={isLoading}
               options={options}
               selectedOptions={selectedOptions}

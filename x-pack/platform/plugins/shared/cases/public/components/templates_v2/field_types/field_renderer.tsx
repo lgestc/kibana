@@ -15,7 +15,7 @@ import {
   useForm,
   useFormData,
 } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { EuiIcon, EuiToolTip } from '@elastic/eui';
+import { EuiIconTip } from '@elastic/eui';
 import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/latest';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { controlRegistry } from './field_types_registry';
@@ -115,14 +115,13 @@ export const FieldsRenderer: FC<{
           isInherited && parentTemplateName ? (
             <span css={css({ display: 'inline-flex', alignItems: 'center', gap: '4px' })}>
               {field.label ?? field.name}
-              <EuiToolTip content={INHERITED_FIELD_TOOLTIP(parentTemplateName)}>
-                <EuiIcon
-                  type="info"
-                  size="s"
-                  color="subdued"
-                  data-test-subj={`inherited-field-icon-${field.name}`}
-                />
-              </EuiToolTip>
+              <EuiIconTip
+                content={INHERITED_FIELD_TOOLTIP(parentTemplateName)}
+                type="info"
+                size="s"
+                color="subdued"
+                data-test-subj={`inherited-field-icon-${field.name}`}
+              />
             </span>
           ) : (
             field.label ?? field.name
