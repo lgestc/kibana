@@ -15,7 +15,7 @@ import {
   useForm,
   useFormData,
 } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
-import { EuiIconTip } from '@elastic/eui';
+import { EuiIconTip, useEuiTheme } from '@elastic/eui';
 import type { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/latest';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { controlRegistry } from './field_types_registry';
@@ -40,6 +40,8 @@ export const FieldsRenderer: FC<{
   parentFieldNames?: Set<string>;
   parentTemplateName?: string;
 }> = ({ parsedTemplate, form, parentFieldNames, parentTemplateName }) => {
+  const { euiTheme } = useEuiTheme();
+
   const fieldTypeMap = useMemo(
     () => Object.fromEntries(parsedTemplate.fields.map((f) => [f.name, f.type])),
     [parsedTemplate.fields]
@@ -128,7 +130,11 @@ export const FieldsRenderer: FC<{
           );
 
         return (
-          <div key={field.name} data-test-subj={`template-field-${field.name}`}>
+          <div
+            key={field.name}
+            data-test-subj={`template-field-${field.name}`}
+            css={{ marginBottom: euiTheme.size.m }}
+          >
             <Control {...controlProps} label={fieldLabel} />
           </div>
         );
