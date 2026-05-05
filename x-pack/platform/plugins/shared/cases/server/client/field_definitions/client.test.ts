@@ -9,7 +9,10 @@ import type { SavedObject } from '@kbn/core/server';
 import { createCasesClientMockArgs } from '../mocks';
 import { createFieldDefinitionsSubClient } from './client';
 import type { FieldDefinition } from '../../../common/types/domain/field_definition/v1';
-import { CASE_FIELD_DEFINITION_SAVED_OBJECT } from '../../../common/constants';
+import {
+  CASE_FIELD_DEFINITION_SAVED_OBJECT,
+  MAX_FIELD_DEFINITIONS_PER_OWNER,
+} from '../../../common/constants';
 
 const makeFieldDefinitionSO = (
   overrides: Partial<FieldDefinition> & { id?: string } = {}
@@ -60,6 +63,22 @@ describe('createFieldDefinitionsSubClient', () => {
       expect(
         clientArgs.services.fieldDefinitionsService.createFieldDefinition
       ).toHaveBeenCalledWith(input);
+    });
+
+    it('throws 400 when the owner already has the maximum number of field definitions', async () => {
+      clientArgs.services.fieldDefinitionsService.getFieldDefinitions.mockResolvedValue({
+        fieldDefinitions: Array(MAX_FIELD_DEFINITIONS_PER_OWNER).fill(
+          makeFieldDefinitionSO().attributes
+        ),
+        total: MAX_FIELD_DEFINITIONS_PER_OWNER,
+      });
+
+      await expect(client.createFieldDefinition(input)).rejects.toThrow(
+        `Cannot create more than ${MAX_FIELD_DEFINITIONS_PER_OWNER} field definitions per owner.`
+      );
+      expect(
+        clientArgs.services.fieldDefinitionsService.createFieldDefinition
+      ).not.toHaveBeenCalled();
     });
 
     it('throws 409 when a field with the same name already exists', async () => {

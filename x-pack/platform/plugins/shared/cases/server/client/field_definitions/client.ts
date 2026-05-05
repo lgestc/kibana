@@ -19,6 +19,7 @@ import type {
 } from '../../../common/types/api/field_definition/v1';
 import type { CasesClientArgs } from '../types';
 import { Operations } from '../../authorization';
+import { MAX_FIELD_DEFINITIONS_PER_OWNER } from '../../../common/constants';
 
 /**
  * API for interacting with field definitions (the reusable fields library).
@@ -71,6 +72,13 @@ export const createFieldDefinitionsSubClient = (
       });
 
       const existing = await fieldDefinitionsService.getFieldDefinitions([input.owner]);
+
+      if (existing.total >= MAX_FIELD_DEFINITIONS_PER_OWNER) {
+        throw Boom.badRequest(
+          `Cannot create more than ${MAX_FIELD_DEFINITIONS_PER_OWNER} field definitions per owner.`
+        );
+      }
+
       const nameLower = input.name.toLowerCase();
       const conflict = existing.fieldDefinitions.find((fd) => fd.name.toLowerCase() === nameLower);
       if (conflict) {
