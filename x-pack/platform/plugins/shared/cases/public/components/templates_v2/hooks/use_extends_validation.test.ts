@@ -31,6 +31,7 @@ const makeTemplate = (overrides: Partial<ParsedTemplate['definition']> = {}): Pa
   name: 'Parent Template',
   owner: 'securitySolution',
   definition: { name: 'Parent Template', fields: [], ...overrides },
+  definitionString: 'name: Parent Template\nfields: []\n',
   templateVersion: 1,
   deletedAt: null,
   isLatest: true,
