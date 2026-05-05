@@ -35,7 +35,7 @@ export const CreateCaseTemplateFields: React.FC = () => {
     return null;
   }
 
-  if (!templateId) {
+  if (!templateId || template?.definition?.fields === undefined) {
     return (
       <>
         <EuiSpacer />

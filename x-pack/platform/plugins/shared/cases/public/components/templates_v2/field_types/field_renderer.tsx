@@ -6,7 +6,7 @@
  */
 
 import type { FC } from 'react';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import type { FormHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import {
   FormProvider,
@@ -162,12 +162,22 @@ export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
     [resolvedFields]
   );
 
+  // Stabilize the resolvedFields reference — only update when content actually changes.
+  // This prevents useYamlFormSync effects from re-running when identical YAML is re-parsed
+  // into a new object reference (e.g. on every keystroke in the YAML editor).
+  const stableResolvedFieldsRef = useRef(resolvedFields);
+  const prevFieldsKeyRef = useRef(fieldsKey);
+  if (prevFieldsKeyRef.current !== fieldsKey) {
+    prevFieldsKeyRef.current = fieldsKey;
+    stableResolvedFieldsRef.current = resolvedFields;
+  }
+
   if (isLoading) return null;
 
   return (
     <TemplateFieldRendererInner
       key={fieldsKey}
-      resolvedFields={resolvedFields}
+      resolvedFields={stableResolvedFieldsRef.current}
       parsedTemplate={parsedTemplate}
       onFieldDefaultChange={onFieldDefaultChange}
     />
