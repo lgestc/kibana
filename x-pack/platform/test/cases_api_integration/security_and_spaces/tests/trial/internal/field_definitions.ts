@@ -184,9 +184,7 @@ export default ({ getService }: FtrProviderContext): void => {
 
       it('updates a field definition for a user with manageTemplates privilege', async () => {
         const { body } = await supertestWithoutAuth
-          .put(
-            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`
-          )
+          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .send(
@@ -201,9 +199,7 @@ export default ({ getService }: FtrProviderContext): void => {
 
       it('returns 403 for a user without manageTemplates privilege', async () => {
         await supertestWithoutAuth
-          .put(
-            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`
-          )
+          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
           .auth(secOnlyNoManageTemplates.username, secOnlyNoManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .send(buildCreateBody())
@@ -218,9 +214,7 @@ export default ({ getService }: FtrProviderContext): void => {
           .expect(200);
 
         await supertestWithoutAuth
-          .put(
-            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`
-          )
+          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .send(buildCreateBody({ name: 'severity' }))
@@ -229,9 +223,7 @@ export default ({ getService }: FtrProviderContext): void => {
 
       it('allows renaming a definition to its own current name', async () => {
         await supertestWithoutAuth
-          .put(
-            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`
-          )
+          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .send(buildCreateBody())
@@ -240,9 +232,7 @@ export default ({ getService }: FtrProviderContext): void => {
 
       it('returns 404 for a non-existent field definition id', async () => {
         await supertestWithoutAuth
-          .put(
-            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/does-not-exist`
-          )
+          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/does-not-exist`)
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .send(buildCreateBody())
@@ -265,9 +255,7 @@ export default ({ getService }: FtrProviderContext): void => {
 
       it('deletes a field definition for a user with manageTemplates privilege', async () => {
         await supertestWithoutAuth
-          .delete(
-            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`
-          )
+          .delete(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .expect(204);
@@ -282,9 +270,7 @@ export default ({ getService }: FtrProviderContext): void => {
 
       it('returns 403 for a user without manageTemplates privilege', async () => {
         await supertestWithoutAuth
-          .delete(
-            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`
-          )
+          .delete(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
           .auth(secOnlyNoManageTemplates.username, secOnlyNoManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .expect(403);
@@ -292,9 +278,7 @@ export default ({ getService }: FtrProviderContext): void => {
 
       it('returns 404 for a non-existent field definition id', async () => {
         await supertestWithoutAuth
-          .delete(
-            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/does-not-exist`
-          )
+          .delete(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/does-not-exist`)
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .expect(404);
