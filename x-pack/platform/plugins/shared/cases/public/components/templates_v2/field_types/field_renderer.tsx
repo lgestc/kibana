@@ -7,6 +7,7 @@
 
 import type { FC } from 'react';
 import React, { useMemo, useRef } from 'react';
+import { useEuiTheme } from '@elastic/eui';
 import type { FormHook } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import {
   FormProvider,
@@ -36,6 +37,8 @@ export const FieldsRenderer: FC<{
   resolvedFields: InlineField[];
   form: FormHook<{}>;
 }> = ({ resolvedFields, form }) => {
+  const { euiTheme } = useEuiTheme();
+
   const fieldTypeMap = useMemo(
     () => Object.fromEntries(resolvedFields.map((f) => [f.name, f.type])),
     [resolvedFields]
@@ -101,7 +104,11 @@ export const FieldsRenderer: FC<{
         };
 
         return (
-          <div key={field.name} data-test-subj={`template-field-${field.name}`}>
+          <div
+            key={field.name}
+            data-test-subj={`template-field-${field.name}`}
+            css={{ marginBottom: euiTheme.size.m }}
+          >
             <Control {...controlProps} />
           </div>
         );
