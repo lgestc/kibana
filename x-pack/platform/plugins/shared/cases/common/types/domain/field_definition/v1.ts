@@ -6,7 +6,6 @@
  */
 
 import { z } from '@kbn/zod/v4';
-import { Owner } from '../../../bundled-types.gen';
 
 export const FieldDefinitionSchema = z.object({
   /**
@@ -28,7 +27,7 @@ export const FieldDefinitionSchema = z.object({
   /**
    * Owning solution
    */
-  owner: Owner,
+  owner: z.string(),
 
   /**
    * Optional human-readable description of the field's purpose

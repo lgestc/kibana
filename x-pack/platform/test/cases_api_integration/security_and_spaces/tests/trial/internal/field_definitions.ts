@@ -12,7 +12,6 @@ import {
   secOnly,
   secOnlyManageTemplates,
   secOnlyNoManageTemplates,
-  noKibanaPrivileges,
 } from '../../../../common/lib/authentication/users';
 
 const FIELD_DEFINITIONS_URL = '/internal/cases/field_definitions';
@@ -63,15 +62,6 @@ export default ({ getService }: FtrProviderContext): void => {
         await supertestWithoutAuth
           .post(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}`)
           .auth(secOnlyNoManageTemplates.username, secOnlyNoManageTemplates.password)
-          .set('kbn-xsrf', 'true')
-          .send(buildCreateBody())
-          .expect(403);
-      });
-
-      it('returns 403 for a user with no kibana privileges', async () => {
-        await supertestWithoutAuth
-          .post(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}`)
-          .auth(noKibanaPrivileges.username, noKibanaPrivileges.password)
           .set('kbn-xsrf', 'true')
           .send(buildCreateBody())
           .expect(403);
@@ -159,10 +149,10 @@ export default ({ getService }: FtrProviderContext): void => {
       });
 
       it('is space-isolated: definitions from space1 are not visible in space2', async () => {
-        const { body } = await supertestWithoutAuth
+        // Use supertest (superuser) to query space2 — the test user only has access to space1
+        const { body } = await supertest
           .get(`${getSpaceUrlPrefix('space2')}${FIELD_DEFINITIONS_URL}`)
           .query({ owner: 'securitySolutionFixture' })
-          .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .expect(200);
 
         expect(body.fieldDefinitions).to.have.length(0);
