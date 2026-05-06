@@ -24,6 +24,7 @@ import { useYamlFormSync } from './hooks/use_yaml_form_sync';
 import { getFieldSnakeKey } from '../../../../common/utils';
 import { getYamlDefaultAsString } from '../utils';
 import { useResolvedFields } from '../../field_library/hooks/use_resolved_fields';
+import { useCasesContext } from '../../cases_context/use_cases_context';
 
 type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
 
@@ -161,7 +162,9 @@ export const TemplateFieldRenderer: FC<TemplateFieldRendererProps> = ({
   owner,
   onFieldDefaultChange,
 }) => {
-  const { resolvedFields, isLoading } = useResolvedFields(parsedTemplate.fields, owner);
+  const { owner: contextOwner } = useCasesContext();
+  const resolvedOwner = owner ?? contextOwner[0];
+  const { resolvedFields, isLoading } = useResolvedFields(parsedTemplate.fields, resolvedOwner);
 
   // Content-based key to detect real field definition changes (vs same-content re-parses).
   const fieldsKey = useMemo(

@@ -16,6 +16,10 @@ jest.mock('../../field_library/hooks/use_resolved_fields', () => ({
     isLoading: false,
   }),
 }));
+
+jest.mock('../../cases_context/use_cases_context', () => ({
+  useCasesContext: () => ({ owner: ['cases'] }),
+}));
 import { render, screen } from '@testing-library/react';
 import { TemplateFieldRenderer } from './field_renderer';
 

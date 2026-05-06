@@ -24,6 +24,10 @@ jest.mock('../../field_library/hooks/use_resolved_fields', () => ({
   }),
 }));
 
+jest.mock('../../cases_context/use_cases_context', () => ({
+  useCasesContext: () => ({ owner: ['cases'] }),
+}));
+
 /**
  * Template with a required field whose show_when condition is false by default
  * (controller starts empty, not equal to 'yes').

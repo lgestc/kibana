@@ -13,7 +13,6 @@ import type { z } from '@kbn/zod/v4';
 import { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/v1';
 import { TemplateFieldRenderer } from '../field_types/field_renderer';
 import { TemplateMetadataPreview } from './template_metadata_preview';
-import { useCasesContext } from '../../cases_context/use_cases_context';
 import * as i18n from '../translations';
 
 type ParsedTemplateDefinition = z.infer<typeof ParsedTemplateDefinitionSchema>;
@@ -24,7 +23,6 @@ interface TemplatePreviewProps {
 
 export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ onFieldDefaultChange }) => {
   const { control } = useFormContext();
-  const { owner } = useCasesContext();
   const values = useWatch({ control, defaultValue: { definition: '' } });
 
   // Store the last valid parsed template
@@ -102,7 +100,6 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ onFieldDefault
           <EuiSpacer size="s" />
           <TemplateFieldRenderer
             parsedTemplate={parsedTemplateData}
-            owner={owner[0]}
             onFieldDefaultChange={onFieldDefaultChange}
           />
         </>
