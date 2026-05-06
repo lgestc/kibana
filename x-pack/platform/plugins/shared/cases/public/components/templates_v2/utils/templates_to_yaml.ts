@@ -213,6 +213,27 @@ const serializeValidation = (out: string[], field: InlineField) => {
   serializeNestedYaml(out, 'validation', defined);
 };
 
+const serializeRefDefault = (
+  out: string[],
+  defaultValue: NonNullable<RefField['metadata']>['default']
+) => {
+  if (defaultValue === undefined) return;
+  out.push(`      metadata:`);
+  if (Array.isArray(defaultValue)) {
+    out.push(`        default:`);
+    for (const item of defaultValue) {
+      if (typeof item === 'string') {
+        out.push(`          - ${yamlString(item)}`);
+      } else {
+        out.push(`          - uid: ${yamlString(item.uid)}`);
+        out.push(`            name: ${yamlString(item.name)}`);
+      }
+    }
+    return;
+  }
+  out.push(`        default: ${yamlString(defaultValue)}`);
+};
+
 const serializeField = (out: string[], field: Field) => {
   if (isRefField(field)) {
     if (field.name !== undefined) {
@@ -221,6 +242,7 @@ const serializeField = (out: string[], field: Field) => {
     } else {
       out.push(`    - $ref: ${yamlString(field.$ref)}`);
     }
+    serializeRefDefault(out, field.metadata?.default);
     out.push('');
     return;
   }

@@ -39,12 +39,22 @@ export const useResolvedFields = (
         const parsed = parseYaml(fd.definition);
         const result = FieldSchema.safeParse(parsed);
         if (!result.success || isRefField(result.data)) return [];
-        const inlineField = result.data as InlineField;
-        return [
-          field.name && field.name !== inlineField.name
-            ? { ...inlineField, name: field.name }
-            : inlineField,
-        ];
+
+        let resolved = result.data as InlineField;
+
+        if (field.name && field.name !== resolved.name) {
+          resolved = { ...resolved, name: field.name };
+        }
+
+        const overrideDefault = field.metadata?.default;
+        if (overrideDefault !== undefined) {
+          resolved = {
+            ...resolved,
+            metadata: { ...(resolved.metadata ?? {}), default: overrideDefault },
+          } as InlineField;
+        }
+
+        return [resolved];
       } catch {
         return [];
       }

@@ -209,10 +209,21 @@ export const RadioGroupFieldSchema = BaseFieldSchema.extend({
  * When a template is parsed, the referenced field is resolved by looking up the library
  * field by its `$ref` name. `name` is an optional local alias; if omitted the `$ref` value
  * is used as the effective field name within the template.
+ *
+ * `metadata.default` is an optional per-template override for the resolved field's default
+ * value. It must satisfy the resolved field's control type — this is enforced when the
+ * override is merged onto the inline field at resolve time.
  */
 export const RefFieldSchema = z.object({
   name: z.string().optional(),
   $ref: z.string().min(1),
+  metadata: z
+    .object({
+      default: z
+        .union([z.string(), z.number(), z.array(z.string()), UserPickerDefaultSchema])
+        .optional(),
+    })
+    .optional(),
 });
 
 export type RefField = z.infer<typeof RefFieldSchema>;

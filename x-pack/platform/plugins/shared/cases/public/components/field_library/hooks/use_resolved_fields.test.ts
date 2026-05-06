@@ -120,4 +120,33 @@ describe('useResolvedFields', () => {
     renderHook(() => useResolvedFields([inlineField], 'observability'));
     expect(mockUseGetFieldDefinitions).toHaveBeenCalledWith({ owner: 'observability' });
   });
+
+  describe('$ref metadata.default override', () => {
+    it('merges the override default onto the resolved field', () => {
+      const refField: Field = {
+        $ref: 'lib_field',
+        metadata: { default: 'override' },
+      };
+      const { result } = renderHook(() => useResolvedFields([refField], 'securitySolution'));
+      expect(result.current.resolvedFields).toHaveLength(1);
+      expect(result.current.resolvedFields[0].metadata).toMatchObject({ default: 'override' });
+    });
+
+    it('falls back to the library default when no override is set', () => {
+      const refField: Field = { $ref: 'lib_field' };
+      const { result } = renderHook(() => useResolvedFields([refField], 'securitySolution'));
+      expect(result.current.resolvedFields[0].metadata).toMatchObject({ default: 'from_lib' });
+    });
+
+    it('combines name alias and metadata.default override on the same entry', () => {
+      const refField: Field = {
+        $ref: 'lib_field',
+        name: 'my_alias',
+        metadata: { default: 'override' },
+      };
+      const { result } = renderHook(() => useResolvedFields([refField], 'securitySolution'));
+      expect(result.current.resolvedFields[0].name).toBe('my_alias');
+      expect(result.current.resolvedFields[0].metadata).toMatchObject({ default: 'override' });
+    });
+  });
 });
