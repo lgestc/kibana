@@ -9,19 +9,23 @@ import React, { useCallback, useState } from 'react';
 import {
   EuiBasicTable,
   EuiButton,
+  EuiButtonEmpty,
   EuiButtonIcon,
   EuiConfirmModal,
   EuiFlexGroup,
   EuiFlexItem,
-  EuiPageHeader,
   EuiSkeletonText,
   EuiSpacer,
   EuiText,
+  EuiTitle,
+  useEuiTheme,
 } from '@elastic/eui';
+import { css } from '@emotion/react';
 import type { EuiBasicTableColumn } from '@elastic/eui';
 import type { Owner } from '../../../../common/bundled-types.gen';
 import type { FieldDefinition } from '../../../../common/types/domain/field_definition/v1';
 import { useCasesContext } from '../../cases_context/use_cases_context';
+import { useCasesTemplatesNavigation } from '../../../common/navigation';
 import { useGetFieldDefinitions } from '../hooks/use_get_field_definitions';
 import { useCreateFieldDefinition } from '../hooks/use_create_field_definition';
 import { useUpdateFieldDefinition } from '../hooks/use_update_field_definition';
@@ -32,7 +36,9 @@ import * as i18n from '../translations';
 export type AllFieldDefinitionsPageProps = Record<string, never>;
 
 export const AllFieldDefinitionsPage: React.FC<AllFieldDefinitionsPageProps> = () => {
+  const { euiTheme } = useEuiTheme();
   const { owner } = useCasesContext();
+  const { navigateToCasesTemplates } = useCasesTemplatesNavigation();
 
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const [editingFieldDef, setEditingFieldDef] = useState<FieldDefinition | undefined>(undefined);
@@ -157,20 +163,44 @@ export const AllFieldDefinitionsPage: React.FC<AllFieldDefinitionsPageProps> = (
 
   return (
     <>
-      <EuiPageHeader
-        pageTitle={i18n.FIELD_LIBRARY_TITLE}
-        description={i18n.FIELD_LIBRARY_DESCRIPTION}
-        rightSideItems={[
-          <EuiButton
-            fill
-            iconType="plusInCircle"
-            onClick={handleCreate}
-            data-test-subj="createFieldDefinitionButton"
-          >
-            {i18n.CREATE_FIELD_DEFINITION}
-          </EuiButton>,
-        ]}
-      />
+      <header>
+        <EuiButtonEmpty
+          iconType="sortLeft"
+          size="xs"
+          flush="left"
+          onClick={navigateToCasesTemplates}
+          aria-label={i18n.BACK_TO_TEMPLATES}
+          data-test-subj="fieldLibraryBackToTemplatesButton"
+        >
+          {i18n.BACK_TO_TEMPLATES}
+        </EuiButtonEmpty>
+        <EuiFlexGroup
+          alignItems="center"
+          gutterSize="s"
+          css={css`
+            margin-bottom: ${euiTheme.size.l};
+          `}
+        >
+          <EuiFlexItem>
+            <EuiTitle size="l">
+              <h1>{i18n.FIELD_LIBRARY_TITLE}</h1>
+            </EuiTitle>
+            <EuiText size="s" color="subdued">
+              <p>{i18n.FIELD_LIBRARY_DESCRIPTION}</p>
+            </EuiText>
+          </EuiFlexItem>
+          <EuiFlexItem grow={false}>
+            <EuiButton
+              fill
+              iconType="plusInCircle"
+              onClick={handleCreate}
+              data-test-subj="createFieldDefinitionButton"
+            >
+              {i18n.CREATE_FIELD_DEFINITION}
+            </EuiButton>
+          </EuiFlexItem>
+        </EuiFlexGroup>
+      </header>
       <EuiSpacer size="l" />
       {isLoading ? (
         <EuiSkeletonText lines={5} />
