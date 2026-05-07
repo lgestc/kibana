@@ -29,12 +29,14 @@ import type {
 } from '../../common/types/domain';
 import {
   AttachmentType,
-  ExternalReferenceSOAttachmentPayloadRt,
-  FileAttachmentMetadataRt,
   CaseSeverity,
   CaseStatuses,
   ConnectorTypes,
 } from '../../common/types/domain';
+import {
+  ExternalReferenceSOAttachmentPayloadSchema,
+  FileAttachmentMetadataSchema,
+} from '../../common/types/domain_zod';
 import { isValidOwner } from '../../common/utils/owner';
 import {
   CASE_VIEW_COMMENT_PATH,
@@ -319,9 +321,10 @@ export const isPersistableStateOrExternalReference = (context: AttachmentRequest
 export const isFileAttachmentRequest = (
   context: Partial<AttachmentRequest>
 ): context is FileAttachmentRequest => {
+  const parsed = ExternalReferenceSOAttachmentPayloadSchema.safeParse(context);
   return (
-    ExternalReferenceSOAttachmentPayloadRt.is(context) &&
-    FileAttachmentMetadataRt.is(context.externalReferenceMetadata)
+    parsed.success &&
+    FileAttachmentMetadataSchema.safeParse(parsed.data.externalReferenceMetadata).success
   );
 };
 
