@@ -5,9 +5,7 @@
  * 2.0.
  */
 
-import { fold } from 'fp-ts/Either';
-import { identity } from 'fp-ts/function';
-import { pipe } from 'fp-ts/pipeable';
+import type { ZodType } from '@kbn/zod/v4';
 
 import type {
   CasesFindResponse,
@@ -16,30 +14,33 @@ import type {
   CasesSimilarResponse,
 } from '../../common/types/api';
 import {
-  CasesFindResponseRt,
-  CasesBulkGetResponseRt,
-  CasesMetricsResponseRt,
-  CasesSimilarResponseRt,
-} from '../../common/types/api';
-import { createToasterPlainError } from '../containers/utils';
-import { throwErrors } from '../../common';
+  CasesFindResponseSchema,
+  CasesBulkGetResponseSchema,
+  CasesMetricsResponseSchema,
+  CasesSimilarResponseSchema,
+} from '../../common/types/api_zod';
+import { ToasterError } from '../containers/utils';
+
+const decodeWithToasterError = <T>(schema: ZodType<unknown>, value: T): NonNullable<T> => {
+  const result = schema.safeParse(value);
+  if (result.success) return result.data as NonNullable<T>;
+  throw new ToasterError([
+    result.error.issues
+      .map((issue) => `${issue.path.join('.') || '<root>'}: ${issue.message}`)
+      .join(','),
+  ]);
+};
 
 export const decodeCasesFindResponse = (respCases?: CasesFindResponse) =>
-  pipe(CasesFindResponseRt.decode(respCases), fold(throwErrors(createToasterPlainError), identity));
+  decodeWithToasterError(CasesFindResponseSchema, respCases);
+
 export const decodeCasesMetricsResponse = (metrics?: CasesMetricsResponse) =>
-  pipe(
-    CasesMetricsResponseRt.decode(metrics),
-    fold(throwErrors(createToasterPlainError), identity)
-  );
+  decodeWithToasterError(CasesMetricsResponseSchema, metrics);
 
 export const decodeCasesBulkGetResponse = (res: CasesBulkGetResponse) => {
-  pipe(CasesBulkGetResponseRt.decode(res), fold(throwErrors(createToasterPlainError), identity));
-
+  decodeWithToasterError(CasesBulkGetResponseSchema, res);
   return res;
 };
 
 export const decodeCasesSimilarResponse = (respCases?: CasesSimilarResponse) =>
-  pipe(
-    CasesSimilarResponseRt.decode(respCases),
-    fold(throwErrors(createToasterPlainError), identity)
-  );
+  decodeWithToasterError(CasesSimilarResponseSchema, respCases);
