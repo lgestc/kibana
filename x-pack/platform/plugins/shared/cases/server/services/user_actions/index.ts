@@ -15,7 +15,8 @@ import type { estypes } from '@elastic/elasticsearch';
 import type { KueryNode } from '@kbn/es-query';
 import type { CaseUserActionDeprecatedResponse } from '../../../common/types/api';
 import { AttachmentType, UserActionActions, UserActionTypes } from '../../../common/types/domain';
-import { decodeOrThrow } from '../../common/runtime_types';
+import type { UserActionAttributes } from '../../../common/types/domain';
+import { decodeOrThrowZod } from '../../common/runtime_types_zod';
 import {
   CASE_COMMENT_SAVED_OBJECT,
   CASE_SAVED_OBJECT,
@@ -46,8 +47,8 @@ import type {
   UserActionPersistedAttributes,
   UserActionSavedObjectTransformed,
 } from '../../common/types/user_actions';
-import { UserActionTransformedAttributesRt } from '../../common/types/user_actions';
-import { CaseUserActionDeprecatedResponseRt } from '../../../common/types/api';
+import { UserActionTransformedAttributesSchema } from '../../common/types/user_actions';
+import { CaseUserActionDeprecatedResponseSchema } from '../../../common/types/api_zod';
 import { isCommentAttachmentType } from '../../../common/utils/attachments';
 
 export class CaseUserActionService {
@@ -223,7 +224,9 @@ export class CaseUserActionService {
           this.context.persistableStateAttachmentTypeRegistry
         );
 
-        const decodeRes = decodeOrThrow(UserActionTransformedAttributesRt)(res.attributes);
+        const decodeRes = decodeOrThrowZod(UserActionTransformedAttributesSchema)(
+          res.attributes
+        ) as UserActionAttributes;
 
         const fieldsDoc = Object.assign(res, {
           attributes: decodeRes,
@@ -287,7 +290,9 @@ export class CaseUserActionService {
         this.context.persistableStateAttachmentTypeRegistry
       );
 
-      const decodeRes = decodeOrThrow(UserActionTransformedAttributesRt)(res.attributes);
+      const decodeRes = decodeOrThrowZod(UserActionTransformedAttributesSchema)(
+        res.attributes
+      ) as UserActionAttributes;
 
       return {
         ...res,
@@ -370,7 +375,9 @@ export class CaseUserActionService {
           this.context.persistableStateAttachmentTypeRegistry
         );
 
-        const decodeRes = decodeOrThrow(UserActionTransformedAttributesRt)(res.attributes);
+        const decodeRes = decodeOrThrowZod(UserActionTransformedAttributesSchema)(
+          res.attributes
+        ) as UserActionAttributes;
 
         fieldsDoc = { ...res, attributes: decodeRes };
       }
@@ -417,7 +424,9 @@ export class CaseUserActionService {
         this.context.persistableStateAttachmentTypeRegistry
       );
 
-      const decodeRes = decodeOrThrow(UserActionTransformedAttributesRt)(res.attributes);
+      const decodeRes = decodeOrThrowZod(UserActionTransformedAttributesSchema)(
+        res.attributes
+      ) as UserActionAttributes;
       return { ...res, attributes: decodeRes };
     }
   }
@@ -540,7 +549,7 @@ export class CaseUserActionService {
       const validatedUserActions: Array<SavedObjectsFindResult<CaseUserActionDeprecatedResponse>> =
         [];
       for (const so of transformedUserActions.saved_objects) {
-        const validatedAttributes = decodeOrThrow(CaseUserActionDeprecatedResponseRt)(
+        const validatedAttributes = decodeOrThrowZod(CaseUserActionDeprecatedResponseSchema)(
           so.attributes
         );
 

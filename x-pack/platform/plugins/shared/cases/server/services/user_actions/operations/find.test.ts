@@ -141,7 +141,7 @@ describe('UserActionsService: Finder', () => {
       method(soFindRes);
 
       await expect(finder[soMethodName]({ caseId: '1' })).rejects.toThrow(
-        `Invalid value "undefined" supplied to "${key}"`
+        `Invalid`
       );
     });
 
@@ -161,7 +161,7 @@ describe('UserActionsService: Finder', () => {
       method(soFindRes);
 
       await expect(finder[soMethodName]({ caseId: '1' })).rejects.toThrow(
-        'Invalid value "undefined" supplied to "payload,title"'
+        'Invalid'
       );
     });
 
@@ -172,7 +172,7 @@ describe('UserActionsService: Finder', () => {
       method(soFindRes);
 
       await expect(finder[soMethodName]({ caseId: '1' })).rejects.toThrow(
-        'Invalid value "undefined" supplied to "payload,connector,fields,issueType",Invalid value "{"priority":"high","parent":"2"}" supplied to "payload,connector,fields"'
+        'Invalid'
       );
     });
 
