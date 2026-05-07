@@ -36,6 +36,7 @@ import {
   CustomFieldNumberTypeSchema,
 } from '../../domain_zod/custom_field/v1';
 import {
+  CaseCloseReasonSchema,
   CaseSchema,
   CasesSchema,
   CaseSettingsSchema,
@@ -112,6 +113,7 @@ export const CaseBaseOptionalFieldsRequestSchema = z.object({
   settings: CaseSettingsSchema.optional(),
   template: CaseTemplateSchema.nullable().optional(),
   [CASE_EXTENDED_FIELDS]: z.record(z.string(), z.string()).optional(),
+  closeReason: CaseCloseReasonSchema.optional(),
 });
 
 export const CaseRequestFieldsSchema = CaseBaseOptionalFieldsRequestSchema.extend({

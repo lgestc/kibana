@@ -30,6 +30,20 @@ export const CaseStatusSchema = BundledCaseStatusSchema;
 
 export const caseStatuses = Object.values(CaseStatuses);
 
+export const DefaultCloseReasonSchema = z.union([
+  z.literal('false_positive'),
+  z.literal('duplicate'),
+  z.literal('true_positive'),
+  z.literal('benign_positive'),
+  z.literal('automated_closure'),
+  z.literal('other'),
+]);
+
+/**
+ * Close reason
+ */
+export const CaseCloseReasonSchema = z.union([DefaultCloseReasonSchema, z.string()]);
+
 /**
  * Severity
  */

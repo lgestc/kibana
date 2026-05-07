@@ -9,8 +9,9 @@ import Boom from '@hapi/boom';
 import { SavedObjectsUtils } from '@kbn/core/server';
 
 import type { Case } from '../../../common/types/domain';
-import { CaseSeverity, UserActionTypes, CaseRt } from '../../../common/types/domain';
-import { decodeWithExcessOrThrow, decodeOrThrow } from '../../common/runtime_types';
+import { CaseSeverity, UserActionTypes } from '../../../common/types/domain';
+import { CaseSchema } from '../../../common/types/domain_zod';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
 
 import { Operations } from '../../authorization';
 import { createCaseError } from '../../common/error';
@@ -18,7 +19,7 @@ import { flattenCaseSavedObject, transformNewCase } from '../../common/utils';
 import type { CasesClient, CasesClientArgs } from '..';
 import { LICENSING_CASE_ASSIGNMENT_FEATURE } from '../../common/constants';
 import type { CasePostRequest } from '../../../common/types/api';
-import { CasePostRequestRt } from '../../../common/types/api';
+import { CasePostRequestSchema } from '../../../common/types/api_zod';
 import {} from '../utils';
 import { validateCustomFields } from './validators';
 import { emptyCaseAssigneesSanitizer } from './sanitizers';
@@ -49,7 +50,7 @@ export const create = async (
   } = clientArgs;
 
   try {
-    const rawQuery = decodeWithExcessOrThrow(CasePostRequestRt)(data);
+    const rawQuery = decodeWithExcessOrThrowZod(CasePostRequestSchema)(data) as CasePostRequest;
     const query = emptyCaseAssigneesSanitizer(rawQuery);
     const configurations = await casesClient.configure.get({ owner: data.owner });
     const customFieldsConfiguration = configurations[0]?.customFields;
@@ -174,7 +175,7 @@ export const create = async (
       savedObject: newCase,
     });
 
-    return decodeOrThrow(CaseRt)(res);
+    return decodeOrThrowZod(CaseSchema)(res) as Case;
   } catch (error) {
     throw createCaseError({ message: `Failed to create case: ${error}`, error, logger });
   }

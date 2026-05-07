@@ -13,7 +13,7 @@ import { SavedObjectsUtils } from '@kbn/core/server';
 
 import type { Case, CustomFieldsConfiguration, User } from '../../../common/types/domain';
 import { CaseSeverity, UserActionTypes } from '../../../common/types/domain';
-import { decodeWithExcessOrThrow, decodeOrThrow } from '../../common/runtime_types';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
 
 import { Operations } from '../../authorization';
 import { createCaseError, isSODecoratedError, isSOError } from '../../common/error';
@@ -25,7 +25,10 @@ import type {
   BulkCreateCasesResponse,
   CasePostRequest,
 } from '../../../common/types/api';
-import { BulkCreateCasesResponseRt, BulkCreateCasesRequestRt } from '../../../common/types/api';
+import {
+  BulkCreateCasesResponseSchema,
+  BulkCreateCasesRequestSchema,
+} from '../../../common/types/api_zod';
 import { validateCustomFields } from './validators';
 import { normalizeCreateCaseRequest } from './utils';
 import type { BulkCreateCasesArgs } from '../../services/cases/types';
@@ -51,7 +54,9 @@ export const bulkCreate = async (
   } = clientArgs;
 
   try {
-    const decodedData = decodeWithExcessOrThrow(BulkCreateCasesRequestRt)(data);
+    const decodedData = decodeWithExcessOrThrowZod(BulkCreateCasesRequestSchema)(
+      data
+    ) as BulkCreateCasesRequest;
     const configurations = await casesClient.configure.get();
 
     const customFieldsConfigurationMap: Map<string, CustomFieldsConfiguration> = new Map(
@@ -156,7 +161,9 @@ export const bulkCreate = async (
       })
     );
 
-    return decodeOrThrow(BulkCreateCasesResponseRt)({ cases: res });
+    return decodeOrThrowZod(BulkCreateCasesResponseSchema)({
+      cases: res,
+    }) as BulkCreateCasesResponse;
   } catch (error) {
     throw createCaseError({ message: `Failed to bulk create cases: ${error}`, error, logger });
   }
