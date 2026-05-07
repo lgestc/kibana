@@ -9,7 +9,7 @@ import type {
   ExternalReferenceAttachmentPayload,
   FileAttachmentMetadata,
 } from '../../../../common/types/domain';
-import { FileAttachmentMetadataRt } from '../../../../common/types/domain';
+import { FileAttachmentMetadataSchema } from '../../../../common/types/domain_zod';
 
 import {
   compressionMimeTypes,
@@ -54,10 +54,8 @@ export const parseMimeType = (mimeType: string | undefined) => {
 export const isValidFileExternalReferenceMetadata = (
   externalReferenceMetadata: ExternalReferenceAttachmentPayload['externalReferenceMetadata']
 ): externalReferenceMetadata is FileAttachmentMetadata => {
-  return (
-    FileAttachmentMetadataRt.is(externalReferenceMetadata) &&
-    externalReferenceMetadata?.files?.length >= 1
-  );
+  const parsed = FileAttachmentMetadataSchema.safeParse(externalReferenceMetadata);
+  return parsed.success && parsed.data.files.length >= 1;
 };
 
 export const getFileFromReferenceMetadata = ({
