@@ -14,6 +14,8 @@ import {
   AttachmentPatchRequestSchema,
 } from './v1';
 import {
+  AttachmentSchemaV2,
+  AttachmentsSchemaV2,
   UnifiedAttachmentPayloadSchema,
   UnifiedReferenceAttachmentPayloadSchema,
   UnifiedValueAttachmentPayloadSchema,
@@ -46,6 +48,27 @@ export const BulkCreateAttachmentsRequestSchemaV2 = limitedArraySchema({
   fieldName: 'attachments',
 });
 
+export const AttachmentsFindResponseSchemaV2 = z.object({
+  comments: z.array(AttachmentSchemaV2),
+  page: z.number(),
+  per_page: z.number(),
+  total: z.number(),
+});
+
+export const BulkGetAttachmentsResponseSchemaV2 = z.object({
+  attachments: AttachmentsSchemaV2,
+  errors: z.array(
+    z.object({
+      error: z.string(),
+      message: z.string(),
+      status: z.union([z.undefined(), z.number()]),
+      savedObjectId: z.string(),
+    })
+  ),
+});
+
 export type AttachmentRequestV2 = z.infer<typeof AttachmentRequestSchemaV2>;
 export type AttachmentPatchRequestV2 = z.infer<typeof AttachmentPatchRequestSchemaV2>;
 export type BulkCreateAttachmentsRequestV2 = z.infer<typeof BulkCreateAttachmentsRequestSchemaV2>;
+export type AttachmentsFindResponseV2 = z.infer<typeof AttachmentsFindResponseSchemaV2>;
+export type BulkGetAttachmentsResponseV2 = z.infer<typeof BulkGetAttachmentsResponseSchemaV2>;

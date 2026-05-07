@@ -8,9 +8,9 @@
 import { SavedObjectsUtils } from '@kbn/core/server';
 
 import type { AttachmentRequestV2 } from '../../../common/types/api';
-import { BulkCreateAttachmentsRequestRtV2 } from '../../../common/types/api/attachment/v2';
+import { BulkCreateAttachmentsRequestSchemaV2 } from '../../../common/types/api_zod/attachment/v2';
 import type { Case } from '../../../common/types/domain';
-import { decodeWithExcessOrThrow } from '../../common/runtime_types';
+import { decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
 
 import { CaseCommentModel } from '../../common/models';
 import { createCaseError } from '../../common/error';
@@ -39,7 +39,7 @@ export const bulkCreate = async (
   } = clientArgs;
 
   try {
-    decodeWithExcessOrThrow(BulkCreateAttachmentsRequestRtV2)(attachments);
+    decodeWithExcessOrThrowZod(BulkCreateAttachmentsRequestSchemaV2)(attachments);
     await validateMaxUserActions({
       caseId,
       userActionService,

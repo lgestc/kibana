@@ -73,10 +73,12 @@ export type UnifiedAttachment = z.infer<typeof UnifiedAttachmentSchema>;
  * Combined v1 legacy and v2 unified attachment types
  */
 export const AttachmentSchemaV2 = z.union([AttachmentSchema, UnifiedAttachmentSchema]);
+export const AttachmentsSchemaV2 = z.array(AttachmentSchemaV2);
 export const AttachmentAttributesSchemaV2 = z.union([
   AttachmentAttributesSchema,
   UnifiedAttachmentAttributesSchema,
 ]);
 
 export type AttachmentV2 = z.infer<typeof AttachmentSchemaV2>;
+export type AttachmentsV2 = z.infer<typeof AttachmentsSchemaV2>;
 export type AttachmentAttributesV2 = z.infer<typeof AttachmentAttributesSchemaV2>;

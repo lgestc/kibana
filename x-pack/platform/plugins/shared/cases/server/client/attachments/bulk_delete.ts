@@ -13,8 +13,8 @@ import type { Logger } from '@kbn/core/server';
 import type { File, FileJSON } from '@kbn/files-plugin/common';
 import type { FileServiceStart } from '@kbn/files-plugin/server';
 import { FileNotFoundError } from '@kbn/files-plugin/server/file_service/errors';
-import { BulkDeleteFileAttachmentsRequestRt } from '../../../common/types/api';
-import { decodeWithExcessOrThrow } from '../../common/runtime_types';
+import { BulkDeleteFileAttachmentsRequestSchema } from '../../../common/types/api_zod';
+import { decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
 import { MAX_CONCURRENT_SEARCHES } from '../../../common/constants';
 import type { CasesClientArgs } from '../types';
 import { createCaseError } from '../../common/error';
@@ -38,7 +38,9 @@ export const bulkDeleteFileAttachments = async (
   } = clientArgs;
 
   try {
-    const request = decodeWithExcessOrThrow(BulkDeleteFileAttachmentsRequestRt)({ ids: fileIds });
+    const request = decodeWithExcessOrThrowZod(BulkDeleteFileAttachmentsRequestSchema)({
+      ids: fileIds,
+    });
 
     await casesClient.cases.resolve({ id: caseId, includeComments: false });
 
