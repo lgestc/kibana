@@ -160,7 +160,7 @@ describe('AttachmentService getter', () => {
         await expect(
           attachmentGetter.bulkGet(['1'], mode)
         ).rejects.toThrowErrorMatchingInlineSnapshot(
-          `"Invalid value \\"undefined\\" supplied to \\"comment\\",Invalid value \\"user\\" supplied to \\"type\\",Invalid value \\"undefined\\" supplied to \\"alertId\\",Invalid value \\"undefined\\" supplied to \\"index\\",Invalid value \\"undefined\\" supplied to \\"rule\\",Invalid value \\"undefined\\" supplied to \\"eventId\\",Invalid value \\"undefined\\" supplied to \\"actions\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceAttachmentTypeId\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceMetadata\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceId\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceStorage\\",Invalid value \\"undefined\\" supplied to \\"persistableStateAttachmentTypeId\\",Invalid value \\"undefined\\" supplied to \\"persistableStateAttachmentState\\""`
+          `"comment: Invalid input: expected string, received undefined, type: Invalid input: expected \\"alert\\", rule: Invalid input: expected object, received undefined, type: Invalid input: expected \\"event\\", type: Invalid input: expected \\"actions\\", and 23 more"`
         );
       });
     });
@@ -247,7 +247,7 @@ describe('AttachmentService getter', () => {
         await expect(
           attachmentGetter.getAllDocumentsAttachedToCase({ caseId: '1', owner: 'securitySolution' })
         ).rejects.toThrowErrorMatchingInlineSnapshot(
-          `"Invalid value \\"undefined\\" supplied to \\"alertId\\""`
+          `"type: Invalid input: expected \\"event\\", type: Invalid input: expected \\"security.event\\", Invalid input: expected array, received undefined, Invalid input: expected string, received undefined, Invalid input: expected array, received undefined, and 3 more"`
         );
       });
     });
@@ -335,7 +335,7 @@ describe('AttachmentService getter', () => {
         await expect(
           attachmentGetter.get({ savedObjectId: '1', mode })
         ).rejects.toThrowErrorMatchingInlineSnapshot(
-          `"Invalid value \\"undefined\\" supplied to \\"comment\\",Invalid value \\"user\\" supplied to \\"type\\",Invalid value \\"undefined\\" supplied to \\"alertId\\",Invalid value \\"undefined\\" supplied to \\"index\\",Invalid value \\"undefined\\" supplied to \\"rule\\",Invalid value \\"undefined\\" supplied to \\"eventId\\",Invalid value \\"undefined\\" supplied to \\"actions\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceAttachmentTypeId\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceMetadata\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceId\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceStorage\\",Invalid value \\"undefined\\" supplied to \\"persistableStateAttachmentTypeId\\",Invalid value \\"undefined\\" supplied to \\"persistableStateAttachmentState\\""`
+          `"comment: Invalid input: expected string, received undefined, type: Invalid input: expected \\"alert\\", rule: Invalid input: expected object, received undefined, type: Invalid input: expected \\"event\\", type: Invalid input: expected \\"actions\\", and 23 more"`
         );
       });
     });
@@ -377,7 +377,7 @@ describe('AttachmentService getter', () => {
         await expect(
           attachmentGetter.getFileAttachments({ caseId: '1', fileIds: ['1'] })
         ).rejects.toThrowErrorMatchingInlineSnapshot(
-          `"Invalid value \\"undefined\\" supplied to \\"comment\\",Invalid value \\"externalReference\\" supplied to \\"type\\",Invalid value \\"undefined\\" supplied to \\"alertId\\",Invalid value \\"undefined\\" supplied to \\"index\\",Invalid value \\"undefined\\" supplied to \\"rule\\",Invalid value \\"undefined\\" supplied to \\"eventId\\",Invalid value \\"undefined\\" supplied to \\"actions\\",Invalid value \\"undefined\\" supplied to \\"externalReferenceAttachmentTypeId\\",Invalid value \\"savedObject\\" supplied to \\"externalReferenceStorage,type\\",Invalid value \\"undefined\\" supplied to \\"persistableStateAttachmentTypeId\\",Invalid value \\"undefined\\" supplied to \\"persistableStateAttachmentState\\""`
+          `"comment: Invalid input: expected string, received undefined, type: Invalid input: expected \\"user\\", type: Invalid input: expected \\"alert\\", rule: Invalid input: expected object, received undefined, type: Invalid input: expected \\"event\\", and 17 more"`
         );
       });
     });

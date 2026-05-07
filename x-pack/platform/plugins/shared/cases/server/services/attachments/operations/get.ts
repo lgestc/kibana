@@ -11,13 +11,13 @@ import type { estypes } from '@elastic/elasticsearch';
 import { FILE_SO_TYPE } from '@kbn/files-plugin/common';
 import { toUnifiedAttachmentType } from '../../../../common/utils/attachments';
 import { isSOError } from '../../../common/error';
-import { decodeOrThrow } from '../../../common/runtime_types';
+import { decodeOrThrowZod } from '../../../common/runtime_types_zod';
 import type {
   AttachmentPersistedAttributes,
   AttachmentTransformedAttributes,
   AttachmentSavedObjectTransformed,
 } from '../../../common/types/attachments_v1';
-import { AttachmentTransformedAttributesRt } from '../../../common/types/attachments_v1';
+import { AttachmentTransformedAttributesSchema } from '../../../common/types/attachments_v1';
 import {
   CASE_ATTACHMENT_SAVED_OBJECT,
   CASE_COMMENT_SAVED_OBJECT,
@@ -35,7 +35,8 @@ import type {
   AttachmentTotals,
   DocumentAttachmentAttributesV2,
 } from '../../../../common/types/domain';
-import { AttachmentType, DocumentAttachmentAttributesRtV2 } from '../../../../common/types/domain';
+import { AttachmentType } from '../../../../common/types/domain';
+import { DocumentAttachmentAttributesSchemaV2 } from '../../../../common/types/domain_zod/attachment/v2';
 import type {
   AlertIdsAggsResult,
   BulkOptionalAttributes,
@@ -146,7 +147,7 @@ export class AttachmentGetter {
           legacySo,
           this.context.persistableStateAttachmentTypeRegistry
         );
-        const validatedAttributes = decodeOrThrow(AttachmentTransformedAttributesRt)(
+        const validatedAttributes = decodeOrThrowZod(AttachmentTransformedAttributesSchema)(
           transformedAttachment.attributes
         );
         validatedAttachments.push(
@@ -189,7 +190,7 @@ export class AttachmentGetter {
             legacySo,
             this.context.persistableStateAttachmentTypeRegistry
           );
-          const validatedAttributes = decodeOrThrow(AttachmentTransformedAttributesRt)(
+          const validatedAttributes = decodeOrThrowZod(AttachmentTransformedAttributesSchema)(
             transformedAttachment.attributes
           );
 
@@ -310,7 +311,9 @@ export class AttachmentGetter {
     response: SavedObjectsFindResponse<AttachmentAttributesV2>
   ): Array<SavedObject<DocumentAttachmentAttributesV2>> {
     return response.saved_objects.map((so) => {
-      const validatedAttributes = decodeOrThrow(DocumentAttachmentAttributesRtV2)(so.attributes);
+      const validatedAttributes = decodeOrThrowZod(DocumentAttachmentAttributesSchemaV2)(
+        so.attributes
+      );
 
       return Object.assign(so, { attributes: validatedAttributes });
     });
@@ -476,7 +479,7 @@ export class AttachmentGetter {
         this.context.persistableStateAttachmentTypeRegistry
       );
 
-      const validatedAttributes = decodeOrThrow(AttachmentTransformedAttributesRt)(
+      const validatedAttributes = decodeOrThrowZod(AttachmentTransformedAttributesSchema)(
         transformedAttachment.attributes
       );
 
@@ -748,7 +751,7 @@ export class AttachmentGetter {
         this.context.persistableStateAttachmentTypeRegistry
       );
 
-      const validatedAttributes = decodeOrThrow(AttachmentTransformedAttributesRt)(
+      const validatedAttributes = decodeOrThrowZod(AttachmentTransformedAttributesSchema)(
         transformedFileAttachment.attributes
       );
 

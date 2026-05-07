@@ -7,10 +7,14 @@
 
 import { z } from '@kbn/zod/v4';
 import { jsonValueSchema } from '../../../schema_zod';
+import { SECURITY_EVENT_ATTACHMENT_TYPE } from '../../../constants/attachments';
 import {
+  AlertAttachmentAttributesSchema,
   AttachmentAttributesBasicSchema,
   AttachmentAttributesSchema,
+  AttachmentPatchAttributesSchema,
   AttachmentSchema,
+  EventAttachmentAttributesSchema,
 } from './v1';
 
 export const UnifiedReferenceAttachmentPayloadSchema = z.object({
@@ -78,7 +82,47 @@ export const AttachmentAttributesSchemaV2 = z.union([
   AttachmentAttributesSchema,
   UnifiedAttachmentAttributesSchema,
 ]);
+export const AttachmentPatchAttributesSchemaV2 = z.union([
+  AttachmentPatchAttributesSchema,
+  UnifiedAttachmentPatchAttributesSchema,
+]);
+
+const UnifiedEventDocumentAttachmentMetadataSchema = z
+  .union([
+    z.null(),
+    z
+      .object({
+        index: z.union([z.string(), z.array(z.string())]),
+      })
+      .partial(),
+  ])
+  .optional();
+
+const UnifiedEventDocumentAttachmentPayloadSchema = z
+  .object({
+    type: z.literal(SECURITY_EVENT_ATTACHMENT_TYPE),
+    attachmentId: z.union([z.string(), z.array(z.string())]),
+    owner: z.string(),
+  })
+  .and(
+    z
+      .object({
+        metadata: UnifiedEventDocumentAttachmentMetadataSchema,
+      })
+      .partial()
+  );
+
+const UnifiedEventDocumentAttachmentAttributesSchema =
+  UnifiedEventDocumentAttachmentPayloadSchema.and(AttachmentAttributesBasicSchema);
+
+export const DocumentAttachmentAttributesSchemaV2 = z.union([
+  AlertAttachmentAttributesSchema,
+  EventAttachmentAttributesSchema,
+  UnifiedEventDocumentAttachmentAttributesSchema,
+]);
 
 export type AttachmentV2 = z.infer<typeof AttachmentSchemaV2>;
 export type AttachmentsV2 = z.infer<typeof AttachmentsSchemaV2>;
 export type AttachmentAttributesV2 = z.infer<typeof AttachmentAttributesSchemaV2>;
+export type AttachmentPatchAttributesV2 = z.infer<typeof AttachmentPatchAttributesSchemaV2>;
+export type DocumentAttachmentAttributesV2 = z.infer<typeof DocumentAttachmentAttributesSchemaV2>;
