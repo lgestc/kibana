@@ -8,7 +8,11 @@
 import { z } from '@kbn/zod/v4';
 import { MAX_USER_ACTIONS_PER_PAGE } from '../../../constants';
 import { paginationSchema } from '../../../schema_zod';
-import { UserActionsSchema } from '../../domain_zod/user_action/v1';
+import {
+  CaseUserActionBasicSchema,
+  CaseUserActionInjectedDeprecatedIdsSchema,
+  UserActionsSchema,
+} from '../../domain_zod/user_action/v1';
 import { UserActionTypes } from '../../domain/user_action/action/v1';
 
 const UserActionAdditionalFindRequestFilterTypes = {
@@ -41,6 +45,16 @@ export const CaseUserActionStatsSchema = z.object({
 
 export const CaseUserActionStatsResponseSchema = CaseUserActionStatsSchema;
 
+/**
+ * Deprecated APIs
+ */
+export const CaseUserActionDeprecatedResponseSchema = CaseUserActionBasicSchema.and(
+  CaseUserActionInjectedDeprecatedIdsSchema
+);
+export const CaseUserActionsDeprecatedResponseSchema = z.array(
+  CaseUserActionDeprecatedResponseSchema
+);
+
 export const UserActionFindRequestSchema = paginationSchema({
   maxPerPage: MAX_USER_ACTIONS_PER_PAGE,
 }).extend({
@@ -59,3 +73,9 @@ export type CaseUserActionStats = z.infer<typeof CaseUserActionStatsSchema>;
 export type CaseUserActionStatsResponse = z.infer<typeof CaseUserActionStatsResponseSchema>;
 export type UserActionFindRequest = z.infer<typeof UserActionFindRequestSchema>;
 export type UserActionFindResponse = z.infer<typeof UserActionFindResponseSchema>;
+export type CaseUserActionDeprecatedResponse = z.infer<
+  typeof CaseUserActionDeprecatedResponseSchema
+>;
+export type CaseUserActionsDeprecatedResponse = z.infer<
+  typeof CaseUserActionsDeprecatedResponseSchema
+>;
