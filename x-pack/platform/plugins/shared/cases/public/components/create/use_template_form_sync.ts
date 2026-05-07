@@ -11,6 +11,8 @@ import { useFormContext, useFormData } from '@kbn/es-ui-shared-plugin/static/for
 import type { ParsedTemplate } from '../../../common/types/domain/template/v1';
 import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
 import { useGetTemplate } from '../templates_v2/hooks/use_get_template';
+import { useParentTemplateDefinition } from '../templates_v2/hooks/use_parent_template_definition';
+import { mergeTemplateDefinitions } from '../templates_v2/utils/merge_template_definitions';
 import { getFieldSnakeKey } from '../../../common/utils';
 import { getYamlDefaultAsString } from '../templates_v2/utils';
 import {
@@ -33,7 +35,9 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
   const { data: fieldDefsData, isLoading: isLoadingFieldDefs } = useGetFieldDefinitions({
     owner: template?.owner,
   });
-
+  const { definition: parentDefinition, isFetched: parentFetched } = useParentTemplateDefinition(
+    template?.definition?.extends
+  );
   const appliedRef = useRef<string | undefined>(undefined);
   const appliedFieldsRef = useRef<string[]>([]);
 
@@ -59,12 +63,21 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
       return;
     }
 
-    const key = `${template.templateId}:${template.templateVersion}`;
+    const { definition } = template;
+    const parentId = definition.extends;
+    // Wait until the parent query settles (success or error) before applying.
+    // parentFetched is false only while the query is in-flight; once it resolves
+    // (even as a 404/error), we proceed — possibly without parent fields.
+    if (parentId && !parentFetched) {
+      return;
+    }
+    const key = `${template.templateId}:${template.templateVersion}:${parentId ?? ''}:${String(
+      parentFetched
+    )}`;
     if (appliedRef.current === key) {
       return;
     }
 
-    const { definition } = template;
     const fieldMappings: Array<[string, unknown]> = [
       ['title', definition.name],
       ['description', definition.description],
@@ -83,9 +96,14 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
     // Do NOT set appliedRef.current yet — the effect must re-run once defs are available.
     if (isLoadingFieldDefs) return;
 
+    // Merge parent fields (if `extends` is set) with the template's own fields
+    const effectiveDefinition = parentDefinition
+      ? mergeTemplateDefinitions(parentDefinition, definition)
+      : definition;
+
     // Resolve all fields — inline fields pass through, ref fields are looked up in the library
     const libraryDefs = fieldDefsData?.fieldDefinitions ?? [];
-    const resolvedFields = (template.definition.fields ?? []).flatMap((field): InlineField[] => {
+    const resolvedFields = (effectiveDefinition.fields ?? []).flatMap((field): InlineField[] => {
       if (isInlineField(field)) return [field];
       const fd = libraryDefs.find((d) => d.name === field.$ref);
       if (!fd) return [];
@@ -113,7 +131,15 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
     }
     appliedFieldsRef.current = newAppliedFields;
     appliedRef.current = key;
-  }, [templateId, template, setFieldValue, fieldDefsData, isLoadingFieldDefs]);
+  }, [
+    templateId,
+    template,
+    parentDefinition,
+    parentFetched,
+    setFieldValue,
+    fieldDefsData,
+    isLoadingFieldDefs,
+  ]);
 
   return { template, isLoading };
 };
