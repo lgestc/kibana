@@ -20,7 +20,7 @@ import type { CasesClientArgs } from '../types';
 import { createCaseError } from '../../common/error';
 import { Operations } from '../../authorization';
 import type { BulkDeleteFileArgs } from './types';
-import { CaseFileMetadataForDeletionRt } from '../../../common/files';
+import { CaseFileMetadataForDeletionSchema } from '../../../common/files';
 import type { CasesClient } from '../client';
 import { createFileEntities, deleteFiles } from '../files';
 
@@ -146,10 +146,9 @@ const getFiles = async ({
   const files = retrieveFilesIgnoringNotFound(fileSettleResults, fileIds, logger);
 
   const [validFiles, invalidFiles] = partition(files, (file) => {
+    const parsed = CaseFileMetadataForDeletionSchema.safeParse(file.data.meta);
     return (
-      CaseFileMetadataForDeletionRt.is(file.data.meta) &&
-      file.data.meta.caseIds.length === 1 &&
-      file.data.meta.caseIds.includes(caseId)
+      parsed.success && parsed.data.caseIds.length === 1 && parsed.data.caseIds.includes(caseId)
     );
   }) as [File[], File[]];
 
