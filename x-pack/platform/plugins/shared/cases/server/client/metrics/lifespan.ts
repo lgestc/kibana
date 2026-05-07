@@ -12,7 +12,8 @@ import type {
   SingleCaseMetricsResponse,
   StatusInfo,
 } from '../../../common/types/api';
-import { StatusUserActionRt, CaseStatuses } from '../../../common/types/domain';
+import { CaseStatuses } from '../../../common/types/domain';
+import { StatusUserActionSchema } from '../../../common/types/domain_zod';
 import { CaseMetricsFeature } from '../../../common/types/api';
 import { Operations } from '../../authorization';
 import { createCaseError } from '../../common/error';
@@ -141,7 +142,9 @@ function isValidStatusChangeUserAction(
   attributes: UserActionAttributes,
   newStatusChangeTimestamp: Date
 ): attributes is UserActionWithResponse<StatusUserAction> {
-  return StatusUserActionRt.is(attributes) && isDateValid(newStatusChangeTimestamp);
+  return (
+    StatusUserActionSchema.safeParse(attributes).success && isDateValid(newStatusChangeTimestamp)
+  );
 }
 
 function isReopen(newStatus: CaseStatuses, lastStatus: CaseStatuses): boolean {
