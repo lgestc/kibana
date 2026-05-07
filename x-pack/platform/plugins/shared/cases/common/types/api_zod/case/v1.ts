@@ -356,6 +356,16 @@ export const CasesPatchRequestSchema = z.object({
   }),
 });
 
+export const UpdateSummarySchema = z.object({
+  syncedAlertCount: z.number(),
+});
+
+export const CaseWithUpdateSummarySchema = CaseSchema.extend({
+  updateSummary: UpdateSummarySchema.optional(),
+});
+
+export const PatchCasesResponseSchema = z.array(CaseWithUpdateSummarySchema);
+
 /**
  * Push case
  */
@@ -410,6 +420,9 @@ export type CasesFindRequest = z.infer<typeof CasesFindRequestSchema>;
 export type CasesFindResponse = z.infer<typeof CasesFindResponseSchema>;
 export type CasePatchRequest = z.infer<typeof CasePatchRequestSchema>;
 export type CasesPatchRequest = z.infer<typeof CasesPatchRequestSchema>;
+export type UpdateSummary = z.infer<typeof UpdateSummarySchema>;
+export type CaseWithUpdateSummary = z.infer<typeof CaseWithUpdateSummarySchema>;
+export type CasesPatchResponse = z.infer<typeof PatchCasesResponseSchema>;
 export type GetTagsResponse = z.infer<typeof GetTagsResponseSchema>;
 export type GetCategoriesResponse = z.infer<typeof GetCategoriesResponseSchema>;
 export type GetReportersResponse = z.infer<typeof GetReportersResponseSchema>;

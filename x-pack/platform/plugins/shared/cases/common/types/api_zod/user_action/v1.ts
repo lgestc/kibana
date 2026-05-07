@@ -39,6 +39,8 @@ export const CaseUserActionStatsSchema = z.object({
   total_other_action_deletions: z.number(),
 });
 
+export const CaseUserActionStatsResponseSchema = CaseUserActionStatsSchema;
+
 export const UserActionFindRequestSchema = paginationSchema({
   maxPerPage: MAX_USER_ACTIONS_PER_PAGE,
 }).extend({
@@ -54,5 +56,6 @@ export const UserActionFindResponseSchema = z.object({
 });
 
 export type CaseUserActionStats = z.infer<typeof CaseUserActionStatsSchema>;
+export type CaseUserActionStatsResponse = z.infer<typeof CaseUserActionStatsResponseSchema>;
 export type UserActionFindRequest = z.infer<typeof UserActionFindRequestSchema>;
 export type UserActionFindResponse = z.infer<typeof UserActionFindResponseSchema>;
