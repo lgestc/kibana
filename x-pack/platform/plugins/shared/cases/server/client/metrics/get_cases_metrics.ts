@@ -8,8 +8,11 @@
 import { merge } from 'lodash';
 
 import type { CasesMetricsRequest, CasesMetricsResponse } from '../../../common/types/api';
-import { decodeWithExcessOrThrow, decodeOrThrow } from '../../common/runtime_types';
-import { CasesMetricsRequestRt, CasesMetricsResponseRt } from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+import {
+  CasesMetricsRequestSchema,
+  CasesMetricsResponseSchema,
+} from '../../../common/types/api_zod';
 import { createCaseError } from '../../common/error';
 import type { CasesClient } from '../client';
 import type { CasesClientArgs } from '../types';
@@ -23,7 +26,9 @@ export const getCasesMetrics = async (
   const { logger } = clientArgs;
 
   try {
-    const queryParams = decodeWithExcessOrThrow(CasesMetricsRequestRt)(params);
+    const queryParams = decodeWithExcessOrThrowZod(CasesMetricsRequestSchema)(
+      params
+    ) as CasesMetricsRequest;
 
     const handlers = buildHandlers(queryParams, casesClient, clientArgs);
 
@@ -37,7 +42,7 @@ export const getCasesMetrics = async (
       return merge(acc, metric);
     }, {}) as CasesMetricsResponse;
 
-    return decodeOrThrow(CasesMetricsResponseRt)(mergedResults);
+    return decodeOrThrowZod(CasesMetricsResponseSchema)(mergedResults) as CasesMetricsResponse;
   } catch (error) {
     throw createCaseError({
       logger,
