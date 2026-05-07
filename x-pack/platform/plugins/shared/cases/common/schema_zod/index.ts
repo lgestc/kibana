@@ -7,6 +7,7 @@
 
 import { z } from '@kbn/zod/v4';
 import { ALLOWED_MIME_TYPES } from '../constants/mime_types';
+import { MAX_DOCS_PER_PAGE } from '../constants';
 
 export interface LimitedSchemaType {
   fieldName: string;
@@ -87,10 +88,32 @@ export const limitedNumberSchema = ({ fieldName, min, max }: LimitedSchemaType) 
 
 export const paginationSchema = ({ maxPerPage }: { maxPerPage: number }) => {
   const pageCoerce = z.union([z.number(), z.string().transform((s) => Number(s))]);
-  return z.object({
-    page: pageCoerce.optional(),
-    perPage: pageCoerce.optional(),
-  });
+  return z
+    .object({
+      page: pageCoerce.optional(),
+      perPage: pageCoerce.optional(),
+    })
+    .superRefine((params, ctx) => {
+      if (params.page == null && params.perPage == null) return;
+
+      const pageAsNumber = params.page ?? 0;
+      const perPageAsNumber = params.perPage ?? 0;
+
+      if (perPageAsNumber > maxPerPage) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `The provided perPage value is too high. The maximum allowed perPage value is ${maxPerPage}.`,
+        });
+        return;
+      }
+
+      if (Math.max(pageAsNumber, pageAsNumber * perPageAsNumber) > MAX_DOCS_PER_PAGE) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `The number of documents is too high. Paginating through more than ${MAX_DOCS_PER_PAGE} documents is not possible.`,
+        });
+      }
+    });
 };
 
 export const limitedNumberAsIntegerSchema = ({ fieldName }: { fieldName: string }) =>

@@ -26,17 +26,17 @@ import type {
   GetRelatedCasesByAlertResponse,
 } from '../../../common/types/api';
 import {
-  AllCategoriesFindRequestRt,
-  AllReportersFindRequestRt,
-  AllTagsFindRequestRt,
-  CaseResolveResponseRt,
-  CasesByAlertIDRequestRt,
-  GetCategoriesResponseRt,
-  GetRelatedCasesByAlertResponseRt,
-  GetReportersResponseRt,
-  GetTagsResponseRt,
-} from '../../../common/types/api';
-import { decodeWithExcessOrThrow, decodeOrThrow } from '../../common/runtime_types';
+  AllCategoriesFindRequestSchema,
+  AllReportersFindRequestSchema,
+  AllTagsFindRequestSchema,
+  CaseResolveResponseSchema,
+  CasesByAlertIDRequestSchema,
+  GetCategoriesResponseSchema,
+  GetRelatedCasesByAlertResponseSchema,
+  GetReportersResponseSchema,
+  GetTagsResponseSchema,
+} from '../../../common/types/api_zod';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
 import { createCaseError } from '../../common/error';
 import {
   countAlertsForID,
@@ -52,7 +52,7 @@ import type {
   CaseSavedObjectTransformed,
   CaseTransformedAttributes,
 } from '../../common/types/case';
-import { CaseRt } from '../../../common/types/domain';
+import { CaseSchema } from '../../../common/types/domain_zod';
 import type { AttachmentMode } from '../../../common/types/domain/attachment/v2';
 
 /**
@@ -86,7 +86,7 @@ export const getCasesByAlertID = async (
   } = clientArgs;
 
   try {
-    const queryParams = decodeWithExcessOrThrow(CasesByAlertIDRequestRt)(options);
+    const queryParams = decodeWithExcessOrThrowZod(CasesByAlertIDRequestSchema)(options);
 
     const { filter: authorizationFilter, ensureSavedObjectsAreAuthorized } =
       await authorization.getAuthorizationFilter(Operations.getCaseIDsByAlertID);
@@ -149,7 +149,9 @@ export const getCasesByAlertID = async (
       totals: getAttachmentTotalsForCaseId(caseInfo.id, commentStats),
     }));
 
-    return decodeOrThrow(GetRelatedCasesByAlertResponseRt)(res);
+    return decodeOrThrowZod(GetRelatedCasesByAlertResponseSchema)(
+      res
+    ) as GetRelatedCasesByAlertResponse;
   } catch (error) {
     throw createCaseError({
       message: `Failed to get case IDs using alert ID: ${alertID} options: ${JSON.stringify(
@@ -221,7 +223,7 @@ export const get = async (
       const commentStats = await attachmentService.getter.getCaseAttatchmentStats({
         caseIds: [theCase.id],
       });
-      return decodeOrThrow(CaseRt)(
+      return decodeOrThrowZod(CaseSchema)(
         flattenCaseSavedObject({
           savedObject: theCase,
           ...(commentStats.has(theCase.id)
@@ -232,7 +234,7 @@ export const get = async (
               }
             : {}),
         })
-      );
+      ) as Case;
     }
 
     const theComments = (await caseService.getAllCaseComments({
@@ -252,7 +254,7 @@ export const get = async (
       totalEvents: countEventsForID({ comments: theComments }),
     });
 
-    return decodeOrThrow(CaseRt)(res);
+    return decodeOrThrowZod(CaseSchema)(res) as Case;
   } catch (error) {
     throw createCaseError({ message: `Failed to get case id: ${id}: ${error}`, error, logger });
   }
@@ -292,12 +294,12 @@ export const resolve = async (
     });
 
     if (!includeComments) {
-      return decodeOrThrow(CaseResolveResponseRt)({
+      return decodeOrThrowZod(CaseResolveResponseSchema)({
         ...resolveData,
         case: flattenCaseSavedObject({
           savedObject: resolvedSavedObject,
         }),
-      });
+      }) as CaseResolveResponse;
     }
 
     const theComments = (await caseService.getAllCaseComments({
@@ -320,7 +322,7 @@ export const resolve = async (
       }),
     };
 
-    return decodeOrThrow(CaseResolveResponseRt)(res);
+    return decodeOrThrowZod(CaseResolveResponseSchema)(res) as CaseResolveResponse;
   } catch (error) {
     throw createCaseError({ message: `Failed to resolve case id: ${id}: ${error}`, error, logger });
   }
@@ -342,7 +344,7 @@ export async function getTags(
   } = clientArgs;
 
   try {
-    const queryParams = decodeWithExcessOrThrow(AllTagsFindRequestRt)(params);
+    const queryParams = decodeWithExcessOrThrowZod(AllTagsFindRequestSchema)(params);
 
     const { filter: authorizationFilter } = await authorization.getAuthorizationFilter(
       Operations.getTags
@@ -355,7 +357,7 @@ export async function getTags(
       filter,
     });
 
-    return decodeOrThrow(GetTagsResponseRt)(tags);
+    return decodeOrThrowZod(GetTagsResponseSchema)(tags);
   } catch (error) {
     throw createCaseError({ message: `Failed to get tags: ${error}`, error, logger });
   }
@@ -376,7 +378,7 @@ export async function getReporters(
   } = clientArgs;
 
   try {
-    const queryParams = decodeWithExcessOrThrow(AllReportersFindRequestRt)(params);
+    const queryParams = decodeWithExcessOrThrowZod(AllReportersFindRequestSchema)(params);
 
     const { filter: authorizationFilter } = await authorization.getAuthorizationFilter(
       Operations.getReporters
@@ -389,7 +391,7 @@ export async function getReporters(
       filter,
     });
 
-    return decodeOrThrow(GetReportersResponseRt)(reporters);
+    return decodeOrThrowZod(GetReportersResponseSchema)(reporters) as User[];
   } catch (error) {
     throw createCaseError({ message: `Failed to get reporters: ${error}`, error, logger });
   }
@@ -410,7 +412,7 @@ export async function getCategories(
   } = clientArgs;
 
   try {
-    const queryParams = decodeWithExcessOrThrow(AllCategoriesFindRequestRt)(params);
+    const queryParams = decodeWithExcessOrThrowZod(AllCategoriesFindRequestSchema)(params);
 
     const { filter: authorizationFilter } = await authorization.getAuthorizationFilter(
       Operations.getCategories
@@ -423,7 +425,7 @@ export async function getCategories(
       filter,
     });
 
-    return decodeOrThrow(GetCategoriesResponseRt)(categories);
+    return decodeOrThrowZod(GetCategoriesResponseSchema)(categories);
   } catch (error) {
     throw createCaseError({ message: `Failed to get categories: ${error}`, error, logger });
   }

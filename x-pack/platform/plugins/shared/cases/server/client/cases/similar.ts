@@ -10,8 +10,11 @@ import Boom from '@hapi/boom';
 import type { ObservableType } from '../../../common/types/domain/observable/v1';
 import { OWNER_FIELD } from '../../../common/constants';
 import type { CasesSimilarResponse, SimilarCasesSearchRequest } from '../../../common/types/api';
-import { SimilarCasesSearchRequestRt, CasesSimilarResponseRt } from '../../../common/types/api';
-import { decodeWithExcessOrThrow, decodeOrThrow } from '../../common/runtime_types';
+import {
+  SimilarCasesSearchRequestSchema,
+  CasesSimilarResponseSchema,
+} from '../../../common/types/api_zod';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
 
 import { createCaseError } from '../../common/error';
 import type { CasesClient, CasesClientArgs } from '..';
@@ -77,7 +80,9 @@ export const similar = async (
   }
 
   try {
-    const paramArgs = decodeWithExcessOrThrow(SimilarCasesSearchRequestRt)(params);
+    const paramArgs = decodeWithExcessOrThrowZod(SimilarCasesSearchRequestSchema)(
+      params
+    ) as SimilarCasesSearchRequest;
     const retrievedCase = await caseService.getCase({ id: caseId });
 
     const availableObservableTypesMap = await getAvailableObservableTypesMap(
@@ -154,7 +159,7 @@ export const similar = async (
       total: cases.total,
     };
 
-    return decodeOrThrow(CasesSimilarResponseRt)(res);
+    return decodeOrThrowZod(CasesSimilarResponseSchema)(res) as CasesSimilarResponse;
   } catch (error) {
     throw createCaseError({
       message: `Failed to find cases: ${JSON.stringify(params)}: ${error}`,

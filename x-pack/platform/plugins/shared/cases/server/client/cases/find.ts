@@ -13,8 +13,11 @@ import type {
   CasesFindRequestWithCustomFields,
   CasesFindResponse,
 } from '../../../common/types/api';
-import { CasesFindRequestWithCustomFieldsRt, CasesFindResponseRt } from '../../../common/types/api';
-import { decodeWithExcessOrThrow, decodeOrThrow } from '../../common/runtime_types';
+import {
+  CasesFindRequestWithCustomFieldsSchema,
+  CasesFindResponseSchema,
+} from '../../../common/types/api_zod';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
 
 import { createCaseError } from '../../common/error';
 import { asArray, transformCases } from '../../common/utils';
@@ -44,7 +47,9 @@ export const find = async (
   } = clientArgs;
 
   try {
-    const paramArgs = decodeWithExcessOrThrow(CasesFindRequestWithCustomFieldsRt)(params);
+    const paramArgs = decodeWithExcessOrThrowZod(CasesFindRequestWithCustomFieldsSchema)(
+      params
+    ) as CasesFindRequestWithCustomFields;
     const configArgs = paramArgs.owner ? { owner: paramArgs.owner } : {};
     const configurations = await casesClient.configure.get(configArgs);
     const customFieldsConfiguration: CustomFieldsConfiguration = configurations
@@ -147,7 +152,7 @@ export const find = async (
       countClosedCases: statusStats.closed,
     });
 
-    return decodeOrThrow(CasesFindResponseRt)(res);
+    return decodeOrThrowZod(CasesFindResponseSchema)(res) as CasesFindResponse;
   } catch (error) {
     throw createCaseError({
       message: `Failed to find cases: ${JSON.stringify(params)}: ${error}`,
