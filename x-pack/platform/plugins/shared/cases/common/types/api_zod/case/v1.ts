@@ -432,3 +432,22 @@ export type CasesBulkGetRequest = z.infer<typeof CasesBulkGetRequestSchema>;
 export type CasesBulkGetResponse = z.infer<typeof CasesBulkGetResponseSchema>;
 export type BulkCreateCasesRequest = z.infer<typeof BulkCreateCasesRequestSchema>;
 export type BulkCreateCasesResponse = z.infer<typeof BulkCreateCasesResponseSchema>;
+export type CasesFindRequestSortFields = z.infer<typeof CasesFindRequestSortFieldsSchema>;
+export type CasesFindRequestWithCustomFields = z.infer<
+  typeof CasesFindRequestWithCustomFieldsSchema
+>;
+export type CasesSearchRequest = z.infer<typeof CasesSearchRequestSchema>;
+export type AllTagsFindRequest = z.infer<typeof AllTagsFindRequestSchema>;
+export type AllCategoriesFindRequest = z.infer<typeof AllCategoriesFindRequestSchema>;
+export type AllReportersFindRequest = AllTagsFindRequest;
+export type GetRelatedCasesByAlertResponse = z.infer<typeof GetRelatedCasesByAlertResponseSchema>;
+export type CaseRequestCustomFields = z.infer<typeof CaseRequestCustomFieldsSchema>;
+export type CaseRequestCustomField = z.infer<typeof CustomFieldForRequestSchema>;
+export type SimilarCasesSearchRequest = z.infer<typeof SimilarCasesSearchRequestSchema>;
+export type CasesSimilarResponse = z.infer<typeof CasesSimilarResponseSchema>;
+export type FindCasesContainingAllDocumentsRequest = z.infer<
+  typeof FindCasesContainingAllDocumentsRequestSchema
+>;
+export type FindCasesContainingAllAlertsResponse = z.infer<
+  typeof FindCasesContainingAllAlertsResponseSchema
+>;

@@ -10,6 +10,7 @@ import { UserSchema } from '../user/v1';
 import { UserActionActionsSchema } from './action/v1';
 import { AssigneesUserActionSchema } from './assignees/v1';
 import { CategoryUserActionSchema } from './category/v1';
+import type { CommentUserActionPayloadWithoutIdsSchema } from './comment/v1';
 import { CommentUserActionSchema, CommentUserActionWithoutIdsSchema } from './comment/v1';
 import {
   ConnectorUserActionSchema,
@@ -22,6 +23,7 @@ import {
 import { DeleteCaseUserActionSchema } from './delete_case/v1';
 import { DescriptionUserActionSchema } from './description/v1';
 import { PushedUserActionSchema, PushedUserActionWithoutConnectorIdSchema } from './pushed/v1';
+import type { SettingsUserActionPayloadSchema } from './settings/v1';
 import { SettingsUserActionSchema } from './settings/v1';
 import { SeverityUserActionSchema } from './severity/v1';
 import { StatusUserActionSchema } from './status/v1';
@@ -29,6 +31,8 @@ import { TagsUserActionSchema } from './tags/v1';
 import { TitleUserActionSchema } from './title/v1';
 import { CustomFieldsUserActionSchema } from './custom_fields/v1';
 import { ObservablesUserActionSchema } from './observables/v1';
+import { TemplateUserActionSchema } from './template/v1';
+import { ExtendedFieldsUserActionSchema } from './extended_fields/v1';
 
 export { UserActionTypes, UserActionActions } from './action/v1';
 export { StatusUserActionSchema } from './status/v1';
@@ -63,6 +67,8 @@ const BasicUserActionsSchema = z.union([
   CategoryUserActionSchema,
   CustomFieldsUserActionSchema,
   ObservablesUserActionSchema,
+  ExtendedFieldsUserActionSchema,
+  TemplateUserActionSchema,
 ]);
 
 const CommonUserActionsWithIdsSchema = z.union([BasicUserActionsSchema, CommentUserActionSchema]);
@@ -109,3 +115,43 @@ export type CaseUserActionWithoutReferenceIds = z.infer<
 export type UserActionPayload = z.infer<typeof UserActionPayloadSchema>;
 export type UserActionAttributes = z.infer<typeof UserActionAttributesSchema>;
 export type UserActions = z.infer<typeof UserActionsSchema>;
+
+type UserActionWithAttributes<T> = T & z.infer<typeof UserActionCommonAttributesSchema>;
+export type UserActionWithDeprecatedResponse<T> = T &
+  z.infer<typeof CaseUserActionInjectedDeprecatedIdsSchema>;
+export type UserAction<T extends UserActionPayload = UserActionPayload> = Omit<
+  z.infer<typeof UserActionSchema>,
+  'type' | 'payload'
+> &
+  T;
+
+export type AssigneesUserAction = UserAction<z.infer<typeof AssigneesUserActionSchema>>;
+export type CategoryUserAction = UserAction<z.infer<typeof CategoryUserActionSchema>>;
+export type CommentUserAction = UserAction<z.infer<typeof CommentUserActionSchema>>;
+export type CommentUserActionPayloadWithoutIds = UserActionWithAttributes<
+  z.infer<typeof CommentUserActionPayloadWithoutIdsSchema>
+>;
+export type ConnectorUserAction = UserAction<z.infer<typeof ConnectorUserActionSchema>>;
+export type ConnectorUserActionWithoutConnectorId = UserActionWithAttributes<
+  z.infer<typeof ConnectorUserActionWithoutConnectorIdSchema>
+>;
+export type DeleteCaseUserAction = UserAction<z.infer<typeof DeleteCaseUserActionSchema>>;
+export type DescriptionUserAction = UserAction<z.infer<typeof DescriptionUserActionSchema>>;
+export type PushedUserAction = UserAction<z.infer<typeof PushedUserActionSchema>>;
+export type PushedUserActionWithoutConnectorId = UserActionWithAttributes<
+  z.infer<typeof PushedUserActionWithoutConnectorIdSchema>
+>;
+export type SettingsUserAction = UserAction<z.infer<typeof SettingsUserActionSchema>>;
+export type SettingsUserActionPayload = z.infer<typeof SettingsUserActionPayloadSchema>;
+export type SeverityUserAction = UserAction<z.infer<typeof SeverityUserActionSchema>>;
+export type StatusUserAction = UserAction<z.infer<typeof StatusUserActionSchema>>;
+export type TagsUserAction = UserAction<z.infer<typeof TagsUserActionSchema>>;
+export type TitleUserAction = UserAction<z.infer<typeof TitleUserActionSchema>>;
+export type CreateCaseUserAction = UserAction<z.infer<typeof CreateCaseUserActionSchema>>;
+export type CreateCaseUserActionWithoutConnectorId = UserActionWithAttributes<
+  z.infer<typeof CreateCaseUserActionWithoutConnectorIdSchema>
+>;
+export type CustomFieldsUserAction = UserAction<z.infer<typeof CustomFieldsUserActionSchema>>;
+export type ObservablesUserAction = UserAction<z.infer<typeof ObservablesUserActionSchema>>;
+export type ExtendedFieldsUserAction = UserAction<z.infer<typeof ExtendedFieldsUserActionSchema>>;
+export type TemplateUserAction = UserAction<z.infer<typeof TemplateUserActionSchema>>;

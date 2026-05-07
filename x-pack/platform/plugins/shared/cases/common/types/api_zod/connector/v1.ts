@@ -49,3 +49,4 @@ export const ConnectorMappingResponseSchema = z.object({
 
 export type ConnectorMappingResponse = z.infer<typeof ConnectorMappingResponseSchema>;
 export type GetCaseConnectorsResponse = z.infer<typeof GetCaseConnectorsResponseSchema>;
+export type GetCaseConnectorsPushDetails = z.infer<typeof PushDetailsSchema>;

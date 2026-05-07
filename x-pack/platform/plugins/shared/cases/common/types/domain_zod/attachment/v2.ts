@@ -126,3 +126,4 @@ export type AttachmentsV2 = z.infer<typeof AttachmentsSchemaV2>;
 export type AttachmentAttributesV2 = z.infer<typeof AttachmentAttributesSchemaV2>;
 export type AttachmentPatchAttributesV2 = z.infer<typeof AttachmentPatchAttributesSchemaV2>;
 export type DocumentAttachmentAttributesV2 = z.infer<typeof DocumentAttachmentAttributesSchemaV2>;
+export type AttachmentMode = 'legacy' | 'unified';

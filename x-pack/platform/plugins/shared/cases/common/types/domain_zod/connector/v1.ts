@@ -6,10 +6,28 @@
  */
 
 import { z } from '@kbn/zod/v4';
-import { ConnectorTypes, SwimlaneConnectorType } from '../../domain/connector/v1';
+import type { ActionType as ConnectorActionType } from '@kbn/actions-plugin/common';
+import type { ActionResult } from '@kbn/actions-plugin/server/types';
 
-export { ConnectorTypes, SwimlaneConnectorType };
-export type { ActionConnector, ActionTypeConnector } from '../../domain/connector/v1';
+export enum ConnectorTypes {
+  casesWebhook = '.cases-webhook',
+  jira = '.jira',
+  none = '.none',
+  resilient = '.resilient',
+  serviceNowITSM = '.servicenow',
+  serviceNowSIR = '.servicenow-sir',
+  swimlane = '.swimlane',
+  theHive = '.thehive',
+}
+
+export enum SwimlaneConnectorType {
+  All = 'all',
+  Alerts = 'alerts',
+  Cases = 'cases',
+}
+
+export type ActionConnector = ActionResult;
+export type ActionTypeConnector = ConnectorActionType;
 
 const ConnectorCasesWebhookTypeFieldsSchema = z.object({
   type: z.literal(ConnectorTypes.casesWebhook),
@@ -195,3 +213,14 @@ export type SwimlaneFieldsType = z.infer<typeof SwimlaneFieldsSchema>;
 export type ServiceNowITSMFieldsType = z.infer<typeof ServiceNowITSMFieldsSchema>;
 export type ServiceNowSIRFieldsType = z.infer<typeof ServiceNowSIRFieldsSchema>;
 export type TheHiveFieldsType = z.infer<typeof TheHiveFieldsSchema>;
+export type ConnectorCasesWebhookTypeFields = z.infer<typeof ConnectorCasesWebhookTypeFieldsSchema>;
+export type ConnectorJiraTypeFields = z.infer<typeof ConnectorJiraTypeFieldsSchema>;
+export type ConnectorResilientTypeFields = z.infer<typeof ConnectorResilientTypeFieldsSchema>;
+export type ConnectorServiceNowITSMTypeFields = z.infer<
+  typeof ConnectorServiceNowITSMTypeFieldsSchema
+>;
+export type ConnectorServiceNowSIRTypeFields = z.infer<
+  typeof ConnectorServiceNowSIRTypeFieldsSchema
+>;
+export type ConnectorSwimlaneTypeFields = z.infer<typeof ConnectorSwimlaneTypeFieldsSchema>;
+export type ConnectorTheHiveTypeFields = z.infer<typeof ConnectorTheHiveTypeFieldsSchema>;

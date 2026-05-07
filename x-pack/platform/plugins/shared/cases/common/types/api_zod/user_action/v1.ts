@@ -8,6 +8,7 @@
 import { z } from '@kbn/zod/v4';
 import { MAX_USER_ACTIONS_PER_PAGE } from '../../../constants';
 import { paginationSchema } from '../../../schema_zod';
+import type { CaseUserActionInjectedIdsSchema } from '../../domain_zod/user_action/v1';
 import {
   CaseUserActionBasicSchema,
   CaseUserActionInjectedDeprecatedIdsSchema,
@@ -79,3 +80,7 @@ export type CaseUserActionDeprecatedResponse = z.infer<
 export type CaseUserActionsDeprecatedResponse = z.infer<
   typeof CaseUserActionsDeprecatedResponseSchema
 >;
+export type UserActionFindRequestTypes = (typeof UserActionFindRequestTypesValues)[number];
+export type UserActionWithResponse<T> = T & { id: string; version: string } & z.infer<
+    typeof CaseUserActionInjectedIdsSchema
+  >;

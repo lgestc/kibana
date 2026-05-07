@@ -30,6 +30,7 @@ import {
   ClosureTypeSchema,
   ConfigurationBasicWithoutOwnerSchema,
 } from '../../domain_zod/configure/v1';
+import type { Configuration, Configurations } from '../../domain_zod/configure/v1';
 import { CaseConnectorSchema } from '../../domain_zod/connector/v1';
 import { CaseBaseOptionalFieldsRequestSchema } from '../case/v1';
 import {
@@ -160,3 +161,6 @@ export const ConfigurationPatchRequestSchema = z.object({
 export type ConfigurationRequest = z.infer<typeof ConfigurationRequestSchema>;
 export type ConfigurationPatchRequest = z.infer<typeof ConfigurationPatchRequestSchema>;
 export type GetConfigurationFindRequest = z.infer<typeof GetConfigurationFindRequestSchema>;
+export type GetConfigureResponse = Configurations;
+export type CreateConfigureResponse = Configuration;
+export type UpdateConfigureResponse = Configuration;
