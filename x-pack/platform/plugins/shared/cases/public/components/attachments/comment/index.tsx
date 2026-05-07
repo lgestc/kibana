@@ -7,8 +7,7 @@
 
 import React from 'react';
 import classNames from 'classnames';
-import * as rt from 'io-ts';
-import { isRight } from 'fp-ts/Either';
+import { z } from '@kbn/zod/v4';
 import { COMMENT_ATTACHMENT_TYPE } from '../../../../common/constants/attachments';
 import type {
   AttachmentType,
@@ -107,11 +106,10 @@ const getCommentAttachmentViewObject = (props: UnifiedValueAttachmentViewProps) 
   };
 };
 
-const CommentDataRt = rt.strict({ data: rt.strict({ content: rt.string }) });
+const CommentDataSchema = z.object({ data: z.object({ content: z.string() }) });
 
 const commentSchemaValidator = (attachment: unknown): void => {
-  const result = CommentDataRt.decode(attachment);
-  if (!isRight(result)) {
+  if (!CommentDataSchema.safeParse(attachment).success) {
     throw new Error('Invalid comment attachment data: expected { content: string }');
   }
 };

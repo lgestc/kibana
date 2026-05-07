@@ -8,8 +8,7 @@
 import React from 'react';
 
 import deepEqual from 'fast-deep-equal';
-import * as rt from 'io-ts';
-import { isRight } from 'fp-ts/Either';
+import { z } from '@kbn/zod/v4';
 import { LENS_ATTACHMENT_TYPE } from '../../../../common/constants';
 import * as i18n from './translations';
 
@@ -77,11 +76,12 @@ const getVisualizationAttachmentViewObject = ({
   };
 };
 
-const LensDataRt = rt.strict({ data: rt.strict({ state: rt.record(rt.string, rt.unknown) }) });
+const LensDataSchema = z.object({
+  data: z.object({ state: z.record(z.string(), z.unknown()) }),
+});
 
 const lensSchemaValidator = (attachment: unknown): void => {
-  const result = LensDataRt.decode(attachment);
-  if (!isRight(result)) {
+  if (!LensDataSchema.safeParse(attachment).success) {
     throw new Error('Invalid lens attachment data: expected { state: Record<string, unknown> }');
   }
 };
