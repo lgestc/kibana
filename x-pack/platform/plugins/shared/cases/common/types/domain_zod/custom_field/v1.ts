@@ -6,9 +6,12 @@
  */
 
 import { z } from '@kbn/zod/v4';
-import { CustomFieldTypes } from '../../domain/custom_field/v1';
 
-export { CustomFieldTypes };
+export enum CustomFieldTypes {
+  TEXT = 'text',
+  TOGGLE = 'toggle',
+  NUMBER = 'number',
+}
 
 export const CustomFieldTextTypeSchema = z.literal(CustomFieldTypes.TEXT);
 export const CustomFieldToggleTypeSchema = z.literal(CustomFieldTypes.TOGGLE);

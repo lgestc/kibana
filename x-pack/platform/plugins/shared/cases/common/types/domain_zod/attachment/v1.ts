@@ -9,9 +9,20 @@ import { z } from '@kbn/zod/v4';
 import { limitedStringSchema, mimeTypeString, jsonValueSchema } from '../../../schema_zod';
 import { UserSchema } from '../user/v1';
 import { MAX_FILENAME_LENGTH } from '../../../constants';
-import { AttachmentType, ExternalReferenceStorageType } from '../../domain/attachment/v1';
 
-export { AttachmentType, ExternalReferenceStorageType };
+export enum AttachmentType {
+  actions = 'actions',
+  alert = 'alert',
+  event = 'event',
+  externalReference = 'externalReference',
+  persistableState = 'persistableState',
+  user = 'user',
+}
+
+export enum ExternalReferenceStorageType {
+  savedObject = 'savedObject',
+  elasticSearchDoc = 'elasticSearchDoc',
+}
 
 /**
  * Files

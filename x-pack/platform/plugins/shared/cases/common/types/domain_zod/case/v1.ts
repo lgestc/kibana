@@ -7,11 +7,7 @@
 
 import { z } from '@kbn/zod/v4';
 import { CaseStatuses } from '@kbn/cases-components/src/status/types';
-import {
-  CaseSeverity as BundledCaseSeveritySchema,
-  CaseStatus as BundledCaseStatusSchema,
-  Settings,
-} from '../../../bundled-types.gen';
+import { Settings } from '../../../bundled-types.gen';
 import { CASE_EXTENDED_FIELDS } from '../../../constants';
 import { ExternalServiceSchema } from '../external_service/v1';
 import { CaseAssigneesSchema, UserSchema } from '../user/v1';
@@ -19,14 +15,21 @@ import { CaseConnectorSchema } from '../connector/v1';
 import { AttachmentSchemaV2 } from '../attachment/v2';
 import { CaseCustomFieldsSchema } from '../custom_field/v1';
 import { CaseObservableSchema } from '../observable/v1';
-import { CaseSeverity } from '../../domain/case/v1';
+export enum CaseSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
 
-export { CaseStatuses, CaseSeverity };
+export { CaseStatuses };
 
 /**
- * Status
+ * Status — exposed as a TS-enum-typed schema so consumers using
+ * `CaseStatuses` (the enum from @kbn/cases-components) get matching
+ * type identity instead of a literal-union shape.
  */
-export const CaseStatusSchema = BundledCaseStatusSchema;
+export const CaseStatusSchema = z.nativeEnum(CaseStatuses);
 
 export const caseStatuses = Object.values(CaseStatuses);
 
@@ -45,9 +48,10 @@ export const DefaultCloseReasonSchema = z.union([
 export const CaseCloseReasonSchema = z.union([DefaultCloseReasonSchema, z.string()]);
 
 /**
- * Severity
+ * Severity — exposed as a TS-enum-typed schema so consumers using
+ * `CaseSeverity` get matching type identity instead of a literal union.
  */
-export const CaseSeveritySchema = BundledCaseSeveritySchema;
+export const CaseSeveritySchema = z.nativeEnum(CaseSeverity);
 
 /**
  * Case

@@ -14,7 +14,7 @@ import {
   CaseUserActionInjectedDeprecatedIdsSchema,
   UserActionsSchema,
 } from '../../domain_zod/user_action/v1';
-import { UserActionTypes } from '../../domain/user_action/action/v1';
+import { UserActionTypes } from '../../domain_zod/user_action/action/v1';
 
 const UserActionAdditionalFindRequestFilterTypes = {
   action: 'action',
