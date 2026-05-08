@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import type { UseFormReturn } from 'react-hook-form';
 import { useFormContext, useFormData } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
 import type { ParsedTemplate } from '../../../common/types/domain/template/v1';
 import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
@@ -20,7 +21,16 @@ interface UseTemplateFormSyncReturn {
   isLoading: boolean;
 }
 
-export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
+/**
+ * Syncs the selected template into the create-case form.
+ *
+ * - Standard case fields (title, description, tags, severity, category) are
+ *   written to the parent form (`@kbn/es-ui-shared-plugin` form_lib).
+ * - Extended (template-defined) fields are written to the inner react-hook-form
+ *   instance owned by `CreateCaseTemplateFields` and mirrored back to the
+ *   parent's `extendedFields` field by that component.
+ */
+export const useTemplateFormSync = (innerForm: UseFormReturn): UseTemplateFormSyncReturn => {
   const { setFieldValue } = useFormContext();
   const [{ templateId }] = useFormData<{ templateId?: string }>({ watch: ['templateId'] });
   const { data: template, isLoading } = useGetTemplate(templateId || undefined);
@@ -28,7 +38,6 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
     template?.definition?.extends
   );
   const appliedRef = useRef<string | undefined>(undefined);
-  const appliedFieldsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (!templateId) {
@@ -39,11 +48,8 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
         setFieldValue('severity', 'low');
         setFieldValue('category', null);
 
-        // Clear previously applied extended fields
-        for (const fieldPath of appliedFieldsRef.current) {
-          setFieldValue(fieldPath, '');
-        }
-        appliedFieldsRef.current = [];
+        // Clear all extended-field values from the inner RHF form.
+        innerForm.reset({ [CASE_EXTENDED_FIELDS]: {} });
       }
       return;
     }
@@ -86,18 +92,18 @@ export const useTemplateFormSync = (): UseTemplateFormSyncReturn => {
       ? mergeTemplateDefinitions(parentDefinition, definition)
       : definition;
 
-    // Apply default values for extended fields
-    const newAppliedFields: string[] = [];
+    // Apply default values for extended fields into the inner RHF form.
+    // Reset wholesale so any previously-applied extended fields from a different
+    // template don't linger in the form state.
+    const nextExtended: Record<string, string> = {};
     if (effectiveDefinition.fields) {
       for (const field of effectiveDefinition.fields) {
-        const fieldPath = `${CASE_EXTENDED_FIELDS}.${getFieldSnakeKey(field.name, field.type)}`;
-        const defaultValue = getYamlDefaultAsString(field.metadata?.default);
-        setFieldValue(fieldPath, defaultValue);
-        newAppliedFields.push(fieldPath);
+        const fieldKey = getFieldSnakeKey(field.name, field.type);
+        nextExtended[fieldKey] = getYamlDefaultAsString(field.metadata?.default);
       }
     }
-    appliedFieldsRef.current = newAppliedFields;
-  }, [templateId, template, parentDefinition, parentFetched, setFieldValue]);
+    innerForm.reset({ [CASE_EXTENDED_FIELDS]: nextExtended });
+  }, [templateId, template, parentDefinition, parentFetched, setFieldValue, innerForm]);
 
   return { template, isLoading };
 };

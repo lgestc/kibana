@@ -10,7 +10,7 @@ import { load as parseYaml } from 'js-yaml';
 import { render, renderHook, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { useForm, FormProvider } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { useForm, FormProvider } from 'react-hook-form';
 import { ParsedTemplateDefinitionSchema } from '../../../../common/types/domain/template/latest';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { FieldsRenderer, TemplateFieldRenderer } from './field_renderer';
@@ -45,23 +45,22 @@ const FormWrapper: React.FC<{
 }> = ({ templateDef, onSubmitResult }) => {
   const parseResult = ParsedTemplateDefinitionSchema.safeParse(parseYaml(templateDef));
 
-  const { form } = useForm<{}>({
-    defaultValue: { [CASE_EXTENDED_FIELDS]: {} },
-    options: { stripEmptyFields: false },
+  const form = useForm({
+    defaultValues: { [CASE_EXTENDED_FIELDS]: {} },
   });
 
   if (!parseResult.success) {
     return <>{`Invalid template: ${parseResult.error}`}</>;
   }
 
-  const handleSubmit = async () => {
-    const { isValid } = await form.submit();
-    onSubmitResult(isValid);
-  };
+  const handleSubmit = form.handleSubmit(
+    () => onSubmitResult(true),
+    () => onSubmitResult(false)
+  );
 
   return (
-    <FormProvider form={form}>
-      <FieldsRenderer parsedTemplate={parseResult.data} form={form} />
+    <FormProvider {...form}>
+      <FieldsRenderer parsedTemplate={parseResult.data} />
       <button type="button" onClick={handleSubmit}>
         {'Submit'}
       </button>
@@ -249,7 +248,7 @@ describe('FieldsRenderer — hidden required fields', () => {
     );
 
     // Type 'yes' into the controller input to satisfy the show_when condition
-    const [controllerInput] = screen.getAllByTestId('input');
+    const controllerInput = screen.getByLabelText('Controller');
     await userEvent.type(controllerInput, 'yes');
 
     // The hidden_required field should now be visible

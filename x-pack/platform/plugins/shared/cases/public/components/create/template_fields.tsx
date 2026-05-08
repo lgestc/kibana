@@ -5,25 +5,46 @@
  * 2.0.
  */
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { EuiCallOut, EuiSpacer, EuiTitle } from '@elastic/eui';
-import { useFormContext, useFormData } from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { FormProvider, useForm } from 'react-hook-form';
+import {
+  useFormContext as useParentFormContext,
+  useFormData,
+} from '@kbn/es-ui-shared-plugin/static/forms/hook_form_lib';
+import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
 import { useTemplateFormSync } from './use_template_form_sync';
 import * as i18n from './translations';
 import { FieldsRenderer } from '../templates_v2/field_types/field_renderer';
 
+type FormShape = Record<string, Record<string, unknown>>;
+
 export const CreateCaseTemplateFields: React.FC = () => {
-  const form = useFormContext();
+  const parentForm = useParentFormContext();
   const [{ templateId }] = useFormData<{ templateId?: string }>({ watch: ['templateId'] });
-  const { template, isLoading } = useTemplateFormSync();
+
+  const innerForm = useForm<FormShape>({
+    defaultValues: { [CASE_EXTENDED_FIELDS]: {} },
+  });
+
+  const { template, isLoading } = useTemplateFormSync(innerForm);
+
+  // Mirror the inner RHF `extendedFields` slice into the parent form_lib field
+  // on every change so the parent's submission picks up the latest values.
+  useEffect(() => {
+    const subscription = innerForm.watch((values) => {
+      const slice = values?.[CASE_EXTENDED_FIELDS] ?? {};
+      parentForm.setFieldValue('extendedFields', slice);
+    });
+    return () => subscription.unsubscribe();
+  }, [innerForm, parentForm]);
 
   const fieldsFragment = useMemo(() => {
     if (!template?.definition?.fields) {
       return null;
     }
-
-    return <FieldsRenderer form={form} parsedTemplate={template.definition} />;
-  }, [template, form]);
+    return <FieldsRenderer parsedTemplate={template.definition} />;
+  }, [template]);
 
   if (isLoading) {
     return null;
@@ -47,7 +68,7 @@ export const CreateCaseTemplateFields: React.FC = () => {
         <h4>{i18n.EXTENDED_FIELDS_TITLE}</h4>
       </EuiTitle>
       <EuiSpacer />
-      {fieldsFragment}
+      <FormProvider {...innerForm}>{fieldsFragment}</FormProvider>
     </>
   );
 };
