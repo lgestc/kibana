@@ -12,8 +12,8 @@ import { spaceIdToNamespace } from '@kbn/spaces-plugin/server/lib/utils/namespac
 import { DEFAULT_NAMESPACE_STRING } from '@kbn/core-saved-objects-utils-server';
 import type { CustomFieldsConfiguration } from '../../../common/types/domain';
 import type { CasesSearchRequest, CasesFindResponse } from '../../../common/types/api';
-import { CasesSearchRequestSchema, CasesFindResponseSchema } from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { CasesSearchRequestSchema, CasesFindResponseSchema } from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 
 import { createCaseError } from '../../common/error';
 import { asArray, transformCases } from '../../common/utils';

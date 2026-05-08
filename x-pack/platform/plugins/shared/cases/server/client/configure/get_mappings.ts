@@ -7,8 +7,8 @@
 
 import { ACTION_SAVED_OBJECT_TYPE } from '@kbn/actions-plugin/server';
 import type { ConnectorMappingResponse } from '../../../common/types/api';
-import { ConnectorMappingResponseSchema } from '../../../common/types/api_zod';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { ConnectorMappingResponseSchema } from '../../../common/types/api';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import { createCaseError } from '../../common/error';
 import type { CasesClientArgs } from '..';
 import type { MappingsArgs } from './types';

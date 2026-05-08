@@ -13,8 +13,8 @@ import type {
 import {
   BulkGetAttachmentsRequestSchema,
   BulkGetAttachmentsResponseSchema,
-} from '../../../common/types/api_zod';
-import { BulkGetAttachmentsResponseSchemaV2 } from '../../../common/types/api_zod/attachment/v2';
+} from '../../../common/types/api';
+import { BulkGetAttachmentsResponseSchemaV2 } from '../../../common/types/api/attachment/v2';
 import type { AttachmentAttributes, AttachmentAttributesV2 } from '../../../common/types/domain';
 import { flattenAttachmentSavedObjects } from '../../common/utils';
 import { createCaseError, generateCaseErrorResponse } from '../../common/error';
@@ -25,7 +25,7 @@ import type { BulkOptionalAttributes, OptionalAttributes } from '../../services/
 import type { CasesClient } from '../client';
 import type { AttachmentSavedObject, SOWithErrors } from '../../common/types';
 import { partitionByCaseAssociation } from '../../common/partitioning';
-import { decodeOrThrowZod, decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod, decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 
 type AttachmentSavedObjectWithErrors = Array<SOWithErrors<AttachmentAttributes>>;
 
@@ -74,7 +74,9 @@ export async function bulkGet(
       errors,
     };
     if (mode === 'legacy') {
-      return decodeOrThrowZod(BulkGetAttachmentsResponseSchema)(res) as BulkGetAttachmentsResponse;
+      return decodeOrThrowZod(BulkGetAttachmentsResponseSchema)(
+        res
+      ) as unknown as BulkGetAttachmentsResponseV2;
     }
     return decodeOrThrowZod(BulkGetAttachmentsResponseSchemaV2)(
       res

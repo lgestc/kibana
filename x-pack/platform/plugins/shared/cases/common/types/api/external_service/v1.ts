@@ -5,28 +5,22 @@
  * 2.0.
  */
 
-import * as rt from 'io-ts';
+import { z } from '@kbn/zod/v4';
 
-export const ExternalServiceResponseRt = rt.intersection([
-  rt.strict({
-    title: rt.string,
-    id: rt.string,
-    pushedDate: rt.string,
-    url: rt.string,
-  }),
-  rt.exact(
-    rt.partial({
-      comments: rt.array(
-        rt.intersection([
-          rt.strict({
-            commentId: rt.string,
-            pushedDate: rt.string,
-          }),
-          rt.exact(rt.partial({ externalCommentId: rt.string })),
-        ])
-      ),
-    })
-  ),
-]);
+export const ExternalServiceResponseSchema = z.object({
+  title: z.string(),
+  id: z.string(),
+  pushedDate: z.string(),
+  url: z.string(),
+  comments: z
+    .array(
+      z.object({
+        commentId: z.string(),
+        pushedDate: z.string(),
+        externalCommentId: z.string().optional(),
+      })
+    )
+    .optional(),
+});
 
-export type ExternalServiceResponse = rt.TypeOf<typeof ExternalServiceResponseRt>;
+export type ExternalServiceResponse = z.infer<typeof ExternalServiceResponseSchema>;

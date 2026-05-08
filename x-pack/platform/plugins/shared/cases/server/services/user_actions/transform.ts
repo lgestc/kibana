@@ -176,7 +176,7 @@ const addReferenceIdToPayload = (
     }
   }
 
-  return userAction.attributes.payload;
+  return userAction.attributes.payload as UserActionAttributes['payload'];
 };
 
 function getConnectorIdFromReferences(

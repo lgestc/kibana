@@ -32,8 +32,8 @@ import {
   ConfigurationRequestSchema,
   GetConfigurationFindRequestSchema,
   FindActionConnectorResponseSchema,
-} from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+} from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 import {
   MAX_CONCURRENT_SEARCHES,
   MAX_SUPPORTED_CONNECTORS_RETURNED,
@@ -48,7 +48,7 @@ import { combineAuthorizedAndOwnerFilter, transformTemplateCustomFields } from '
 import type { MappingsArgs, CreateMappingsArgs, UpdateMappingsArgs } from './types';
 import { createMappings } from './create_mappings';
 import { updateMappings } from './update_mappings';
-import { ConfigurationSchema, ConfigurationsSchema } from '../../../common/types/domain_zod';
+import { ConfigurationSchema, ConfigurationsSchema } from '../../../common/types/domain';
 import {
   validateDuplicatedKeysInRequest,
   validateDuplicatedObservableTypesInRequest,

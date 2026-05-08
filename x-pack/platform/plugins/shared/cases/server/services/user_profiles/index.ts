@@ -15,8 +15,8 @@ import { DEFAULT_SPACE_ID } from '@kbn/spaces-plugin/common';
 
 import type { LicensingPluginStart } from '@kbn/licensing-plugin/server';
 import type { SuggestUserProfilesRequest } from '../../../common/types/api';
-import { SuggestUserProfilesRequestSchema } from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { SuggestUserProfilesRequestSchema } from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 import { Operations } from '../../authorization';
 import { createCaseError } from '../../common/error';
 import { LicensingService } from '../licensing';

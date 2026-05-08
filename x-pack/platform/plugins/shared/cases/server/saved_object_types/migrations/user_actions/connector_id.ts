@@ -17,7 +17,7 @@ import type {
   CaseConnector,
   ExternalService as CaseExternalService,
 } from '../../../../common/types/domain';
-import { CaseConnectorSchema, ExternalServiceSchema } from '../../../../common/types/domain_zod';
+import { CaseConnectorSchema, ExternalServiceSchema } from '../../../../common/types/domain';
 import {
   CONNECTOR_ID_REFERENCE_NAME,
   PUSH_CONNECTOR_ID_REFERENCE_NAME,

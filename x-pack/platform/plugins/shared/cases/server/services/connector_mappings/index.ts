@@ -27,7 +27,7 @@ import {
   ConnectorMappingsAttributesPartialSchema,
   ConnectorMappingsAttributesTransformedSchema,
 } from '../../common/types/connector_mappings';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 
 export class ConnectorMappingsService {
   constructor(private readonly log: Logger) {}

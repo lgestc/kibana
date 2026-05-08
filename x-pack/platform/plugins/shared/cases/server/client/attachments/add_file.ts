@@ -9,7 +9,7 @@ import { SavedObjectsUtils } from '@kbn/core/server';
 
 import type { Owner } from '../../../common/constants/types';
 import type { Case } from '../../../common/types/domain';
-import { FileAttachmentMetadataPayloadSchema } from '../../../common/types/domain_zod';
+import { FileAttachmentMetadataPayloadSchema } from '../../../common/types/domain';
 import type { CasesClient, CasesClientArgs } from '..';
 import type { AddFileArgs } from './types';
 
@@ -20,7 +20,7 @@ import { constructFileKindIdByOwner } from '../../../common/files';
 import { Operations } from '../../authorization';
 import { validateRegisteredAttachments } from './validators';
 import { buildAttachmentRequestFromFileJSON } from '../utils';
-import { decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 
 /**
  * Create a file attachment to a case.

@@ -23,7 +23,7 @@ import { UserActionPersistedAttributesSchema } from '../../../common/types/user_
 import { CASE_SAVED_OBJECT, CASE_USER_ACTION_SAVED_OBJECT } from '../../../../common/constants';
 import { arraysDifference } from '../../../client/utils';
 import { isUserActionType } from '../../../../common/utils/user_actions';
-import { decodeOrThrowZod } from '../../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../../common/runtime_types';
 import { BuilderFactory } from '../builder_factory';
 import type {
   AddSyncedAlertsCountToUserActionsParams,

@@ -8,11 +8,8 @@
 import { merge } from 'lodash';
 
 import type { CasesMetricsRequest, CasesMetricsResponse } from '../../../common/types/api';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
-import {
-  CasesMetricsRequestSchema,
-  CasesMetricsResponseSchema,
-} from '../../../common/types/api_zod';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
+import { CasesMetricsRequestSchema, CasesMetricsResponseSchema } from '../../../common/types/api';
 import { createCaseError } from '../../common/error';
 import type { CasesClient } from '../client';
 import type { CasesClientArgs } from '../types';

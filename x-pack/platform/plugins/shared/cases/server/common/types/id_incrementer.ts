@@ -6,7 +6,7 @@
  */
 
 import type { SavedObject } from '@kbn/core-saved-objects-server';
-import { CaseIdIncrementerAttributesSchema } from '../../../common/types/domain_zod/incremental_id/v1';
+import { CaseIdIncrementerAttributesSchema } from '../../../common/types/domain/incremental_id/v1';
 
 export interface CaseIdIncrementerPersistedAttributes {
   '@timestamp': number;

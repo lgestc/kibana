@@ -13,7 +13,7 @@ import { SavedObjectsUtils } from '@kbn/core/server';
 
 import type { Case, CustomFieldsConfiguration, User } from '../../../common/types/domain';
 import { CaseSeverity, UserActionTypes } from '../../../common/types/domain';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 
 import { Operations } from '../../authorization';
 import { createCaseError, isSODecoratedError, isSOError } from '../../common/error';
@@ -28,7 +28,7 @@ import type {
 import {
   BulkCreateCasesResponseSchema,
   BulkCreateCasesRequestSchema,
-} from '../../../common/types/api_zod';
+} from '../../../common/types/api';
 import { validateCustomFields } from './validators';
 import { normalizeCreateCaseRequest } from './utils';
 import type { BulkCreateCasesArgs } from '../../services/cases/types';

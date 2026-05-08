@@ -30,8 +30,8 @@ import {
   UserActionActions,
   UserActionTypes,
   AttachmentType,
+  CaseSchema,
 } from '../../../common/types/domain';
-import { CaseSchema } from '../../../common/types/domain_zod';
 
 import { CASE_SAVED_OBJECT, MAX_DOCS_PER_PAGE } from '../../../common/constants';
 import type { CasesClientArgs } from '../../client';
@@ -51,7 +51,7 @@ import {
   isCommentRequestTypeEvent,
   countEventsForID,
 } from '../utils';
-import { decodeOrThrowZod } from '../runtime_types_zod';
+import { decodeOrThrowZod } from '../runtime_types';
 import type {
   AttachmentRequest,
   AttachmentPatchRequestV2,

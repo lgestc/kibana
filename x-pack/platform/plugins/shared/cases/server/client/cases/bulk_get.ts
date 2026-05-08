@@ -9,11 +9,8 @@ import { partition } from 'lodash';
 
 import type { CaseAttributes } from '../../../common/types/domain';
 import type { CasesBulkGetRequest, CasesBulkGetResponse } from '../../../common/types/api';
-import {
-  CasesBulkGetResponseSchema,
-  CasesBulkGetRequestSchema,
-} from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { CasesBulkGetResponseSchema, CasesBulkGetRequestSchema } from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 import { createCaseError, generateCaseErrorResponse } from '../../common/error';
 import { flattenCaseSavedObject } from '../../common/utils';
 import type { CasesClientArgs } from '../types';

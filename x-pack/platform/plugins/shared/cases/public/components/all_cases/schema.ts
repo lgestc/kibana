@@ -6,7 +6,7 @@
  */
 
 import { z } from '@kbn/zod/v4';
-import { CaseSeveritySchema, CaseStatusSchema } from '../../../common/types/domain_zod';
+import { CaseSeveritySchema, CaseStatusSchema } from '../../../common/types/domain';
 
 export const AllCasesURLQueryParamsSchema = z
   .object({

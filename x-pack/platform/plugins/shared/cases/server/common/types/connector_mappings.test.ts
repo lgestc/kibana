@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import { decodeOrThrowZod } from '../runtime_types_zod';
+import { decodeOrThrowZod } from '../runtime_types';
 import { ConnectorMappingsAttributesPartialSchema } from './connector_mappings';
 
 describe('mappings', () => {
@@ -21,9 +21,7 @@ describe('mappings', () => {
     });
 
     it('does not throw when the object is empty', () => {
-      expect(() =>
-        decodeOrThrowZod(ConnectorMappingsAttributesPartialSchema)({})
-      ).not.toThrow();
+      expect(() => decodeOrThrowZod(ConnectorMappingsAttributesPartialSchema)({})).not.toThrow();
     });
   });
 });

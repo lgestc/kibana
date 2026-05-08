@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import { decodeOrThrowZod } from '../runtime_types_zod';
+import { decodeOrThrowZod } from '../runtime_types';
 import { ConfigurationPartialAttributesSchema } from './configure';
 
 describe('Configuration', () => {

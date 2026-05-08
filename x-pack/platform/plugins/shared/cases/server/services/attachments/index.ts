@@ -24,8 +24,8 @@ import type {
 import {
   AttachmentAttributesSchemaV2,
   AttachmentPatchAttributesSchemaV2,
-} from '../../../common/types/domain_zod/attachment/v2';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+} from '../../../common/types/domain/attachment/v2';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import {
   CASE_ATTACHMENT_SAVED_OBJECT,
   CASE_COMMENT_SAVED_OBJECT,

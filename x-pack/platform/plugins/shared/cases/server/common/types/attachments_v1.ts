@@ -11,7 +11,7 @@ import type { AttachmentAttributes } from '../../../common/types/domain';
 import {
   AttachmentAttributesSchema,
   AttachmentPatchAttributesSchema,
-} from '../../../common/types/domain_zod';
+} from '../../../common/types/domain';
 import type { User } from './user';
 
 export interface AttachmentRequestAttributes {

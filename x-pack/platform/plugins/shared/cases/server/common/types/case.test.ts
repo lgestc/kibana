@@ -7,11 +7,8 @@
 
 import { omit } from 'lodash';
 import { ConnectorTypes, SECURITY_SOLUTION_OWNER } from '../../../common';
-import {
-  getPartialCaseTransformedAttributesSchema,
-  OwnerSchema,
-} from './case';
-import { decodeOrThrowZod } from '../runtime_types_zod';
+import { getPartialCaseTransformedAttributesSchema, OwnerSchema } from './case';
+import { decodeOrThrowZod } from '../runtime_types';
 import { CaseSeverity, CaseStatuses } from '../../../common/types/domain';
 
 describe('case types', () => {

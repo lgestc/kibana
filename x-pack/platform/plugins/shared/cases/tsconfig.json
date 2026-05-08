@@ -26,7 +26,6 @@
     "@kbn/kibana-utils-plugin",
     "@kbn/i18n",
     "@kbn/utility-types",
-    "@kbn/securitysolution-io-ts-utils",
     "@kbn/cases-components",
     "@kbn/es-query",
     "@kbn/i18n-react",

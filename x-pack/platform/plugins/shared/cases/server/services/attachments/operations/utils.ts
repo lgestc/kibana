@@ -6,14 +6,14 @@
  */
 
 import { passThroughTransformer } from '../../../common/attachments/base';
-import { decodeOrThrowZod } from '../../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../../common/runtime_types';
 import type { AttachmentPersistedAttributes } from '../../../common/types/attachments_v1';
 import type { UnifiedAttachmentAttributes } from '../../../common/types/attachments_v2';
 import type {
   AttachmentPatchAttributesV2,
   AttachmentMode,
 } from '../../../../common/types/domain/attachment/v2';
-import { UnifiedAttachmentAttributesSchema } from '../../../../common/types/domain_zod/attachment/v2';
+import { UnifiedAttachmentAttributesSchema } from '../../../../common/types/domain/attachment/v2';
 import { isMigratedAttachmentType } from '../../../../common/utils/attachments';
 import {
   getAttachmentTypeFromAttributes,

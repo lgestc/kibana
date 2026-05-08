@@ -5,12 +5,12 @@
  * 2.0.
  */
 
-import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types';
 import { CASE_PUSH_URL } from '../../../../common/constants';
 import type { CaseRoute } from '../types';
 import { createCaseError } from '../../../common/error';
 import { createCasesRoute } from '../create_cases_route';
-import { CasePushRequestParamsSchema } from '../../../../common/types/api_zod';
+import { CasePushRequestParamsSchema } from '../../../../common/types/api';
 import type { caseDomainV1 } from '../../../../common/types/domain';
 import { DEFAULT_CASES_ROUTE_SECURITY } from '../constants';
 

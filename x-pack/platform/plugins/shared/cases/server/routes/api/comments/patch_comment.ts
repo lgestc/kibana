@@ -7,8 +7,8 @@
 
 import { schema } from '@kbn/config-schema';
 import type { AttachmentPatchRequestV2 } from '../../../../common/types/api';
-import { AttachmentPatchRequestSchema } from '../../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types_zod';
+import { AttachmentPatchRequestSchema } from '../../../../common/types/api';
+import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types';
 import { CASE_COMMENTS_URL } from '../../../../common/constants';
 import { createCaseError } from '../../../common/error';
 import { createCasesRoute } from '../create_cases_route';

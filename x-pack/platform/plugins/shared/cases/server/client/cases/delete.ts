@@ -10,8 +10,8 @@ import { chunk } from 'lodash';
 import type { SavedObjectsBulkDeleteObject } from '@kbn/core/server';
 import type { FileServiceStart } from '@kbn/files-plugin/server';
 import type { CasesDeleteRequest } from '../../../common/types/api';
-import { CasesDeleteRequestSchema } from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { CasesDeleteRequestSchema } from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 import {
   CASE_SAVED_OBJECT,
   CASE_USER_ACTION_SAVED_OBJECT,

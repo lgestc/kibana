@@ -12,8 +12,7 @@ import type {
   SingleCaseMetricsResponse,
   StatusInfo,
 } from '../../../common/types/api';
-import { CaseStatuses } from '../../../common/types/domain';
-import { StatusUserActionSchema } from '../../../common/types/domain_zod';
+import { CaseStatuses, StatusUserActionSchema } from '../../../common/types/domain';
 import { CaseMetricsFeature } from '../../../common/types/api';
 import { Operations } from '../../authorization';
 import { createCaseError } from '../../common/error';

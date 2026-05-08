@@ -5,15 +5,7 @@
  * 2.0.
  */
 
-import * as rt from 'io-ts';
-
-export type SingleCaseMetricsRequest = rt.TypeOf<typeof SingleCaseMetricsRequestRt>;
-export type SingleCaseMetricsResponse = rt.TypeOf<typeof SingleCaseMetricsResponseRt>;
-export type CasesMetricsRequest = rt.TypeOf<typeof CasesMetricsRequestRt>;
-export type CasesMetricsResponse = rt.TypeOf<typeof CasesMetricsResponseRt>;
-export type AlertHostsMetrics = rt.TypeOf<typeof AlertHostsMetricsRt>;
-export type AlertUsersMetrics = rt.TypeOf<typeof AlertUsersMetricsRt>;
-export type StatusInfo = rt.TypeOf<typeof StatusInfoRt>;
+import { z } from '@kbn/zod/v4';
 
 export enum CaseMetricsFeature {
   ALERTS_COUNT = 'alerts.count',
@@ -26,198 +18,98 @@ export enum CaseMetricsFeature {
   STATUS = 'status',
 }
 
-export const SingleCaseMetricsFeatureFieldRt = rt.union([
-  rt.literal(CaseMetricsFeature.ALERTS_COUNT),
-  rt.literal(CaseMetricsFeature.ALERTS_USERS),
-  rt.literal(CaseMetricsFeature.ALERTS_HOSTS),
-  rt.literal(CaseMetricsFeature.ACTIONS_ISOLATE_HOST),
-  rt.literal(CaseMetricsFeature.CONNECTORS),
-  rt.literal(CaseMetricsFeature.LIFESPAN),
+export const SingleCaseMetricsFeatureFieldSchema = z.union([
+  z.literal(CaseMetricsFeature.ALERTS_COUNT),
+  z.literal(CaseMetricsFeature.ALERTS_USERS),
+  z.literal(CaseMetricsFeature.ALERTS_HOSTS),
+  z.literal(CaseMetricsFeature.ACTIONS_ISOLATE_HOST),
+  z.literal(CaseMetricsFeature.CONNECTORS),
+  z.literal(CaseMetricsFeature.LIFESPAN),
 ]);
 
-export const CasesMetricsFeatureFieldRt = rt.union([
-  SingleCaseMetricsFeatureFieldRt,
-  rt.literal(CaseMetricsFeature.MTTR),
-  rt.literal(CaseMetricsFeature.STATUS),
+export const CasesMetricsFeatureFieldSchema = z.union([
+  SingleCaseMetricsFeatureFieldSchema,
+  z.literal(CaseMetricsFeature.MTTR),
+  z.literal(CaseMetricsFeature.STATUS),
 ]);
 
-const StatusInfoRt = rt.strict({
-  /**
-   * Duration the case was in the open status in milliseconds
-   */
-  openDuration: rt.number,
-  /**
-   * Duration the case was in the in-progress status in milliseconds. Zero indicates the case was never in-progress.
-   */
-  inProgressDuration: rt.number,
-  /**
-   * The ISO string representation of the dates the case was reopened
-   */
-  reopenDates: rt.array(rt.string),
+const StatusInfoSchema = z.object({
+  openDuration: z.number(),
+  inProgressDuration: z.number(),
+  reopenDates: z.array(z.string()),
 });
 
-const AlertHostsMetricsRt = rt.strict({
-  /**
-   * Total unique hosts represented in the alerts
-   */
-  total: rt.number,
-  values: rt.array(
-    rt.strict({
-      /**
-       * Host name
-       */
-      name: rt.union([rt.string, rt.undefined]),
-      /**
-       * Unique identifier for the host
-       */
-      id: rt.string,
-      /**
-       * Number of alerts that have this particular host name
-       */
-      count: rt.number,
+const AlertHostsMetricsSchema = z.object({
+  total: z.number(),
+  values: z.array(
+    z.object({
+      name: z.string().optional(),
+      id: z.string(),
+      count: z.number(),
     })
   ),
 });
 
-const AlertUsersMetricsRt = rt.strict({
-  /**
-   * Total unique users represented in the alerts
-   */
-  total: rt.number,
-  values: rt.array(
-    rt.strict({
-      /**
-       * Username
-       */
-      name: rt.string,
-      /**
-       * Number of alerts that have this particular username
-       */
-      count: rt.number,
+const AlertUsersMetricsSchema = z.object({
+  total: z.number(),
+  values: z.array(
+    z.object({
+      name: z.string(),
+      count: z.number(),
     })
   ),
 });
 
-export const SingleCaseMetricsRequestRt = rt.strict({
-  /**
-   * The metrics to retrieve.
-   */
-  features: rt.array(SingleCaseMetricsFeatureFieldRt),
+export const SingleCaseMetricsRequestSchema = z.object({
+  features: z.array(SingleCaseMetricsFeatureFieldSchema),
 });
 
-export const CasesMetricsRequestRt = rt.intersection([
-  rt.strict({
-    /**
-     * The metrics to retrieve.
-     */
-    features: rt.array(CasesMetricsFeatureFieldRt),
-  }),
-  rt.exact(
-    rt.partial({
-      /**
-       * A KQL date. If used all cases created after (gte) the from date will be returned
-       */
-      from: rt.string,
-      /**
-       * A KQL date. If used all cases created before (lte) the to date will be returned.
-       */
-      to: rt.string,
-      /**
-       * The owner(s) to filter by. The user making the request must have privileges to retrieve cases of that
-       * ownership or they will be ignored. If no owner is included, then all ownership types will be included in the response
-       * that the user has access to.
-       */
-      owner: rt.union([rt.array(rt.string), rt.string]),
+export const CasesMetricsRequestSchema = z.object({
+  features: z.array(CasesMetricsFeatureFieldSchema),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  owner: z.union([z.array(z.string()), z.string()]).optional(),
+});
+
+export const SingleCaseMetricsResponseSchema = z.object({
+  alerts: z
+    .object({
+      count: z.number().optional(),
+      hosts: AlertHostsMetricsSchema.optional(),
+      users: AlertUsersMetricsSchema.optional(),
     })
-  ),
-]);
+    .optional(),
+  connectors: z.object({ total: z.number() }).optional(),
+  actions: z
+    .object({
+      isolateHost: z
+        .object({
+          isolate: z.object({ total: z.number() }),
+          unisolate: z.object({ total: z.number() }),
+        })
+        .optional(),
+    })
+    .optional(),
+  lifespan: z
+    .object({
+      creationDate: z.string(),
+      closeDate: z.string().nullable(),
+      statusInfo: StatusInfoSchema,
+    })
+    .optional(),
+});
 
-export const SingleCaseMetricsResponseRt = rt.exact(
-  rt.partial({
-    alerts: rt.exact(
-      rt.partial({
-        /**
-         * Number of alerts attached to the case
-         */
-        count: rt.number,
-        /**
-         * Host information represented from the alerts attached to this case
-         */
-        hosts: AlertHostsMetricsRt,
-        /**
-         * User information represented from the alerts attached to this case
-         */
-        users: AlertUsersMetricsRt,
-      })
-    ),
-    /**
-     * External connectors associated with the case
-     */
-    connectors: rt.strict({
-      /**
-       * Total number of connectors in the case
-       */
-      total: rt.number,
-    }),
-    /**
-     * Actions taken within the case
-     */
-    actions: rt.exact(
-      rt.partial({
-        isolateHost: rt.strict({
-          /**
-           * Isolate host action information
-           */
-          isolate: rt.strict({
-            /**
-             * Total times the isolate host action has been performed
-             */
-            total: rt.number,
-          }),
-          /**
-           * Unisolate host action information
-           */
-          unisolate: rt.strict({
-            /**
-             * Total times the unisolate host action has been performed
-             */
-            total: rt.number,
-          }),
-        }),
-      })
-    ),
-    /**
-     * The case's open,close,in-progress details
-     */
-    lifespan: rt.strict({
-      /**
-       * Date the case was created, in ISO format
-       */
-      creationDate: rt.string,
-      /**
-       * Date the case was closed, in ISO format. Will be null if the case is not currently closed
-       */
-      closeDate: rt.union([rt.string, rt.null]),
-      /**
-       * The case's status information regarding durations in a specific status
-       */
-      statusInfo: StatusInfoRt,
-    }),
-  })
-);
+export const CasesMetricsResponseSchema = z.object({
+  mttr: z.number().nullable().optional(),
+  status: z.object({ open: z.number(), inProgress: z.number(), closed: z.number() }).optional(),
+});
 
-export const CasesMetricsResponseRt = rt.exact(
-  rt.partial({
-    /**
-     * The average resolve time of all cases in seconds
-     */
-    mttr: rt.union([rt.number, rt.null]),
-    /**
-     * The number of total cases per status
-     */
-    status: rt.strict({ open: rt.number, inProgress: rt.number, closed: rt.number }),
-  })
-);
-
-export type CasesMetricsFeatureField = rt.TypeOf<typeof CasesMetricsFeatureFieldRt>;
-export type SingleCaseMetricsFeatureField = rt.TypeOf<typeof SingleCaseMetricsFeatureFieldRt>;
+export type SingleCaseMetricsRequest = z.infer<typeof SingleCaseMetricsRequestSchema>;
+export type CasesMetricsRequest = z.infer<typeof CasesMetricsRequestSchema>;
+export type SingleCaseMetricsResponse = z.infer<typeof SingleCaseMetricsResponseSchema>;
+export type CasesMetricsResponse = z.infer<typeof CasesMetricsResponseSchema>;
+export type AlertHostsMetrics = z.infer<typeof AlertHostsMetricsSchema>;
+export type AlertUsersMetrics = z.infer<typeof AlertUsersMetricsSchema>;
+export type StatusInfo = z.infer<typeof StatusInfoSchema>;
+export type SingleCaseMetricsFeatureField = z.infer<typeof SingleCaseMetricsFeatureFieldSchema>;
+export type CasesMetricsFeatureField = z.infer<typeof CasesMetricsFeatureFieldSchema>;

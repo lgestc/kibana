@@ -6,8 +6,8 @@
  */
 
 import type { CaseUserActionStatsResponse } from '../../../common/types/api';
-import { CaseUserActionStatsResponseSchema } from '../../../common/types/api_zod';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { CaseUserActionStatsResponseSchema } from '../../../common/types/api';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import { createCaseError } from '../../common/error';
 import type { CasesClientArgs } from '..';
 import type { UserActionGet } from './types';

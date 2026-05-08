@@ -31,7 +31,7 @@ import type {
   CasesPatchResponse,
   CaseWithUpdateSummary,
 } from '../../../common/types/api';
-import { PatchCasesResponseSchema, CasesPatchRequestSchema } from '../../../common/types/api_zod';
+import { PatchCasesResponseSchema, CasesPatchRequestSchema } from '../../../common/types/api';
 import {
   CASE_COMMENT_SAVED_OBJECT,
   CASE_SAVED_OBJECT,
@@ -57,7 +57,7 @@ import {
 import { LICENSING_CASE_ASSIGNMENT_FEATURE } from '../../common/constants';
 import type { LicensingService } from '../../services/licensing';
 import type { CaseSavedObjectTransformed } from '../../common/types/case';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 import type {
   CaseAttributes,
   User,

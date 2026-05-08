@@ -8,7 +8,7 @@
 import type { SavedObject } from '@kbn/core-saved-objects-server';
 import { z } from '@kbn/zod/v4';
 import type { CaseAttributes, Observable } from '../../../common/types/domain';
-import { CaseAttributesSchema } from '../../../common/types/domain_zod';
+import { CaseAttributesSchema } from '../../../common/types/domain';
 import type { ConnectorPersisted } from './connectors';
 import type { ExternalServicePersisted } from './external_service';
 import type { User, UserProfile } from './user';

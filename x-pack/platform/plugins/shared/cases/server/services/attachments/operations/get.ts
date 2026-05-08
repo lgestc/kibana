@@ -11,7 +11,7 @@ import type { estypes } from '@elastic/elasticsearch';
 import { FILE_SO_TYPE } from '@kbn/files-plugin/common';
 import { toUnifiedAttachmentType } from '../../../../common/utils/attachments';
 import { isSOError } from '../../../common/error';
-import { decodeOrThrowZod } from '../../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../../common/runtime_types';
 import type {
   AttachmentPersistedAttributes,
   AttachmentTransformedAttributes,
@@ -36,7 +36,7 @@ import type {
   DocumentAttachmentAttributesV2,
 } from '../../../../common/types/domain';
 import { AttachmentType } from '../../../../common/types/domain';
-import { DocumentAttachmentAttributesSchemaV2 } from '../../../../common/types/domain_zod/attachment/v2';
+import { DocumentAttachmentAttributesSchemaV2 } from '../../../../common/types/domain/attachment/v2';
 import type {
   AlertIdsAggsResult,
   BulkOptionalAttributes,

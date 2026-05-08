@@ -18,7 +18,7 @@ import {
   CasesBulkGetResponseSchema,
   CasesMetricsResponseSchema,
   CasesSimilarResponseSchema,
-} from '../../common/types/api_zod';
+} from '../../common/types/api';
 import { ToasterError } from '../containers/utils';
 
 const decodeWithToasterError = <T>(schema: ZodType<unknown>, value: T): NonNullable<T> => {

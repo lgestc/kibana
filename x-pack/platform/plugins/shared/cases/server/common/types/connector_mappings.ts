@@ -7,7 +7,7 @@
 
 import type { SavedObject } from '@kbn/core/server';
 import type { ConnectorMappingsAttributes } from '../../../common/types/domain';
-import { ConnectorMappingsAttributesSchema } from '../../../common/types/domain_zod';
+import { ConnectorMappingsAttributesSchema } from '../../../common/types/domain';
 
 export interface ConnectorMappingsPersistedAttributes {
   mappings: Array<{

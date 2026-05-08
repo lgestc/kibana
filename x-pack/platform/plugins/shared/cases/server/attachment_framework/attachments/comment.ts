@@ -9,7 +9,7 @@ import { z } from '@kbn/zod/v4';
 import type { UnifiedAttachmentTypeSetup } from '../types';
 import { COMMENT_ATTACHMENT_TYPE } from '../../../common/constants/attachments';
 import { MAX_COMMENT_LENGTH } from '../../../common/constants';
-import { decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 
 export const commentAttachmentType: UnifiedAttachmentTypeSetup = {
   id: COMMENT_ATTACHMENT_TYPE,

@@ -5,8 +5,8 @@
  * 2.0.
  */
 
-import { CaseConfigureRequestParamsSchema } from '../../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types_zod';
+import { CaseConfigureRequestParamsSchema } from '../../../../common/types/api';
+import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types';
 import { CASE_CONFIGURE_DETAILS_URL } from '../../../../common/constants';
 import { createCaseError } from '../../../common/error';
 import { createCasesRoute } from '../create_cases_route';

@@ -6,8 +6,8 @@
  */
 
 import { schema } from '@kbn/config-schema';
-import { BulkGetAttachmentsRequestSchema } from '../../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types_zod';
+import { BulkGetAttachmentsRequestSchema } from '../../../../common/types/api';
+import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types';
 import type { attachmentApiV2 } from '../../../../common/types/api';
 
 import { INTERNAL_BULK_GET_ATTACHMENTS_URL } from '../../../../common/constants';

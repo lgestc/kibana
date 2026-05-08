@@ -6,6 +6,6 @@
  */
 
 import type { z } from '@kbn/zod/v4';
-import type { SingleFileAttachmentMetadataSchema } from '../../../../common/types/domain_zod';
+import type { SingleFileAttachmentMetadataSchema } from '../../../../common/types/domain';
 
 export type DownloadableFile = z.infer<typeof SingleFileAttachmentMetadataSchema> & { id: string };

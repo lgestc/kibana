@@ -6,8 +6,8 @@
  */
 
 import type { CasesStatusRequest, CasesStatusResponse } from '../../../common/types/api';
-import { CasesStatusRequestSchema, CasesStatusResponseSchema } from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { CasesStatusRequestSchema, CasesStatusResponseSchema } from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 import type { CasesClientArgs } from '../types';
 import { Operations } from '../../authorization';
 import { constructQueryOptions } from '../utils';

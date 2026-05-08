@@ -7,12 +7,12 @@
 
 import Boom from '@hapi/boom';
 
-import { AttachmentPatchRequestSchemaV2 } from '../../../common/types/api_zod/attachment/v2';
+import { AttachmentPatchRequestSchemaV2 } from '../../../common/types/api/attachment/v2';
 import { CaseCommentModel } from '../../common/models';
 import { createCaseError } from '../../common/error';
 import { isCommentRequestTypeExternalReference } from '../../../common/utils/attachments';
 import type { Case } from '../../../common/types/domain';
-import { decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 import { CASE_SAVED_OBJECT } from '../../../common/constants';
 import type { CasesClientArgs } from '..';
 import { decodeCommentRequestV2 } from '../utils';

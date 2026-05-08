@@ -32,11 +32,9 @@ import {
   CaseSeverity,
   CaseStatuses,
   ConnectorTypes,
-} from '../../common/types/domain';
-import {
   ExternalReferenceSOAttachmentPayloadSchema,
   FileAttachmentMetadataSchema,
-} from '../../common/types/domain_zod';
+} from '../../common/types/domain';
 import { isValidOwner } from '../../common/utils/owner';
 import {
   CASE_VIEW_COMMENT_PATH,

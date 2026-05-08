@@ -17,19 +17,19 @@ import type { DocumentResponse, AttachmentsFindResponse } from '../../../common/
 import {
   DocumentResponseSchema,
   FindAttachmentsQueryParamsSchema,
-} from '../../../common/types/api_zod';
-import { AttachmentsFindResponseSchemaV2 } from '../../../common/types/api_zod/attachment/v2';
+} from '../../../common/types/api';
+import { AttachmentsFindResponseSchemaV2 } from '../../../common/types/api/attachment/v2';
 import {
   AttachmentSchemaV2,
   AttachmentsSchemaV2,
-} from '../../../common/types/domain_zod/attachment/v2';
+} from '../../../common/types/domain/attachment/v2';
 import type { CasesClient } from '../client';
 import type { CasesClientArgs } from '../types';
 
 import type { FindCommentsArgs, GetAllDocumentsAttachedToCase, GetAllArgs, GetArgs } from './types';
 
 import { CASE_COMMENT_SAVED_OBJECT, CASE_SAVED_OBJECT } from '../../../common/constants';
-import { decodeOrThrowZod, decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod, decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 import {
   defaultSortField,
   transformComments,

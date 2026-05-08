@@ -10,7 +10,7 @@ import Boom from '@hapi/boom';
 import { isLegacyAttachmentRequest } from '../../../common/utils/attachments';
 import type { AlertAttachmentPayload } from '../../../common/types/domain';
 import { UserActionActions, UserActionTypes } from '../../../common/types/domain';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import { CASE_SAVED_OBJECT } from '../../../common/constants';
 import { getAlertInfoFromComments, isCommentRequestTypeAlert } from '../../common/utils';
 import type { CasesClientArgs } from '../types';
@@ -18,7 +18,7 @@ import { createCaseError } from '../../common/error';
 import { Operations } from '../../authorization';
 import type { DeleteAllArgs, DeleteArgs } from './types';
 import type { AttachmentRequestV2 } from '../../../common/types/api';
-import { AttachmentRequestSchemaV2 } from '../../../common/types/api_zod/attachment/v2';
+import { AttachmentRequestSchemaV2 } from '../../../common/types/api/attachment/v2';
 
 /**
  * Delete all comments for a case.

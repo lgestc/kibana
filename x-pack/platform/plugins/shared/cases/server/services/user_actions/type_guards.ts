@@ -11,8 +11,8 @@ import {
   CaseAssigneesSchema,
   CaseCustomFieldsSchema,
   CaseSettingsSchema,
-} from '../../../common/types/domain_zod';
-import { ExtendedFieldsSchema } from '../../../common/types/domain_zod/user_action/extended_fields/v1';
+} from '../../../common/types/domain';
+import { ExtendedFieldsSchema } from '../../../common/types/domain/user_action/extended_fields/v1';
 
 export const isStringArray = (value: unknown): value is string[] => {
   return Array.isArray(value) && value.every((val) => isString(val));

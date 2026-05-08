@@ -5,12 +5,8 @@
  * 2.0.
  */
 
-import * as rt from 'io-ts';
+import { z } from '@kbn/zod/v4';
 
-/**
- * These values are used in a number of places including to define the accepted values in the
- * user_actions/_find api. These values should not be removed only new values can be added.
- */
 export const UserActionTypes = {
   assignees: 'assignees',
   comment: 'comment',
@@ -27,17 +23,11 @@ export const UserActionTypes = {
   category: 'category',
   customFields: 'customFields',
   observables: 'observables',
-  // Key intentionally uses snake_case to match the saved object attribute name returned by
-  // Object.keys(updatedAttributes), which is used in getUserActionItemByDifference.
   extended_fields: 'extended_fields',
   template: 'template',
 } as const;
 
 type UserActionActionTypeKeys = keyof typeof UserActionTypes;
-/**
- * This defines the type of the user action, meaning what individual action was taken, for example changing the status,
- * adding an assignee etc.
- */
 export type UserActionType = (typeof UserActionTypes)[UserActionActionTypeKeys];
 
 export const UserActionActions = {
@@ -48,9 +38,8 @@ export const UserActionActions = {
   push_to_service: 'push_to_service',
 } as const;
 
-export const UserActionActionsRt = rt.keyof(UserActionActions);
+export type UserActionAction = (typeof UserActionActions)[keyof typeof UserActionActions];
 
-/**
- * This defines the high level category for the user action. Whether the user add, removed, updated something
- */
-export type UserActionAction = rt.TypeOf<typeof UserActionActionsRt>;
+export const UserActionActionsSchema = z.enum(
+  Object.values(UserActionActions) as [UserActionAction, ...UserActionAction[]]
+);

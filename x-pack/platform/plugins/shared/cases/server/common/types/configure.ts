@@ -18,7 +18,7 @@ import {
   ConfigurationActivityFieldsSchema,
   ConfigurationAttributesSchema,
   ConfigurationBasicWithoutOwnerSchema,
-} from '../../../common/types/domain_zod';
+} from '../../../common/types/domain';
 import type { ConnectorPersisted } from './connectors';
 import type { User, UserProfile } from './user';
 

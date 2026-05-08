@@ -12,12 +12,12 @@ import type { CustomFieldPutRequest, CaseRequestCustomFields } from '../../../co
 import {
   CustomFieldPutRequestSchema,
   CaseRequestCustomFieldsSchema,
-} from '../../../common/types/api_zod';
+} from '../../../common/types/api';
 import { Operations } from '../../authorization';
 import { createCaseError } from '../../common/error';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 import type { CaseCustomField } from '../../../common/types/domain';
-import { CaseCustomFieldSchema } from '../../../common/types/domain_zod';
+import { CaseCustomFieldSchema } from '../../../common/types/domain';
 import { validateCustomFieldTypesInRequest } from './validators';
 import type { UserActionEvent } from '../../services/user_actions/types';
 import { validateMaxUserActions } from '../../common/validators';

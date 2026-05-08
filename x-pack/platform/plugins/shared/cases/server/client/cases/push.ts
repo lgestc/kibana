@@ -19,8 +19,12 @@ import type {
   Case,
   ConfigurationAttributes,
 } from '../../../common/types/domain';
-import { CaseStatuses, UserActionTypes, AttachmentType } from '../../../common/types/domain';
-import { CaseSchema } from '../../../common/types/domain_zod';
+import {
+  CaseStatuses,
+  UserActionTypes,
+  AttachmentType,
+  CaseSchema,
+} from '../../../common/types/domain';
 import {
   CASE_COMMENT_SAVED_OBJECT,
   CASE_SAVED_OBJECT,
@@ -44,7 +48,7 @@ import { Operations } from '../../authorization';
 import { casesConnectors } from '../../connectors';
 import { getAlerts } from '../alerts/get';
 import { buildFilter } from '../utils';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import type { ExternalServiceResponse } from '../../../common/types/api';
 
 /**

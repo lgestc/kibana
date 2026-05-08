@@ -11,8 +11,7 @@ import Boom from '@hapi/boom';
 
 import { MAX_OBSERVABLES_PER_CASE } from '../../../common/constants';
 import type { Case, Observable } from '../../../common/types/domain';
-import { UserActionTypes } from '../../../common/types/domain';
-import { CaseSchema } from '../../../common/types/domain_zod';
+import { UserActionTypes, CaseSchema } from '../../../common/types/domain';
 import {
   type AddObservableRequest,
   type UpdateObservableRequest,
@@ -23,10 +22,10 @@ import {
   AddObservableRequestSchema,
   UpdateObservableRequestSchema,
   BulkAddObservablesRequestSchema,
-} from '../../../common/types/api_zod';
+} from '../../../common/types/api';
 import type { CasesClient } from '../client';
 import type { CasesClientArgs } from '../types';
-import { decodeOrThrowZod, decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod, decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 import type { Authorization } from '../../authorization';
 import { Operations } from '../../authorization';
 import type { CaseSavedObjectTransformed } from '../../common/types/case';

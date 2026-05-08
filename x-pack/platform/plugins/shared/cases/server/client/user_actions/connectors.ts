@@ -14,8 +14,8 @@ import type {
   GetCaseConnectorsPushDetails,
   GetCaseConnectorsResponse,
 } from '../../../common/types/api';
-import { GetCaseConnectorsResponseSchema } from '../../../common/types/api_zod';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { GetCaseConnectorsResponseSchema } from '../../../common/types/api';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import {
   isConnectorUserAction,
   isCreateCaseUserAction,

@@ -10,8 +10,8 @@ import type { SingleCaseMetricsResponse } from '../../../common/types/api';
 import {
   SingleCaseMetricsResponseSchema,
   SingleCaseMetricsRequestSchema,
-} from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+} from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 import { Operations } from '../../authorization';
 import { createCaseError } from '../../common/error';
 import type { CasesClient } from '../client';

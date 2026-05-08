@@ -9,7 +9,7 @@ import type {
   ExternalReferenceAttachmentPayload,
   FileAttachmentMetadata,
 } from '../../../../common/types/domain';
-import { FileAttachmentMetadataSchema } from '../../../../common/types/domain_zod';
+import { FileAttachmentMetadataSchema } from '../../../../common/types/domain';
 
 import {
   compressionMimeTypes,

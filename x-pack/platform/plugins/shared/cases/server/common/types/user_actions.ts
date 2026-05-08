@@ -10,7 +10,7 @@ import type { UserActionAttributes } from '../../../common/types/domain';
 import {
   UserActionAttributesSchema,
   CaseUserActionWithoutReferenceIdsSchema,
-} from '../../../common/types/domain_zod';
+} from '../../../common/types/domain';
 import type { User } from './user';
 
 interface UserActionCommonPersistedAttributes {

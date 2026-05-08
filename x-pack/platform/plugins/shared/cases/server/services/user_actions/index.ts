@@ -16,7 +16,7 @@ import type { KueryNode } from '@kbn/es-query';
 import type { CaseUserActionDeprecatedResponse } from '../../../common/types/api';
 import { AttachmentType, UserActionActions, UserActionTypes } from '../../../common/types/domain';
 import type { UserActionAttributes } from '../../../common/types/domain';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import {
   CASE_COMMENT_SAVED_OBJECT,
   CASE_SAVED_OBJECT,
@@ -48,7 +48,7 @@ import type {
   UserActionSavedObjectTransformed,
 } from '../../common/types/user_actions';
 import { UserActionTransformedAttributesSchema } from '../../common/types/user_actions';
-import { CaseUserActionDeprecatedResponseSchema } from '../../../common/types/api_zod';
+import { CaseUserActionDeprecatedResponseSchema } from '../../../common/types/api';
 import { isCommentAttachmentType } from '../../../common/utils/attachments';
 
 export class CaseUserActionService {

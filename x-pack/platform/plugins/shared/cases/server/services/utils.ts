@@ -6,7 +6,7 @@
  */
 
 import type { ZodType } from '@kbn/zod/v4';
-import { decodeOrThrowZod } from '../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../common/runtime_types';
 
 export const bulkDecodeSOAttributes = <T>(
   savedObjects: Array<{ id: string; attributes: T }>,

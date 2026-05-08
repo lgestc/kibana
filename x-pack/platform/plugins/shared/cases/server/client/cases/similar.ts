@@ -13,8 +13,8 @@ import type { CasesSimilarResponse, SimilarCasesSearchRequest } from '../../../c
 import {
   SimilarCasesSearchRequestSchema,
   CasesSimilarResponseSchema,
-} from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+} from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 
 import { createCaseError } from '../../common/error';
 import type { CasesClient, CasesClientArgs } from '..';

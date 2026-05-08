@@ -35,8 +35,8 @@ import {
   GetRelatedCasesByAlertResponseSchema,
   GetReportersResponseSchema,
   GetTagsResponseSchema,
-} from '../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+} from '../../../common/types/api';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 import { createCaseError } from '../../common/error';
 import {
   countAlertsForID,
@@ -52,7 +52,7 @@ import type {
   CaseSavedObjectTransformed,
   CaseTransformedAttributes,
 } from '../../common/types/case';
-import { CaseSchema } from '../../../common/types/domain_zod';
+import { CaseSchema } from '../../../common/types/domain';
 import type { AttachmentMode } from '../../../common/types/domain/attachment/v2';
 
 /**

@@ -7,13 +7,13 @@
 
 import { schema } from '@kbn/config-schema';
 
-import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types';
 import { INTERNAL_DELETE_FILE_ATTACHMENTS_URL } from '../../../../common/constants';
 import { createCasesRoute } from '../create_cases_route';
 import { createCaseError } from '../../../common/error';
 import { escapeHatch } from '../utils';
 import type { attachmentApiV1 } from '../../../../common/types/api';
-import { BulkDeleteFileAttachmentsRequestSchema } from '../../../../common/types/api_zod';
+import { BulkDeleteFileAttachmentsRequestSchema } from '../../../../common/types/api';
 import { DEFAULT_CASES_ROUTE_SECURITY } from '../constants';
 
 export const bulkDeleteFileAttachments = createCasesRoute({

@@ -10,14 +10,14 @@ import type { ZodType } from '@kbn/zod/v4';
 
 import type { ToastInputFields } from '@kbn/core/public';
 import { builderMap as customFieldsBuilder } from '../components/custom_fields/builder';
-import { AttachmentType } from '../../common/types/domain';
 import {
+  AttachmentType,
   CaseSchema,
   CasesSchema,
   ConfigurationSchema,
   ConfigurationsSchema,
   UserActionsSchema,
-} from '../../common/types/domain_zod';
+} from '../../common/types/domain';
 import type {
   CasePatchRequest,
   CaseResolveResponse,
@@ -32,7 +32,7 @@ import {
   CaseUserActionStatsResponseSchema,
   FindCasesContainingAllAlertsResponseSchema,
   SingleCaseMetricsResponseSchema,
-} from '../../common/types/api_zod';
+} from '../../common/types/api';
 import type {
   Case,
   Cases,

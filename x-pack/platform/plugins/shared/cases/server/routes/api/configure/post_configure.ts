@@ -6,8 +6,8 @@
  */
 
 import type { ConfigurationRequest, configureApiV1 } from '../../../../common/types/api';
-import { ConfigurationRequestSchema } from '../../../../common/types/api_zod';
-import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types_zod';
+import { ConfigurationRequestSchema } from '../../../../common/types/api';
+import { decodeWithExcessOrThrowZod } from '../../../common/runtime_types';
 import { CASE_CONFIGURE_URL } from '../../../../common/constants';
 import { createCaseError } from '../../../common/error';
 import { createCasesRoute } from '../create_cases_route';

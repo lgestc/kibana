@@ -37,7 +37,7 @@ import {
   CASE_SAVED_OBJECT,
   MAX_DOCS_PER_PAGE,
 } from '../../../common/constants';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import type {
   SavedObjectFindOptionsKueryNode,
   SavedObjectsBulkResponseWithErrors,

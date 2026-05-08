@@ -9,9 +9,8 @@ import Boom from '@hapi/boom';
 import { SavedObjectsUtils } from '@kbn/core/server';
 
 import type { Case } from '../../../common/types/domain';
-import { CaseSeverity, UserActionTypes } from '../../../common/types/domain';
-import { CaseSchema } from '../../../common/types/domain_zod';
-import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { CaseSeverity, UserActionTypes, CaseSchema } from '../../../common/types/domain';
+import { decodeWithExcessOrThrowZod, decodeOrThrowZod } from '../../common/runtime_types';
 
 import { Operations } from '../../authorization';
 import { createCaseError } from '../../common/error';
@@ -19,7 +18,7 @@ import { flattenCaseSavedObject, transformNewCase } from '../../common/utils';
 import type { CasesClient, CasesClientArgs } from '..';
 import { LICENSING_CASE_ASSIGNMENT_FEATURE } from '../../common/constants';
 import type { CasePostRequest } from '../../../common/types/api';
-import { CasePostRequestSchema } from '../../../common/types/api_zod';
+import { CasePostRequestSchema } from '../../../common/types/api';
 import {} from '../utils';
 import { validateCustomFields } from './validators';
 import { emptyCaseAssigneesSanitizer } from './sanitizers';

@@ -7,9 +7,9 @@
 
 import { SavedObjectsUtils } from '@kbn/core/server';
 
-import { AttachmentRequestSchemaV2 } from '../../../common/types/api_zod/attachment/v2';
+import { AttachmentRequestSchemaV2 } from '../../../common/types/api/attachment/v2';
 import type { Case } from '../../../common/types/domain';
-import { decodeWithExcessOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod } from '../../common/runtime_types';
 import { CaseCommentModel } from '../../common/models';
 import { createCaseError } from '../../common/error';
 import type { CasesClientArgs } from '..';

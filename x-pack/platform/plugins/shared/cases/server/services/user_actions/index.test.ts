@@ -2039,9 +2039,7 @@ describe('CaseUserActionService', () => {
             const soFindRes = createSOFindResponse([{ ...userAction, attributes, score: 0 }]);
             unsecuredSavedObjectsClient.find.mockResolvedValue(soFindRes);
 
-            await expect(service.getMostRecentUserAction('123')).rejects.toThrow(
-              `Invalid`
-            );
+            await expect(service.getMostRecentUserAction('123')).rejects.toThrow(`Invalid`);
           });
 
           it('throws if missing attributes from the payload', async () => {
@@ -2050,9 +2048,7 @@ describe('CaseUserActionService', () => {
             const soFindRes = createSOFindResponse([{ ...userAction, attributes, score: 0 }]);
             unsecuredSavedObjectsClient.find.mockResolvedValue(soFindRes);
 
-            await expect(service.getMostRecentUserAction('123')).rejects.toThrow(
-              'Invalid'
-            );
+            await expect(service.getMostRecentUserAction('123')).rejects.toThrow('Invalid');
           });
 
           it('throws if missing nested attributes from the payload', async () => {
@@ -2064,9 +2060,7 @@ describe('CaseUserActionService', () => {
             const soFindRes = createSOFindResponse([{ ...userAction, attributes, score: 0 }]);
             unsecuredSavedObjectsClient.find.mockResolvedValue(soFindRes);
 
-            await expect(service.getMostRecentUserAction('123')).rejects.toThrow(
-              'Invalid'
-            );
+            await expect(service.getMostRecentUserAction('123')).rejects.toThrow('Invalid');
           });
 
           it('strips out excess attributes', async () => {
@@ -2352,9 +2346,7 @@ describe('CaseUserActionService', () => {
               unsecuredSavedObjectsClient.find.mockResolvedValue({ ...soFindRes, aggregations });
               soSerializerMock.rawToSavedObject.mockReturnValue(userActionWithOmittedAttribute);
 
-              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow(
-                `Invalid`
-              );
+              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow(`Invalid`);
             });
 
             it('throws if missing attributes from the payload', async () => {
@@ -2370,9 +2362,7 @@ describe('CaseUserActionService', () => {
               unsecuredSavedObjectsClient.find.mockResolvedValue({ ...soFindRes, aggregations });
               soSerializerMock.rawToSavedObject.mockReturnValue(userActionWithOmittedAttribute);
 
-              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow(
-                'Invalid'
-              );
+              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow('Invalid');
             });
 
             it('throws if missing nested attributes from the payload', async () => {
@@ -2391,9 +2381,7 @@ describe('CaseUserActionService', () => {
               unsecuredSavedObjectsClient.find.mockResolvedValue({ ...soFindRes, aggregations });
               soSerializerMock.rawToSavedObject.mockReturnValue(userActionWithOmittedAttribute);
 
-              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow(
-                'Invalid'
-              );
+              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow('Invalid');
             });
 
             it('strips out excess attributes', async () => {
@@ -2525,9 +2513,7 @@ describe('CaseUserActionService', () => {
                 pushActionActionWithOmittedAttribute
               );
 
-              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow(
-                `Invalid`
-              );
+              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow(`Invalid`);
             });
 
             it('throws if missing attributes from the payload', async () => {
@@ -2553,9 +2539,7 @@ describe('CaseUserActionService', () => {
                 pushActionActionWithOmittedAttribute
               );
 
-              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow(
-                'Invalid'
-              );
+              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow('Invalid');
             });
 
             it('throws if missing nested attributes from the payload', async () => {
@@ -2584,9 +2568,7 @@ describe('CaseUserActionService', () => {
                 pushActionActionWithOmittedAttribute
               );
 
-              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow(
-                'Invalid'
-              );
+              await expect(service.getCaseConnectorInformation('1')).rejects.toThrow('Invalid');
             });
 
             it('strips out excess attributes', async () => {

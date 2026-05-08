@@ -8,8 +8,8 @@
 import { isEmpty, isString } from 'lodash';
 import type { UserProfileAvatarData, UserProfileWithAvatar } from '@kbn/user-profile-components';
 import type { GetCaseUsersResponse } from '../../../common/types/api';
-import { GetCaseUsersResponseSchema } from '../../../common/types/api_zod';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { GetCaseUsersResponseSchema } from '../../../common/types/api';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 import type { OwnerEntity } from '../../authorization';
 import { Operations } from '../../authorization';
 import { createCaseError } from '../../common/error';

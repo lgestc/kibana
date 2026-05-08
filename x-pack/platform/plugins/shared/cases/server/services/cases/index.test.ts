@@ -2373,9 +2373,7 @@ describe('CasesService', () => {
           const attributes = omit({ ...theCase.attributes }, key);
           unsecuredSavedObjectsClient.get.mockResolvedValue({ ...theCase, attributes });
 
-          await expect(service.getCase({ id: 'a' })).rejects.toThrow(
-            `${key}: Invalid input`
-          );
+          await expect(service.getCase({ id: 'a' })).rejects.toThrow(`${key}: Invalid input`);
         }
       );
 
@@ -2769,9 +2767,7 @@ describe('CasesService', () => {
 
           unsecuredSavedObjectsClient.find.mockResolvedValue(findMockReturn);
 
-          await expect(service.findCases()).rejects.toThrow(
-            `${key}: Invalid input`
-          );
+          await expect(service.findCases()).rejects.toThrow(`${key}: Invalid input`);
         }
       );
 

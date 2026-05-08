@@ -29,8 +29,9 @@ import type {
   TemplatesConfiguration,
   CustomFieldTypes,
 } from '../../common/types/domain';
-import { AttachmentType, ExternalReferenceStorageType } from '../../common/types/domain';
 import {
+  AttachmentType,
+  ExternalReferenceStorageType,
   ActionsAttachmentPayloadSchema,
   AlertAttachmentPayloadSchema,
   EventAttachmentPayloadSchema,
@@ -38,11 +39,11 @@ import {
   ExternalReferenceSOAttachmentPayloadSchema,
   PersistableStateAttachmentPayloadSchema,
   UserCommentAttachmentPayloadSchema,
-} from '../../common/types/domain_zod';
+} from '../../common/types/domain';
 import type { SavedObjectFindOptionsKueryNode } from '../common/types';
 import type { CasesSearchParams } from './types';
 
-import { decodeWithExcessOrThrowZod } from '../common/runtime_types_zod';
+import { decodeWithExcessOrThrowZod } from '../common/runtime_types';
 import {
   CASE_SAVED_OBJECT,
   FILE_ATTACHMENT_TYPE,

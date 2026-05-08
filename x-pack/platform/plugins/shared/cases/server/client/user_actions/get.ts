@@ -6,13 +6,13 @@
  */
 
 import type { CaseUserActionsDeprecatedResponse } from '../../../common/types/api';
-import { CaseUserActionsDeprecatedResponseSchema } from '../../../common/types/api_zod';
+import { CaseUserActionsDeprecatedResponseSchema } from '../../../common/types/api';
 import { createCaseError } from '../../common/error';
 import type { CasesClientArgs } from '..';
 import { Operations } from '../../authorization';
 import type { UserActionGet } from './types';
 import { extractAttributes } from './utils';
-import { decodeOrThrowZod } from '../../common/runtime_types_zod';
+import { decodeOrThrowZod } from '../../common/runtime_types';
 
 export const get = async (
   { caseId }: UserActionGet,
