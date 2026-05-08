@@ -105,7 +105,7 @@ describe('AttachmentService', () => {
             id: '1',
           })
         ).rejects.toThrowErrorMatchingInlineSnapshot(
-          `"comment: Invalid input: expected string, received undefined, type: Invalid input: expected \\"alert\\", rule: Invalid input: expected object, received undefined, type: Invalid input: expected \\"event\\", type: Invalid input: expected \\"actions\\", and 25 more"`
+          `"comment: Invalid input: expected string, received undefined, type: Invalid input: expected \\"alert\\", rule: Invalid input: expected object, received undefined, type: Invalid input: expected \\"event\\", type: Invalid input: expected \\"actions\\", and 26 more"`
         );
       });
 
@@ -205,7 +205,7 @@ describe('AttachmentService', () => {
             attachments: [{ attributes: invalidAttachment.attributes, references: [], id: '1' }],
           })
         ).rejects.toThrowErrorMatchingInlineSnapshot(
-          `"comment: Invalid input: expected string, received undefined, type: Invalid input: expected \\"alert\\", rule: Invalid input: expected object, received undefined, type: Invalid input: expected \\"event\\", type: Invalid input: expected \\"actions\\", and 25 more"`
+          `"comment: Invalid input: expected string, received undefined, type: Invalid input: expected \\"alert\\", rule: Invalid input: expected object, received undefined, type: Invalid input: expected \\"event\\", type: Invalid input: expected \\"actions\\", and 26 more"`
         );
       });
 
