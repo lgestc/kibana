@@ -54,7 +54,10 @@ describe('runtime_types', () => {
 
     it('throws when an excess field exists inside a union variant', () => {
       const schema = z.object({
-        payload: z.union([z.object({ kind: z.literal('a'), value: z.string() }), z.object({ kind: z.literal('b') })]),
+        payload: z.union([
+          z.object({ kind: z.literal('a'), value: z.string() }),
+          z.object({ kind: z.literal('b') }),
+        ]),
       });
       expect(() =>
         decodeWithExcessOrThrowZod(schema)({ payload: { kind: 'a', value: 'hi', extra: 1 } })

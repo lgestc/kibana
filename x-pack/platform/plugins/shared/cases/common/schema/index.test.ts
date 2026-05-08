@@ -152,9 +152,7 @@ describe('schema', () => {
     });
 
     it(`fails when page > ${MAX_DOCS_PER_PAGE}`, () => {
-      expect(
-        errors(paginationSchema({ maxPerPage: 3 }), { page: MAX_DOCS_PER_PAGE + 1 })
-      ).toEqual([
+      expect(errors(paginationSchema({ maxPerPage: 3 }), { page: MAX_DOCS_PER_PAGE + 1 })).toEqual([
         'The number of documents is too high. Paginating through more than 10000 documents is not possible.',
       ]);
     });
