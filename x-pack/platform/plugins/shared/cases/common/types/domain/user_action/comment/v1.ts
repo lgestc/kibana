@@ -23,4 +23,7 @@ export const CommentUserActionSchema = z.object({
   payload: CommentUserActionPayloadSchema,
 });
 
-export const CommentUserActionWithoutIdsSchema = CommentUserActionSchema;
+export const CommentUserActionWithoutIdsSchema = z.object({
+  type: z.literal(UserActionTypes.comment),
+  payload: CommentUserActionPayloadWithoutIdsSchema,
+});
