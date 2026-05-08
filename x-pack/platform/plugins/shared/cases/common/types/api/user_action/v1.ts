@@ -36,6 +36,9 @@ const UserActionFindRequestTypesValues = Object.values(UserActionFindRequestType
   ...UserActionFindRequestTypeValue[]
 ];
 
+/**
+ * User actions stats API
+ */
 export const CaseUserActionStatsSchema = z.object({
   total: z.number(),
   total_deletions: z.number(),
@@ -59,6 +62,9 @@ export const CaseUserActionsDeprecatedResponseSchema = z.array(
   CaseUserActionDeprecatedResponseSchema
 );
 
+/**
+ * Find User Actions API
+ */
 export const UserActionFindRequestSchema = paginationSchema({
   maxPerPage: MAX_USER_ACTIONS_PER_PAGE,
 }).extend({

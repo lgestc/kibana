@@ -22,8 +22,17 @@ export const ClosureTypeSchema = z.union([
 ]);
 
 export const CustomFieldConfigurationWithoutTypeSchema = z.object({
+  /**
+   * key of custom field
+   */
   key: z.string(),
+  /**
+   * label of custom field
+   */
   label: z.string(),
+  /**
+   * custom field options - required
+   */
   required: z.boolean(),
 });
 
@@ -55,24 +64,57 @@ export const CustomFieldsConfigurationSchema = z.array(CustomFieldConfigurationS
 export const ObservableTypesConfigurationSchema = z.array(CaseObservableTypeSchema);
 
 export const TemplateConfigurationSchema = z.object({
+  /**
+   * key of template
+   */
   key: z.string(),
+  /**
+   * name of template
+   */
   name: z.string(),
+  /**
+   * case fields of template
+   */
   caseFields: CaseBaseOptionalFieldsSchema.nullable(),
+  /**
+   * description of template
+   */
   description: z.string().optional(),
+  /**
+   * tags of template
+   */
   tags: z.array(z.string()).optional(),
 });
 
 export const TemplatesConfigurationSchema = z.array(TemplateConfigurationSchema);
 
 export const ConfigurationBasicWithoutOwnerSchema = z.object({
+  /**
+   * The external connector
+   */
   connector: CaseConnectorSchema,
+  /**
+   * Whether to close the case after it has been synced with the external system
+   */
   closure_type: ClosureTypeSchema,
+  /**
+   * The custom fields configured for the case
+   */
   customFields: CustomFieldsConfigurationSchema,
+  /**
+   * Templates configured for the case
+   */
   templates: TemplatesConfigurationSchema,
+  /**
+   * Observable types configured for the case
+   */
   observableTypes: ObservableTypesConfigurationSchema,
 });
 
 export const CasesConfigureBasicSchema = ConfigurationBasicWithoutOwnerSchema.extend({
+  /**
+   * The plugin owner that manages this configuration
+   */
   owner: z.string(),
 });
 

@@ -34,73 +34,176 @@ export const CasesMetricsFeatureFieldSchema = z.union([
 ]);
 
 const StatusInfoSchema = z.object({
+  /**
+   * Duration the case was in the open status in milliseconds
+   */
   openDuration: z.number(),
+  /**
+   * Duration the case was in the in-progress status in milliseconds. Zero indicates the case was never in-progress.
+   */
   inProgressDuration: z.number(),
+  /**
+   * The ISO string representation of the dates the case was reopened
+   */
   reopenDates: z.array(z.string()),
 });
 
 const AlertHostsMetricsSchema = z.object({
+  /**
+   * Total unique hosts represented in the alerts
+   */
   total: z.number(),
   values: z.array(
     z.object({
+      /**
+       * Host name
+       */
       name: z.string().optional(),
+      /**
+       * Unique identifier for the host
+       */
       id: z.string(),
+      /**
+       * Number of alerts that have this particular host name
+       */
       count: z.number(),
     })
   ),
 });
 
 const AlertUsersMetricsSchema = z.object({
+  /**
+   * Total unique users represented in the alerts
+   */
   total: z.number(),
   values: z.array(
     z.object({
+      /**
+       * Username
+       */
       name: z.string(),
+      /**
+       * Number of alerts that have this particular username
+       */
       count: z.number(),
     })
   ),
 });
 
 export const SingleCaseMetricsRequestSchema = z.object({
+  /**
+   * The metrics to retrieve.
+   */
   features: z.array(SingleCaseMetricsFeatureFieldSchema),
 });
 
 export const CasesMetricsRequestSchema = z.object({
+  /**
+   * The metrics to retrieve.
+   */
   features: z.array(CasesMetricsFeatureFieldSchema),
+  /**
+   * A KQL date. If used all cases created after (gte) the from date will be returned
+   */
   from: z.string().optional(),
+  /**
+   * A KQL date. If used all cases created before (lte) the to date will be returned.
+   */
   to: z.string().optional(),
+  /**
+   * The owner(s) to filter by. The user making the request must have privileges to retrieve cases of that
+   * ownership or they will be ignored. If no owner is included, then all ownership types will be included in the response
+   * that the user has access to.
+   */
   owner: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
 export const SingleCaseMetricsResponseSchema = z.object({
   alerts: z
     .object({
+      /**
+       * Number of alerts attached to the case
+       */
       count: z.number().optional(),
+      /**
+       * Host information represented from the alerts attached to this case
+       */
       hosts: AlertHostsMetricsSchema.optional(),
+      /**
+       * User information represented from the alerts attached to this case
+       */
       users: AlertUsersMetricsSchema.optional(),
     })
     .optional(),
-  connectors: z.object({ total: z.number() }).optional(),
+  /**
+   * External connectors associated with the case
+   */
+  connectors: z
+    .object({
+      /**
+       * Total number of connectors in the case
+       */
+      total: z.number(),
+    })
+    .optional(),
+  /**
+   * Actions taken within the case
+   */
   actions: z
     .object({
       isolateHost: z
         .object({
-          isolate: z.object({ total: z.number() }),
-          unisolate: z.object({ total: z.number() }),
+          /**
+           * Isolate host action information
+           */
+          isolate: z.object({
+            /**
+             * Total times the isolate host action has been performed
+             */
+            total: z.number(),
+          }),
+          /**
+           * Unisolate host action information
+           */
+          unisolate: z.object({
+            /**
+             * Total times the unisolate host action has been performed
+             */
+            total: z.number(),
+          }),
         })
         .optional(),
     })
     .optional(),
+  /**
+   * The case's open,close,in-progress details
+   */
   lifespan: z
     .object({
+      /**
+       * Date the case was created, in ISO format
+       */
       creationDate: z.string(),
+      /**
+       * Date the case was closed, in ISO format. Will be null if the case is not currently closed
+       */
       closeDate: z.string().nullable(),
+      /**
+       * The case's status information regarding durations in a specific status
+       */
       statusInfo: StatusInfoSchema,
     })
     .optional(),
 });
 
 export const CasesMetricsResponseSchema = z.object({
+  /**
+   * The average resolve time of all cases in seconds
+   */
   mttr: z.number().nullable().optional(),
+  /**
+   * The number of total cases per status
+   */
   status: z.object({ open: z.number(), inProgress: z.number(), closed: z.number() }).optional(),
 });
 

@@ -45,6 +45,10 @@ const UserActionCommonAttributesSchema = z.object({
   action: UserActionActionsSchema,
 });
 
+/**
+ * This should only be used for the getAll route and it should be removed when the route is removed
+ * @deprecated use CaseUserActionInjectedIdsSchema instead
+ */
 export const CaseUserActionInjectedDeprecatedIdsSchema = z.object({
   action_id: z.string(),
   case_id: z.string(),
@@ -99,6 +103,9 @@ export const CaseUserActionWithoutReferenceIdsSchema = UserActionsWithoutIdsSche
   UserActionCommonAttributesSchema
 );
 
+/**
+ * This includes the comment_id but not the action_id or case_id
+ */
 export const UserActionAttributesSchema = CaseUserActionBasicSchema.and(
   CaseUserActionInjectedIdsSchema
 );
@@ -125,6 +132,9 @@ export type UserAction<T extends UserActionPayload = UserActionPayload> = Omit<
 > &
   T;
 
+/**
+ * User actions
+ */
 export type AssigneesUserAction = UserAction<z.infer<typeof AssigneesUserActionSchema>>;
 export type CategoryUserAction = UserAction<z.infer<typeof CategoryUserActionSchema>>;
 export type CommentUserAction = UserAction<z.infer<typeof CommentUserActionSchema>>;

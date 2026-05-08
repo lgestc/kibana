@@ -83,41 +83,77 @@ export const CaseRequestCustomFieldsSchema = limitedArraySchema({
 });
 
 export const CaseBaseOptionalFieldsRequestSchema = z.object({
+  /**
+   * The description of the case
+   */
   description: limitedStringSchema({
     fieldName: 'description',
     min: 1,
     max: MAX_DESCRIPTION_LENGTH,
   }).optional(),
+  /**
+   * The identifying strings for filter a case
+   */
   tags: limitedArraySchema({
     codec: limitedStringSchema({ fieldName: 'tag', min: 1, max: MAX_LENGTH_PER_TAG }),
     min: 0,
     max: MAX_TAGS_PER_CASE,
     fieldName: 'tags',
   }).optional(),
+  /**
+   * The title of a case
+   */
   title: limitedStringSchema({ fieldName: 'title', min: 1, max: MAX_TITLE_LENGTH }).optional(),
+  /**
+   * The external system that the case can be synced with
+   */
   connector: CaseConnectorSchema.optional(),
+  /**
+   * The severity of the case
+   */
   severity: CaseSeveritySchema.optional(),
+  /**
+   * The users assigned to this case
+   */
   assignees: limitedArraySchema({
     codec: CaseUserProfileSchema,
     fieldName: 'assignees',
     min: 0,
     max: MAX_ASSIGNEES_PER_CASE,
   }).optional(),
+  /**
+   * The category of the case.
+   */
   category: z
     .union([
       limitedStringSchema({ fieldName: 'category', min: 1, max: MAX_CATEGORY_LENGTH }),
       z.null(),
     ])
     .optional(),
+  /**
+   * Custom fields of the case
+   */
   customFields: CaseRequestCustomFieldsSchema.optional(),
+  /**
+   * The alert sync settings
+   */
   settings: CaseSettingsSchema.optional(),
   template: CaseTemplateSchema.nullable().optional(),
   [CASE_EXTENDED_FIELDS]: z.record(z.string(), z.string()).optional(),
+  /**
+   * The close reason to sync to attached alerts
+   */
   closeReason: CaseCloseReasonSchema.optional(),
 });
 
 export const CaseRequestFieldsSchema = CaseBaseOptionalFieldsRequestSchema.extend({
+  /**
+   * The current status of the case (open, closed, in-progress)
+   */
   status: CaseStatusSchema.optional(),
+  /**
+   * The plugin owner of the case
+   */
   owner: z.string().optional(),
 });
 
@@ -125,34 +161,66 @@ export const CaseRequestFieldsSchema = CaseBaseOptionalFieldsRequestSchema.exten
  * Create case
  */
 export const CasePostRequestSchema = z.object({
+  /**
+   * Description of the case
+   */
   description: limitedStringSchema({
     fieldName: 'description',
     min: 1,
     max: MAX_DESCRIPTION_LENGTH,
   }),
+  /**
+   * Identifiers for the case.
+   */
   tags: limitedArraySchema({
     codec: limitedStringSchema({ fieldName: 'tag', min: 1, max: MAX_LENGTH_PER_TAG }),
     fieldName: 'tags',
     min: 0,
     max: MAX_TAGS_PER_CASE,
   }),
+  /**
+   * Title of the case
+   */
   title: limitedStringSchema({ fieldName: 'title', min: 1, max: MAX_TITLE_LENGTH }),
+  /**
+   * The external configuration for the case
+   */
   connector: CaseConnectorSchema,
+  /**
+   * Sync settings for alerts
+   */
   settings: CaseSettingsSchema,
+  /**
+   * The owner here must match the string used when a plugin registers a feature with access to the cases plugin. The user
+   * creating this case must also be granted access to that plugin's feature.
+   */
   owner: z.string(),
+  /**
+   * The users assigned to the case
+   */
   assignees: limitedArraySchema({
     codec: CaseUserProfileSchema,
     fieldName: 'assignees',
     min: 0,
     max: MAX_ASSIGNEES_PER_CASE,
   }).optional(),
+  /**
+   * The severity of the case. The severity is
+   * default it to "low" if not provided.
+   */
   severity: CaseSeveritySchema.optional(),
+  /**
+   * The category of the case.
+   */
   category: z
     .union([
       limitedStringSchema({ fieldName: 'category', min: 1, max: MAX_CATEGORY_LENGTH }),
       z.null(),
     ])
     .optional(),
+  /**
+   * The list of custom field values of the case.
+   */
   customFields: CaseRequestCustomFieldsSchema.optional(),
   template: CaseTemplateSchema.nullable().optional(),
   [CASE_EXTENDED_FIELDS]: z.record(z.string(), z.string()).optional(),
@@ -195,6 +263,9 @@ export const CasesFindRequestSortFieldsSchema = z.enum(CasesFindRequestSortField
 const CasesFindRequestBaseFieldsSchema = paginationSchema({
   maxPerPage: MAX_CASES_PER_PAGE,
 }).extend({
+  /**
+   * Tags to filter by
+   */
   tags: z
     .union([
       limitedArraySchema({
@@ -206,8 +277,17 @@ const CasesFindRequestBaseFieldsSchema = paginationSchema({
       z.string(),
     ])
     .optional(),
+  /**
+   * The status of the case (open, closed, in-progress)
+   */
   status: z.union([CaseStatusSchema, z.array(CaseStatusSchema)]).optional(),
+  /**
+   * The severity of the case
+   */
   severity: z.union([CaseSeveritySchema, z.array(CaseSeveritySchema)]).optional(),
+  /**
+   * The uids of the user profiles to filter by
+   */
   assignees: z
     .union([
       limitedArraySchema({
@@ -219,6 +299,9 @@ const CasesFindRequestBaseFieldsSchema = paginationSchema({
       z.string(),
     ])
     .optional(),
+  /**
+   * The reporters to filter by
+   */
   reporters: z
     .union([
       limitedArraySchema({
@@ -230,13 +313,40 @@ const CasesFindRequestBaseFieldsSchema = paginationSchema({
       z.string(),
     ])
     .optional(),
+  /**
+   * Operator to use for the `search` field
+   */
   defaultSearchOperator: z.enum(['AND', 'OR']).optional(),
+  /**
+   * A KQL date. If used all cases created after (gte) the from date will be returned
+   */
   from: z.string().optional(),
+  /**
+   * An Elasticsearch simple_query_string
+   */
   search: z.string().optional(),
+  /**
+   * The field to use for sorting the found objects.
+   *
+   */
   sortField: CasesFindRequestSortFieldsSchema.optional(),
+  /**
+   * The order to sort by
+   */
   sortOrder: z.enum(['desc', 'asc']).optional(),
+  /**
+   * A KQL date. If used all cases created before (lte) the to date will be returned.
+   */
   to: z.string().optional(),
+  /**
+   * The owner(s) to filter by. The user making the request must have privileges to retrieve cases of that
+   * ownership or they will be ignored. If no owner is included, then all ownership types will be included in the response
+   * that the user has access to.
+   */
   owner: z.union([z.array(z.string()), z.string()]).optional(),
+  /**
+   * The category of the case.
+   */
   category: z
     .union([
       limitedArraySchema({
@@ -251,10 +361,17 @@ const CasesFindRequestBaseFieldsSchema = paginationSchema({
 });
 
 export const CasesFindRequestSchema = CasesFindRequestBaseFieldsSchema.extend({
+  /**
+   * The fields to perform the simple_query_string parsed query against
+   */
   searchFields: z
     .union([z.array(CasesFindRequestSearchFieldsSchema), CasesFindRequestSearchFieldsSchema])
     .optional(),
 });
+
+/**
+ * search cases
+ */
 
 const CasesSearchRequestSearchFieldsValues = [
   'cases.description',
@@ -275,16 +392,28 @@ const ExtendedFieldFilterSchema = z.object({
 });
 
 export const CasesSearchRequestSchema = CasesFindRequestBaseFieldsSchema.extend({
+  /**
+   * custom fields of the case
+   */
   customFields: z
     .record(z.string(), z.array(z.union([z.string(), z.boolean(), z.number(), z.null()])))
     .optional(),
+  /**
+   * The fields to perform the simple_query_string parsed query against.
+   */
   searchFields: z
     .union([z.array(CasesSearchRequestSearchFieldsSchema), CasesSearchRequestSearchFieldsSchema])
     .optional(),
+  /**
+   * Extended field filters parsed from label:value syntax in the search bar.
+   */
   extendedFieldFilters: z.array(ExtendedFieldFilterSchema).optional(),
 });
 
 export const CasesFindRequestWithCustomFieldsSchema = CasesFindRequestSchema.extend({
+  /**
+   * custom fields of the case
+   */
   customFields: z
     .record(z.string(), z.array(z.union([z.string(), z.boolean(), z.number(), z.null()])))
     .optional(),
@@ -350,6 +479,9 @@ export const CasesBulkGetResponseSchema = z.object({
  * Update cases
  */
 
+/**
+ * The saved object ID and version
+ */
 export const CasePatchRequestSchema = CaseRequestFieldsSchema.extend({
   id: z.string(),
   version: z.string(),
@@ -388,6 +520,10 @@ export const CasePushRequestParamsSchema = z.object({
  */
 
 export const AllTagsFindRequestSchema = z.object({
+  /**
+   * The owner of the cases to retrieve the tags from. If no owner is provided the tags from all cases
+   * that the user has access to will be returned.
+   */
   owner: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
@@ -403,6 +539,10 @@ export const GetReportersResponseSchema = z.array(UserSchema);
  */
 
 export const CasesByAlertIDRequestSchema = z.object({
+  /**
+   * The type of cases to retrieve given an alert ID. If no owner is provided, all cases
+   * that the user has access to will be returned.
+   */
   owner: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
@@ -411,8 +551,15 @@ export const GetRelatedCasesByAlertResponseSchema = z.array(RelatedCaseSchema);
 export const SimilarCasesSearchRequestSchema = paginationSchema({ maxPerPage: MAX_CASES_PER_PAGE });
 
 export const FindCasesContainingAllDocumentsRequestSchema = z.object({
+  /**
+   * The IDs of the documents to find cases for.
+   */
   documentIds: z.array(z.string()).optional(),
+  /**
+   * The IDs of the alerts to find cases for. TODO: remove this in the next serverless release cycle https://github.com/elastic/security-team/issues/14718
+   */
   alertIds: z.array(z.string()).optional(),
+  // The IDs of the cases to find alerts for.
   caseIds: z.array(z.string()),
 });
 

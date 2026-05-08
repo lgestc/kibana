@@ -100,6 +100,13 @@ export const AttachmentRequestWithoutRefsSchema = z.union([
   PersistableStateAttachmentPayloadSchema,
 ]);
 
+/**
+ * Partial updates are not allowed.
+ * We want to prevent the user for changing the type without removing invalid fields.
+ * injectAttachmentSOAttributesFromRefsForPatch is dependent on this assumption.
+ * The consumers of the persistable attachment service should always get the
+ * persistableStateAttachmentState on a patch.
+ */
 export const AttachmentPatchRequestSchema = AttachmentRequestSchema.and(
   z.object({ id: z.string(), version: z.string() })
 );
@@ -114,6 +121,9 @@ export const AttachmentsFindResponseSchema = z.object({
 export const FindAttachmentsQueryParamsSchema = paginationSchema({
   maxPerPage: MAX_COMMENTS_PER_PAGE,
 }).extend({
+  /**
+   * Order to sort the response
+   */
   sortOrder: z.enum(['desc', 'asc']).optional(),
 });
 

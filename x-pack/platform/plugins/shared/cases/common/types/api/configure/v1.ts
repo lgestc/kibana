@@ -36,12 +36,21 @@ import {
 } from '../custom_field/v1';
 
 export const CustomFieldConfigurationWithoutTypeSchema = z.object({
+  /**
+   * key of custom field
+   */
   key: regexStringSchema({
     codec: limitedStringSchema({ fieldName: 'key', min: 1, max: MAX_CUSTOM_FIELD_KEY_LENGTH }),
     pattern: '^[a-z0-9_-]+$',
     message: `Key must be lower case, a-z, 0-9, '_', and '-' are allowed`,
   }),
+  /**
+   * label of custom field
+   */
   label: limitedStringSchema({ fieldName: 'label', min: 1, max: MAX_CUSTOM_FIELD_LABEL_LENGTH }),
+  /**
+   * custom field options - required
+   */
   required: z.boolean(),
 });
 
@@ -98,18 +107,33 @@ export const ObservableTypesConfigurationSchema = limitedArraySchema({
 });
 
 export const TemplateConfigurationSchema = z.object({
+  /**
+   * key of template
+   */
   key: regexStringSchema({
     codec: limitedStringSchema({ fieldName: 'key', min: 1, max: MAX_TEMPLATE_KEY_LENGTH }),
     pattern: '^[a-z0-9_-]+$',
     message: `Key must be lower case, a-z, 0-9, '_', and '-' are allowed`,
   }),
+  /**
+   * name of template
+   */
   name: limitedStringSchema({ fieldName: 'name', min: 1, max: MAX_TEMPLATE_NAME_LENGTH }),
+  /**
+   * case fields
+   */
   caseFields: CaseBaseOptionalFieldsRequestSchema.nullable(),
+  /**
+   * description of templates
+   */
   description: limitedStringSchema({
     fieldName: 'description',
     min: 0,
     max: MAX_TEMPLATE_DESCRIPTION_LENGTH,
   }).optional(),
+  /**
+   * tags of templates
+   */
   tags: limitedArraySchema({
     codec: limitedStringSchema({
       fieldName: `template's tag`,
@@ -130,8 +154,17 @@ export const TemplatesConfigurationSchema = limitedArraySchema({
 });
 
 export const ConfigurationRequestSchema = z.object({
+  /**
+   * The external connector
+   */
   connector: CaseConnectorSchema,
+  /**
+   * Whether to close the case after it has been synced with the external system
+   */
   closure_type: ClosureTypeSchema,
+  /**
+   * The plugin owner that manages this configuration
+   */
   owner: z.string(),
   customFields: CustomFieldsConfigurationSchema.optional(),
   templates: TemplatesConfigurationSchema.optional(),
@@ -139,6 +172,10 @@ export const ConfigurationRequestSchema = z.object({
 });
 
 export const GetConfigurationFindRequestSchema = z.object({
+  /**
+   * The configuration plugin owner to filter the search by. If this is left empty the results will include all configurations
+   * that the user has permissions to access
+   */
   owner: z.union([z.array(z.string()), z.string()]).optional(),
 });
 

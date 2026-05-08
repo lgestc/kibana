@@ -64,15 +64,46 @@ export const CaseTemplateSchema = z.object({
 });
 
 const CaseBaseFields = {
+  /**
+   * The description of the case
+   */
   description: z.string(),
+  /**
+   * The identifying strings for filter a case
+   */
   tags: z.array(z.string()),
+  /**
+   * The title of a case
+   */
   title: z.string(),
+  /**
+   * The external system that the case can be synced with
+   */
   connector: CaseConnectorSchema,
+  /**
+   * The severity of the case
+   */
   severity: CaseSeveritySchema,
+  /**
+   * The users assigned to this case
+   */
   assignees: CaseAssigneesSchema,
+  /**
+   * The category of the case.
+   */
   category: z.string().nullable(),
+  /**
+   * An array containing the possible,
+   * user-configured custom fields.
+   */
   customFields: CaseCustomFieldsSchema,
+  /**
+   * The alert sync settings
+   */
   settings: CaseSettingsSchema,
+  /**
+   * Observables
+   */
   observables: z.array(CaseObservableSchema),
 };
 
@@ -90,7 +121,13 @@ export const CaseBaseOptionalFieldsSchema = z.object({
 });
 
 const CaseBasicSchema = z.object({
+  /**
+   * The current status of the case (open, closed, in-progress)
+   */
   status: CaseStatusSchema,
+  /**
+   * The plugin owner of the case
+   */
   owner: z.string(),
   ...CaseBaseFields,
 });
@@ -112,6 +149,8 @@ export const CaseAttributesSchema = CaseBasicSchema.extend({
   time_to_resolve: z.number().nullable().optional(),
   template: CaseTemplateSchema.nullable().optional(),
   [CASE_EXTENDED_FIELDS]: z.record(z.string(), z.string()).optional(),
+  // Populated at response time by enrichCasesWithFieldLabels — not persisted to the SO.
+  // Maps storage keys (e.g. `priority_as_keyword`) to user-facing labels (e.g. "Priority").
   [CASE_EXTENDED_FIELDS_LABELS]: z.record(z.string(), z.string()).optional(),
 });
 

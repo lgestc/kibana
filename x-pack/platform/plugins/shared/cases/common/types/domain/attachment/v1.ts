@@ -328,6 +328,12 @@ export const AttachmentSchema = AttachmentAttributesSchema.and(
 
 export const AttachmentsSchema = z.array(AttachmentSchema);
 
+/**
+ * This type is used by the CaseService.
+ * Because the type for the attributes of savedObjectClient update function is Partial<T>
+ * we need to make all of our attributes partial too.
+ * We ensure that partial updates of CommentContext is not going to happen inside the patch comment route.
+ */
 export const AttachmentPatchAttributesSchema = z
   .union([
     UserCommentAttachmentPayloadSchema.partial(),

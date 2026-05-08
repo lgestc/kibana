@@ -17,6 +17,13 @@ import {
   EventAttachmentAttributesSchema,
 } from './v1';
 
+/**
+ * Payload for Reference-based Attachments
+ * - type: always required
+ * - attachmentId: required - references external entities (alerts, events, external references)
+ * - metadata: optional - additional metadata about the reference
+ * - data: optional - some reference attachments may also have data
+ */
 export const UnifiedReferenceAttachmentPayloadSchema = z.object({
   type: z.string(),
   attachmentId: z.union([z.string(), z.array(z.string())]),
@@ -25,6 +32,12 @@ export const UnifiedReferenceAttachmentPayloadSchema = z.object({
   metadata: z.record(z.string(), jsonValueSchema).nullable().optional(),
 });
 
+/**
+ * Payload for Value-based Attachments
+ * - type: always required
+ * - data: required - contains content/state (user comments, persistable state, visualizations)
+ * - metadata: optional - additional metadata
+ */
 export const UnifiedValueAttachmentPayloadSchema = z.object({
   type: z.string(),
   data: z.record(z.string(), jsonValueSchema),
@@ -37,14 +50,28 @@ export const UnifiedAttachmentPayloadSchema = z.union([
   UnifiedValueAttachmentPayloadSchema,
 ]);
 
+/**
+ * Saved Object attributes for Unified Attachments
+ * Contains the payload and the basic attributes
+ */
 export const UnifiedAttachmentAttributesSchema = UnifiedAttachmentPayloadSchema.and(
   AttachmentAttributesBasicSchema
 );
 
+/**
+ * Full Saved Object representationfor Unified Attachments
+ * Contains payload, basic attributes and id and version
+ */
 export const UnifiedAttachmentSchema = UnifiedAttachmentAttributesSchema.and(
   z.object({ id: z.string(), version: z.string() })
 );
 
+/**
+ * Partial payload props for patch (reference and value). We define these explicitly because
+ * UnifiedReferenceAttachmentPayloadRt and UnifiedValueAttachmentPayloadRt are rt.intersection([...]),
+ * so they have no .type.props (only rt.strict() codecs have .props); v1 payloads use rt.strict()
+ * so AttachmentPatchAttributesRt can use .type.props there.
+ */
 const UnifiedReferenceAttachmentPayloadPartialSchema = z.object({
   type: z.string().optional(),
   attachmentId: z.union([z.string(), z.array(z.string())]).optional(),
@@ -126,4 +153,7 @@ export type AttachmentsV2 = z.infer<typeof AttachmentsSchemaV2>;
 export type AttachmentAttributesV2 = z.infer<typeof AttachmentAttributesSchemaV2>;
 export type AttachmentPatchAttributesV2 = z.infer<typeof AttachmentPatchAttributesSchemaV2>;
 export type DocumentAttachmentAttributesV2 = z.infer<typeof DocumentAttachmentAttributesSchemaV2>;
+/**
+ * Transitional read-shape mode while v1/v2 attachments coexist.
+ */
 export type AttachmentMode = 'legacy' | 'unified';
