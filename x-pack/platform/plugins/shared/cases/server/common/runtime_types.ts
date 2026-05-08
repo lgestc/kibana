@@ -17,7 +17,8 @@ export const createPlainError = (message: string) => new Error(message);
  * Zod equivalent of `decodeOrThrow` from `./runtime_types`. Parses input
  * against the provided schema and throws (via `createError`) when the input
  * fails validation. Unknown keys are silently stripped — matching io-ts's
- * `decodeOrThrow` behavior on `rt.strict` / `rt.exact` schemas.
+ * `decodeOrThrow` behavior on `rt.exact` schemas. (`rt.strict` rejected
+ * excess keys; for that behavior use `decodeWithExcessOrThrowZod`.)
  */
 export const decodeOrThrowZod =
   <T>(schema: ZodType<T>, createError: ErrorFactory = createPlainError) =>

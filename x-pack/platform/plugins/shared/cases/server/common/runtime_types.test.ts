@@ -44,6 +44,34 @@ describe('runtime_types', () => {
       const schema = z.object({ a: z.string() });
       expect(decodeWithExcessOrThrowZod(schema)({ a: 'hi' })).toStrictEqual({ a: 'hi' });
     });
+
+    it('throws when an excess field exists inside an array of objects', () => {
+      const schema = z.object({ items: z.array(z.object({ a: z.string() })) });
+      expect(() =>
+        decodeWithExcessOrThrowZod(schema)({ items: [{ a: 'hi' }, { a: 'hi', b: 1 }] })
+      ).toThrowErrorMatchingInlineSnapshot(`"Excess keys are not allowed"`);
+    });
+
+    it('throws when an excess field exists inside a union variant', () => {
+      const schema = z.object({
+        payload: z.union([z.object({ kind: z.literal('a'), value: z.string() }), z.object({ kind: z.literal('b') })]),
+      });
+      expect(() =>
+        decodeWithExcessOrThrowZod(schema)({ payload: { kind: 'a', value: 'hi', extra: 1 } })
+      ).toThrowErrorMatchingInlineSnapshot(`"Excess keys are not allowed"`);
+    });
+
+    it('throws when an excess field exists inside a discriminated union variant', () => {
+      const schema = z.object({
+        payload: z.discriminatedUnion('kind', [
+          z.object({ kind: z.literal('a'), value: z.string() }),
+          z.object({ kind: z.literal('b') }),
+        ]),
+      });
+      expect(() =>
+        decodeWithExcessOrThrowZod(schema)({ payload: { kind: 'a', value: 'hi', extra: 1 } })
+      ).toThrowErrorMatchingInlineSnapshot(`"Excess keys are not allowed"`);
+    });
   });
 
   describe('decodeOrThrowZod', () => {

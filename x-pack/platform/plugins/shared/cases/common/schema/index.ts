@@ -15,13 +15,19 @@ export interface LimitedSchemaType {
   max: number;
 }
 
-export const NonEmptyString = z.string().min(1);
+// Matches io-ts parity: rejects strings whose `.trim()` is empty (e.g. "   ", "\t\n").
+// Preserves the original (untrimmed) string on success.
+export const NonEmptyString = z
+  .string()
+  .refine((s) => s.trim().length >= 1, 'string must have length >= 1');
 
 export const limitedStringSchema = ({ fieldName, min, max }: LimitedSchemaType) =>
   z.string().superRefine((s, ctx) => {
     const trimmed = s.trim();
 
-    if (trimmed.length === 0) {
+    // io-ts parity: an empty / whitespace-only string is only rejected when
+    // `min > 0`; with `min === 0` it should pass through.
+    if (trimmed.length === 0 && min > 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `The ${fieldName} field cannot be an empty string.`,
@@ -87,7 +93,22 @@ export const limitedNumberSchema = ({ fieldName, min, max }: LimitedSchemaType) 
   });
 
 export const paginationSchema = ({ maxPerPage }: { maxPerPage: number }) => {
-  const pageCoerce = z.union([z.number(), z.string().transform((s) => Number(s))]);
+  // Matches io-ts `NumberFromString` parity: a string input must parse to a finite
+  // number. `Number('abc')` returns `NaN`, which previously failed validation —
+  // a plain `transform((s) => Number(s))` would let `NaN` through silently and
+  // bypass the downstream `> maxPerPage` / `MAX_DOCS_PER_PAGE` guards.
+  // The transform is on the union (rather than only on the string variant) so
+  // the custom error message survives instead of being swallowed by the
+  // union's "no variant matched" error.
+  const pageCoerce = z.union([z.number(), z.string()]).transform((value, ctx) => {
+    if (typeof value === 'number') return value;
+    const n = Number(value);
+    if (!Number.isFinite(n)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'cannot parse to a number' });
+      return z.NEVER;
+    }
+    return n;
+  });
   return z
     .object({
       page: pageCoerce.optional(),
