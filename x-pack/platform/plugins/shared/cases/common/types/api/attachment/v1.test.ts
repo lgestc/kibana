@@ -11,7 +11,7 @@ import {
   MAX_COMMENT_LENGTH,
   MAX_DELETE_FILES,
 } from '../../../constants';
-import { decodeWithExcessOrThrowZod } from '../../../../server/common/runtime_types';
+import { DeepStrict } from '@kbn/zod-helpers';
 import {
   AttachmentType,
   ExternalReferenceStorageType,
@@ -269,15 +269,14 @@ describe('AttachmentPatchRequestSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('decodeWithExcessOrThrowZod rejects unknown top-level fields on patch', () => {
-    expect(() =>
-      decodeWithExcessOrThrowZod(AttachmentPatchRequestSchema)({
-        ...validUserComment,
-        id: 'a',
-        version: 'b',
-        rogue: 'field',
-      })
-    ).toThrow(/Excess keys are not allowed/);
+  it('DeepStrict-wrapped schema rejects unknown top-level fields on patch (route-layer parity)', () => {
+    const result = DeepStrict(AttachmentPatchRequestSchema).safeParse({
+      ...validUserComment,
+      id: 'a',
+      version: 'b',
+      rogue: 'field',
+    });
+    expect(result.success).toBe(false);
   });
 });
 

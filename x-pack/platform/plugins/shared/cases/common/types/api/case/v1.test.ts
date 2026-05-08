@@ -21,7 +21,7 @@ import {
   MAX_TAGS_PER_CASE,
   MAX_TITLE_LENGTH,
 } from '../../../constants';
-import { decodeWithExcessOrThrowZod } from '../../../../server/common/runtime_types';
+import { DeepStrict } from '@kbn/zod-helpers';
 import { CaseSeverity, CaseStatuses } from '../../domain/case/v1';
 import { ConnectorTypes } from '../../domain/connector/v1';
 import { CustomFieldTypes } from '../../domain/custom_field/v1';
@@ -200,10 +200,12 @@ describe('CasePostRequestSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('decodeWithExcessOrThrowZod rejects unknown top-level fields', () => {
-    expect(() =>
-      decodeWithExcessOrThrowZod(CasePostRequestSchema)({ ...validPostRequest, foo: 'bar' })
-    ).toThrow(/Excess keys are not allowed/);
+  it('DeepStrict-wrapped schema rejects unknown top-level fields (route-layer parity)', () => {
+    const result = DeepStrict(CasePostRequestSchema).safeParse({
+      ...validPostRequest,
+      foo: 'bar',
+    });
+    expect(result.success).toBe(false);
   });
 
   it('rejects missing required fields', () => {
@@ -355,10 +357,9 @@ describe('CasesFindRequestSchema', () => {
     ).toBe(false);
   });
 
-  it('decodeWithExcessOrThrowZod rejects unknown top-level fields', () => {
-    expect(() =>
-      decodeWithExcessOrThrowZod(CasesFindRequestSchema)({ rootSearchField: 'bad' })
-    ).toThrow(/Excess keys are not allowed/);
+  it('DeepStrict-wrapped schema rejects unknown top-level fields (route-layer parity)', () => {
+    const result = DeepStrict(CasesFindRequestSchema).safeParse({ rootSearchField: 'bad' });
+    expect(result.success).toBe(false);
   });
 });
 
