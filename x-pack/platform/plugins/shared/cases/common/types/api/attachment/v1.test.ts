@@ -11,11 +11,9 @@ import {
   MAX_COMMENT_LENGTH,
   MAX_DELETE_FILES,
 } from '../../../constants';
+import type { ZodType } from '@kbn/zod/v4';
 import { DeepStrict } from '@kbn/zod-helpers';
-import {
-  AttachmentType,
-  ExternalReferenceStorageType,
-} from '../../domain/attachment/v1';
+import { AttachmentType, ExternalReferenceStorageType } from '../../domain/attachment/v1';
 import {
   AttachmentPatchRequestSchema,
   AttachmentRequestSchema,
@@ -24,13 +22,10 @@ import {
   BulkGetAttachmentsRequestSchema,
 } from './v1';
 
-const errors = (
-  schema: { safeParse: (v: unknown) => { success: boolean; error?: any } },
-  value: unknown
-): string[] => {
+const errors = (schema: ZodType<unknown>, value: unknown): string[] => {
   const result = schema.safeParse(value);
-  if (result.success || !result.error) return [];
-  return result.error.issues.map((i: { message: string }) => i.message);
+  if (result.success) return [];
+  return result.error.issues.map((i) => i.message);
 };
 
 const validUserComment = {
@@ -302,9 +297,9 @@ describe('BulkCreateAttachmentsRequestSchema', () => {
 
 describe('BulkDeleteFileAttachmentsRequestSchema', () => {
   it('accepts a single non-empty id', () => {
-    expect(
-      BulkDeleteFileAttachmentsRequestSchema.safeParse({ ids: ['file-1'] }).success
-    ).toBe(true);
+    expect(BulkDeleteFileAttachmentsRequestSchema.safeParse({ ids: ['file-1'] }).success).toBe(
+      true
+    );
   });
 
   it('rejects an empty ids array', () => {

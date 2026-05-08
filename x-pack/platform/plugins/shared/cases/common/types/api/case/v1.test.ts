@@ -21,6 +21,7 @@ import {
   MAX_TAGS_PER_CASE,
   MAX_TITLE_LENGTH,
 } from '../../../constants';
+import type { ZodType } from '@kbn/zod/v4';
 import { DeepStrict } from '@kbn/zod-helpers';
 import { CaseSeverity, CaseStatuses } from '../../domain/case/v1';
 import { ConnectorTypes } from '../../domain/connector/v1';
@@ -34,10 +35,10 @@ import {
   CasesSearchRequestSchema,
 } from './v1';
 
-const errors = (schema: { safeParse: (v: unknown) => { success: boolean; error?: any } }, value: unknown): string[] => {
+const errors = (schema: ZodType<unknown>, value: unknown): string[] => {
   const result = schema.safeParse(value);
-  if (result.success || !result.error) return [];
-  return result.error.issues.map((i: { message: string }) => i.message);
+  if (result.success) return [];
+  return result.error.issues.map((i) => i.message);
 };
 
 const validPostRequest: CasePostRequest = {
@@ -94,7 +95,9 @@ describe('CasePostRequestSchema', () => {
       connector: { ...validPostRequest.connector, foo: 'bar' },
     });
     expect(result.success).toBe(true);
-    if (result.success) expect((result.data.connector as any).foo).toBeUndefined();
+    if (result.success) {
+      expect((result.data.connector as Record<string, unknown>).foo).toBeUndefined();
+    }
   });
 
   it('rejects more than MAX_ASSIGNEES_PER_CASE assignees', () => {
@@ -236,9 +239,7 @@ describe('CasePatchRequestSchema', () => {
   });
 
   it('accepts id and version with no other fields', () => {
-    expect(
-      CasePatchRequestSchema.safeParse({ id: 'a', version: 'b' }).success
-    ).toBe(true);
+    expect(CasePatchRequestSchema.safeParse({ id: 'a', version: 'b' }).success).toBe(true);
   });
 
   it('rejects whitespace-only title (length-bounded fields enforce trim parity)', () => {
@@ -275,9 +276,7 @@ describe('CasesFindRequestSchema', () => {
   });
 
   it('accepts numeric strings for page/perPage (NumberFromString parity)', () => {
-    expect(
-      CasesFindRequestSchema.safeParse({ page: '1', perPage: '20' }).success
-    ).toBe(true);
+    expect(CasesFindRequestSchema.safeParse({ page: '1', perPage: '20' }).success).toBe(true);
   });
 
   it('rejects non-numeric strings for page/perPage (NumberFromString parity)', () => {
@@ -352,9 +351,7 @@ describe('CasesFindRequestSchema', () => {
   });
 
   it('rejects an invalid searchField enum value', () => {
-    expect(
-      CasesFindRequestSchema.safeParse({ searchFields: ['badField'] }).success
-    ).toBe(false);
+    expect(CasesFindRequestSchema.safeParse({ searchFields: ['badField'] }).success).toBe(false);
   });
 
   it('DeepStrict-wrapped schema rejects unknown top-level fields (route-layer parity)', () => {
@@ -372,9 +369,9 @@ describe('CasesSearchRequestSchema', () => {
   });
 
   it('rejects an unsupported searchFields value', () => {
-    expect(
-      CasesSearchRequestSchema.safeParse({ searchFields: ['cases.unknown'] }).success
-    ).toBe(false);
+    expect(CasesSearchRequestSchema.safeParse({ searchFields: ['cases.unknown'] }).success).toBe(
+      false
+    );
   });
 
   it('accepts extendedFieldFilters', () => {
@@ -386,8 +383,7 @@ describe('CasesSearchRequestSchema', () => {
 
   it('rejects extendedFieldFilters with missing fields', () => {
     expect(
-      CasesSearchRequestSchema.safeParse({ extendedFieldFilters: [{ label: 'priority' }] })
-        .success
+      CasesSearchRequestSchema.safeParse({ extendedFieldFilters: [{ label: 'priority' }] }).success
     ).toBe(false);
   });
 });
