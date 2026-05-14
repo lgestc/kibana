@@ -811,7 +811,7 @@ export class AttachmentService {
           mode,
         });
         if (transformed.isUnified) {
-          const validatedAttributes = decodeOrThrow(AttachmentAttributesRtV2)(
+          const validatedAttributes = decodeOrThrowZod(AttachmentAttributesSchemaV2)(
             transformed.attributes
           );
           validatedAttachments.push(Object.assign(injectedSo, { attributes: validatedAttributes }));
