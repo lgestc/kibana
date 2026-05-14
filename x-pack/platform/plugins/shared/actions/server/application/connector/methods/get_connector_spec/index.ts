@@ -5,6 +5,5 @@
  * 2.0.
  */
 
-import { PREFIX } from '../../shared/test_ids';
-
-export const ALERT_REASON_BODY_TEST_ID = `${PREFIX}AlertReasonBody` as const;
+export { getConnectorSpecAsJsonSchema } from './get_connector_spec';
+export type { GetConnectorSpecParams } from './types';
