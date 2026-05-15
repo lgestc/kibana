@@ -16,6 +16,7 @@ import { CASE_EXTENDED_FIELDS } from '../../../common/constants';
 import { useTemplateFormSync } from './use_template_form_sync';
 import * as i18n from './translations';
 import { FieldsRenderer } from '../templates_v2/field_types/field_renderer';
+import { useResolvedFields } from '../field_library/hooks/use_resolved_fields';
 
 type FormShape = Record<string, Record<string, unknown>>;
 
@@ -39,18 +40,23 @@ export const CreateCaseTemplateFields: React.FC = () => {
     return () => subscription.unsubscribe();
   }, [innerForm, parentForm]);
 
+  const { resolvedFields, isLoading: isLoadingFields } = useResolvedFields(
+    template?.definition?.fields ?? [],
+    template?.owner
+  );
+
   const fieldsFragment = useMemo(() => {
-    if (!template?.definition?.fields) {
+    if (!resolvedFields.length) {
       return null;
     }
-    return <FieldsRenderer parsedTemplate={template.definition} />;
-  }, [template]);
+    return <FieldsRenderer resolvedFields={resolvedFields} />;
+  }, [resolvedFields]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingFields) {
     return null;
   }
 
-  if (!templateId || !fieldsFragment) {
+  if (!templateId || template?.definition?.fields === undefined) {
     return (
       <>
         <EuiSpacer />
