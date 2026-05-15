@@ -360,10 +360,7 @@ export const CaseViewActivity = ({
             onSubmit={onSubmitCustomField}
           />
           {isTemplatesV2Enabled && (
-            <TemplateFields
-              caseData={caseData}
-              onUpdateField={onUpdateField}
-            />
+            <TemplateFields caseData={caseData} onUpdateField={onUpdateField} />
           )}
         </EuiFlexGroup>
       </EuiFlexItem>
