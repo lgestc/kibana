@@ -363,8 +363,6 @@ export const CaseViewActivity = ({
             <TemplateFields
               caseData={caseData}
               onUpdateField={onUpdateField}
-              isLoading={isLoading}
-              loadingKey={loadingKey}
             />
           )}
         </EuiFlexGroup>
