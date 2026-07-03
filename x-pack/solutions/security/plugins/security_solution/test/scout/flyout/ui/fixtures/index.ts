@@ -5,6 +5,4 @@
  * 2.0.
  */
 
-export * as archives from './archives';
-export * as detection_rules from './detection_rules';
-export { FULL_KIBANA_SECURITY_ROLE } from './roles';
+export { spaceTest, tags } from '@kbn/scout-security';
