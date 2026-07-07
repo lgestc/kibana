@@ -74,6 +74,7 @@ describe('CasesConnector', () => {
     getUnsecuredSavedObjectsClient,
     getUiSettingsClient,
     isCasesAttachmentsEnabled: false,
+    isTemplatesEnabled: false,
   };
   const connectorParams = {
     configurationUtilities: actionsConfigMock.create(),
@@ -131,7 +132,34 @@ describe('CasesConnector', () => {
       casesService: expect.any(CasesService),
       spaceId: 'default',
       isCasesAttachmentsEnabled: false,
+      isTemplatesEnabled: false,
     });
+  });
+
+  it('threads isTemplatesEnabled through to the CasesConnectorExecutor', async () => {
+    const connectorWithTemplatesEnabled = new CasesConnector({
+      casesParams: { ...casesParams, isTemplatesEnabled: true },
+      connectorParams,
+    });
+
+    await connectorWithTemplatesEnabled.run({
+      alerts: [{ _id: 'alert-id-0', _index: 'alert-index-0' }],
+      groupedAlerts,
+      groupingBy,
+      owner,
+      rule,
+      timeWindow,
+      internallyManagedAlerts,
+      reopenClosedCases,
+      maximumCasesToOpen,
+      templateId,
+      templateVersion,
+      autoPushCase,
+    });
+
+    expect(CasesConnectorExecutorMock).toBeCalledWith(
+      expect.objectContaining({ isTemplatesEnabled: true })
+    );
   });
 
   it('executes the CasesConnectorExecutor correctly', async () => {

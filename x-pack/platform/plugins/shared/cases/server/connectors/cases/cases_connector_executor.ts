@@ -65,6 +65,7 @@ interface CasesConnectorExecutorParams {
   casesClient: CasesClient;
   spaceId: string;
   isCasesAttachmentsEnabled?: boolean;
+  isTemplatesEnabled?: boolean;
 }
 
 type GroupedAlertsWithOracleKey = CasesGroupedAlerts & { oracleKey: string };
@@ -79,6 +80,7 @@ export class CasesConnectorExecutor {
   private readonly casesClient: CasesClient;
   private readonly spaceId: string;
   private readonly isCasesAttachmentsEnabled: boolean;
+  private readonly isTemplatesEnabled: boolean;
 
   constructor({
     logger,
@@ -87,6 +89,7 @@ export class CasesConnectorExecutor {
     casesClient,
     spaceId,
     isCasesAttachmentsEnabled = false,
+    isTemplatesEnabled = false,
   }: CasesConnectorExecutorParams) {
     this.logger = logger;
     this.casesOracleService = casesOracleService;
@@ -94,6 +97,7 @@ export class CasesConnectorExecutor {
     this.casesClient = casesClient;
     this.spaceId = spaceId;
     this.isCasesAttachmentsEnabled = isCasesAttachmentsEnabled;
+    this.isTemplatesEnabled = isTemplatesEnabled;
   }
 
   public async execute(params: CasesConnectorRunParams) {
@@ -815,10 +819,7 @@ export class CasesConnectorExecutor {
       id: caseId,
       description: v2Template.description ?? this.getCaseDescription(params, flattenGrouping),
       tags: this.getCaseTags(params, flattenGrouping, v2Template.tags),
-      title:
-        title ??
-        v2Template.name ??
-        this.getCasesTitle(params, flattenGrouping, oracleRecord.counter),
+      title: title ?? this.getCasesTitle(params, flattenGrouping, oracleRecord.counter),
       connector: {
         id: 'none',
         name: 'none',
@@ -832,6 +833,13 @@ export class CasesConnectorExecutor {
       owner: params.owner,
       customFields: builtCustomFields,
     };
+
+    if (params.templateId && params.templateVersion) {
+      baseRequest.template = {
+        id: params.templateId,
+        version: Number(params.templateVersion),
+      };
+    }
 
     if (extendedFields && Object.keys(extendedFields).length > 0) {
       baseRequest[CASE_EXTENDED_FIELDS] = extendedFields;
@@ -1388,7 +1396,7 @@ export class CasesConnectorExecutor {
     v2Template: ParsedTemplateDefinition | null;
     extendedFields: Record<string, string> | undefined;
   }> {
-    if (!params.templateVersion || !params.templateId) {
+    if (!this.isTemplatesEnabled || !params.templateVersion || !params.templateId) {
       return { v2Template: null, extendedFields: undefined };
     }
 
