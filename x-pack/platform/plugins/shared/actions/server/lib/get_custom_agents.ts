@@ -10,6 +10,7 @@ import type { AgentOptions } from 'https';
 import { Agent as HttpsAgent } from 'https';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import type { HttpsProxyAgentOptions } from 'https-proxy-agent';
 import type { Logger } from '@kbn/core/server';
 import type { ActionsConfigurationUtilities } from '../actions_config';
 import { getNodeSSLOptions, getSSLSettingsFromConfig } from './get_node_ssl_options';
@@ -23,21 +24,22 @@ interface GetCustomAgentsResponse {
   httpsAgent: HttpsAgent | undefined;
 }
 
-class TargetSslHttpsProxyAgent extends HttpsProxyAgent {
+class TargetSslHttpsProxyAgent extends HttpsProxyAgent<string> {
   constructor(
-    proxyOptions: ConstructorParameters<typeof HttpsProxyAgent>[0],
+    proxyUrl: string | URL,
+    proxyOpts: HttpsProxyAgentOptions<string>,
     private readonly targetSSLOptions: AgentOptions
   ) {
-    super(proxyOptions);
+    super(proxyUrl, proxyOpts);
   }
 
-  callback(
-    req: Parameters<HttpsProxyAgent['callback']>[0],
-    opts: Parameters<HttpsProxyAgent['callback']>[1]
+  connect(
+    req: Parameters<HttpsProxyAgent<string>['connect']>[0],
+    opts: Parameters<HttpsProxyAgent<string>['connect']>[1]
   ) {
     // HttpsProxyAgent constructor options configure the proxy connection. Target TLS
     // options must be merged into the CONNECT-upgraded request options instead.
-    return super.callback(req, { ...opts, ...this.targetSSLOptions });
+    return super.connect(req, { ...opts, ...this.targetSSLOptions });
   }
 }
 
@@ -146,7 +148,8 @@ export function getCustomAgents(
   // the https agent.
   const httpAgent = new HttpProxyAgent(proxySettings.proxyUrl) as unknown as HttpAgent;
   const targetSSLOptions = agentOptions ?? agentSSLOptions;
-  const httpsAgent = new TargetSslHttpsProxyAgent(proxySettings.proxyUrl, 
+  const httpsAgent = new TargetSslHttpsProxyAgent(
+    proxySettings.proxyUrl,
     {
       host: proxyUrl.hostname,
       port: Number(proxyUrl.port),

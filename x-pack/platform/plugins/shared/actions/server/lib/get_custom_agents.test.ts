@@ -42,9 +42,9 @@ describe('getCustomAgents', () => {
   });
 
   test('passes target SSL overrides to the CONNECT-upgraded TLS request', async () => {
-    const callbackSpy = jest
-      .spyOn(HttpsProxyAgent.prototype, 'callback')
-      .mockResolvedValue({} as Awaited<ReturnType<HttpsProxyAgent['callback']>>);
+    const connectSpy = jest
+      .spyOn(HttpsProxyAgent.prototype, 'connect')
+      .mockResolvedValue({} as Awaited<ReturnType<HttpsProxyAgent<string>['connect']>>);
 
     configurationUtilities.getProxySettings.mockReturnValue({
       proxyUrl: 'http://someproxyhost',
@@ -60,23 +60,23 @@ describe('getCustomAgents', () => {
     });
 
     try {
-      await (httpsAgent as unknown as HttpsProxyAgent).callback(
-        {} as Parameters<HttpsProxyAgent['callback']>[0],
+      await (httpsAgent as unknown as HttpsProxyAgent<string>).connect(
+        {} as Parameters<HttpsProxyAgent<string>['connect']>[0],
         {
           host: targetHost,
           port: 443,
           secureEndpoint: true,
-        } as Parameters<HttpsProxyAgent['callback']>[1]
+        } as Parameters<HttpsProxyAgent<string>['connect']>[1]
       );
 
-      expect(callbackSpy).toHaveBeenCalledWith(
+      expect(connectSpy).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           rejectUnauthorized: false,
         })
       );
     } finally {
-      callbackSpy.mockRestore();
+      connectSpy.mockRestore();
     }
   });
 
