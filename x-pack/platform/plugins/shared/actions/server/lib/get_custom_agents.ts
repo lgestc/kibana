@@ -146,17 +146,16 @@ export function getCustomAgents(
   // the https agent.
   const httpAgent = new HttpProxyAgent(proxySettings.proxyUrl) as unknown as HttpAgent;
   const targetSSLOptions = agentOptions ?? agentSSLOptions;
-  const httpsAgent = new TargetSslHttpsProxyAgent(
+  const httpsAgent = new TargetSslHttpsProxyAgent(proxySettings.proxyUrl, 
     {
       host: proxyUrl.hostname,
       port: Number(proxyUrl.port),
-      protocol: proxyUrl.protocol,
       headers: proxySettings.proxyHeaders,
       // do not fail on invalid certs if value is false
       ...proxyNodeSSLOptions,
     },
     targetSSLOptions
-  ) as unknown as HttpsAgent;
+  );
   // vsCode wasn't convinced HttpsProxyAgent is an https.Agent, so we convinced it
 
   if (targetSSLOptions) {
