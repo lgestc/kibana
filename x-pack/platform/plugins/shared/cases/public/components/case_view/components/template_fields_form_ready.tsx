@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FieldValues } from 'react-hook-form';
 import { FormProvider, useForm } from 'react-hook-form';
 import type { InlineField } from '../../../../common/types/domain/template/fields';
+import { FieldType } from '../../../../common/types/domain/template/fields';
 import { CASE_EXTENDED_FIELDS } from '../../../../common/constants';
 import { getFieldCamelKey, getFieldSnakeKey } from '../../../../common/utils';
 import { FieldsRenderer } from '../../templates_v2/field_types/field_renderer';
@@ -17,6 +18,56 @@ import { getYamlDefaultAsString } from '../../templates_v2/utils';
 import type { OnUpdateFields } from '../types';
 
 export const EMPTY_EXTENDED_FIELDS: Record<string, unknown> = {};
+
+/**
+ * Parses a CHECKBOX_GROUP form value (JSON string or plain array) into a `string[]`.
+ * Mirrors the `toArray` logic in `checkbox_group.tsx`.
+ */
+const parseCheckboxItems = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string');
+  }
+  if (typeof value === 'string' && value !== '') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed)
+        ? parsed.filter((item): item is string => typeof item === 'string')
+        : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+/**
+ * Returns `existingValue` only when it is still valid under the new field definition.
+ *
+ * For option-based controls (SELECT_BASIC, RADIO_GROUP, CHECKBOX_GROUP) a value that
+ * was valid under a previous template may no longer be a member of the new template's
+ * option set. Passing such a value through `trigger()` won't catch it (client-side
+ * validation only checks non-empty, not option membership), but the server rejects it
+ * with a 400. Returning `undefined` here lets the required-field check surface the gap
+ * to the user so they can re-pick before confirming the template switch.
+ */
+const sanitizeExistingValue = (field: InlineField, existingValue: unknown): unknown => {
+  if (existingValue === undefined || existingValue === '') return undefined;
+
+  if (field.control === FieldType.SELECT_BASIC || field.control === FieldType.RADIO_GROUP) {
+    const { options } = field.metadata;
+    return typeof existingValue === 'string' && options.includes(existingValue)
+      ? existingValue
+      : undefined;
+  }
+
+  if (field.control === FieldType.CHECKBOX_GROUP) {
+    const { options } = field.metadata;
+    const validItems = parseCheckboxItems(existingValue).filter((item) => options.includes(item));
+    return validItems.length > 0 ? JSON.stringify(validItems) : undefined;
+  }
+
+  return existingValue;
+};
 
 /**
  * API exposed to a parent component when the form is used in batch mode
@@ -74,10 +125,12 @@ export const TemplateFieldsFormReady: FC<TemplateFieldsFormReadyProps> = ({
       const camelKey = getFieldCamelKey(field.name, field.type);
       const existingValue = extendedFields[camelKey];
       if (isBatchMode && applyDefaults) {
-        // In batch mode, fall back to the template's YAML default when the case has no value.
+        // Sanitize option-based values so stale selections from a previous template
+        // don't silently bypass server-side validation. Non-option controls are passed through.
+        const sanitized = sanitizeExistingValue(field, existingValue);
         inner[snakeKey] =
-          existingValue !== undefined && existingValue !== ''
-            ? existingValue
+          sanitized !== undefined && sanitized !== ''
+            ? sanitized
             : getYamlDefaultAsString(field.metadata?.default);
       } else {
         inner[snakeKey] = existingValue ?? '';
