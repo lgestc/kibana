@@ -25,13 +25,10 @@ import {
 } from '@elastic/eui';
 import type { EuiComboBoxOptionOption } from '@elastic/eui';
 import type { CaseUI } from '../../../common';
-import { parseFieldDefinitionsToInlineFields } from '../../../common/utils';
-import { isInlineField } from '../../../common/types/domain/template/fields';
 import { useCasesContext } from '../cases_context/use_cases_context';
 import { useGetTemplates } from '../templates_v2/hooks/use_get_templates';
 import { useGetTemplate } from '../templates_v2/hooks/use_get_template';
-import { useResolvedFields } from '../field_library/hooks/use_resolved_fields';
-import { useGetFieldDefinitions } from '../field_library/hooks/use_get_field_definitions';
+import { useTemplateNonGlobalFields } from '../templates_v2/hooks/use_template_non_global_fields';
 import { useChangeAppliedTemplate } from '../case_view/use_change_applied_template';
 import {
   EMPTY_EXTENDED_FIELDS,
@@ -75,31 +72,12 @@ export const ApplyTemplateModal: FC<ApplyTemplateModalProps> = ({ caseData, onCl
     selectedTemplateId || undefined
   );
 
-  const { data: globalFieldDefsData } = useGetFieldDefinitions({
-    owner: caseData.owner,
-    isGlobal: true,
-    staleTime: Infinity,
-  });
-
-  const globalFieldNames = useMemo<ReadonlySet<string>>(
-    () =>
-      new Set(
-        parseFieldDefinitionsToInlineFields(globalFieldDefsData?.fieldDefinitions ?? []).map(
-          (f) => f.name
-        )
-      ),
-    [globalFieldDefsData]
-  );
-
   const selectedTemplateDefinitionFields = useMemo(
-    () =>
-      (selectedTemplateData?.definition?.fields ?? []).filter(
-        (f) => !isInlineField(f) || !globalFieldNames.has(f.name)
-      ),
-    [selectedTemplateData, globalFieldNames]
+    () => selectedTemplateData?.definition?.fields ?? [],
+    [selectedTemplateData]
   );
 
-  const { resolvedFields, isLoading: isResolvingFields } = useResolvedFields(
+  const { resolvedFields, isLoading: isResolvingFields } = useTemplateNonGlobalFields(
     selectedTemplateDefinitionFields,
     caseData.owner
   );

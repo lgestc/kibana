@@ -171,6 +171,7 @@ export const ConfirmChangeTemplateModal: FC<ConfirmChangeTemplateModalProps> = (
         </EuiButtonEmpty>
         <EuiButton
           fill
+          autoFocus
           onClick={onConfirm}
           isDisabled={isConfirmDisabled}
           isLoading={isLoading}

@@ -10,14 +10,11 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { EuiComboBox, EuiPopover, EuiPopoverTitle } from '@elastic/eui';
 import type { EuiComboBoxOptionOption } from '@elastic/eui';
 import type { CaseUI } from '../../../../../../common';
-import { parseFieldDefinitionsToInlineFields } from '../../../../../../common/utils';
-import { isInlineField } from '../../../../../../common/types/domain/template/fields';
 import { useCasesContext } from '../../../../cases_context/use_cases_context';
 import { useGetTemplates } from '../../../../templates_v2/hooks/use_get_templates';
 import { TEMPLATE_SELECTOR_PAGE_SIZE } from '../../../../templates_v2/constants';
 import { useGetTemplate } from '../../../../templates_v2/hooks/use_get_template';
-import { useResolvedFields } from '../../../../field_library/hooks/use_resolved_fields';
-import { useGetFieldDefinitions } from '../../../../field_library/hooks/use_get_field_definitions';
+import { useTemplateNonGlobalFields } from '../../../../templates_v2/hooks/use_template_non_global_fields';
 import {
   EMPTY_EXTENDED_FIELDS,
   TemplateFieldsFormReady,
@@ -76,35 +73,15 @@ export const TemplateSettingsPopover: FC<TemplateSettingsPopoverProps> = ({
     pendingTemplateId || undefined
   );
 
-  // Resolve the pending template's fields so they can be rendered in the confirm modal.
-  // Mirror the same global-field filtering that TemplateFields (case_view) applies so we
-  // don't show fields the page's GlobalCaseFields section already owns.
-  const { data: globalFieldDefsData } = useGetFieldDefinitions({
-    owner: caseData.owner,
-    isGlobal: true,
-    staleTime: Infinity,
-  });
-
-  const globalFieldNames = useMemo<ReadonlySet<string>>(
-    () =>
-      new Set(
-        parseFieldDefinitionsToInlineFields(globalFieldDefsData?.fieldDefinitions ?? []).map(
-          (f) => f.name
-        )
-      ),
-    [globalFieldDefsData]
-  );
-
+  // Resolve the pending template's non-global fields so they can be rendered in the confirm
+  // modal. Global fields are filtered out because the GlobalCaseFields section already owns them.
   const pendingTemplateDefinitionFields = useMemo(
-    () =>
-      (pendingTemplateData?.definition?.fields ?? []).filter(
-        (f) => !isInlineField(f) || !globalFieldNames.has(f.name)
-      ),
-    [pendingTemplateData, globalFieldNames]
+    () => pendingTemplateData?.definition?.fields ?? [],
+    [pendingTemplateData]
   );
 
   const { resolvedFields: pendingResolvedFields, isLoading: isResolvingPendingFields } =
-    useResolvedFields(pendingTemplateDefinitionFields, caseData.owner);
+    useTemplateNonGlobalFields(pendingTemplateDefinitionFields, caseData.owner);
 
   // A ref the confirm modal's Confirm handler uses to trigger whole-form validation
   // and read the collected field values before PATCHing.
@@ -209,7 +186,7 @@ export const TemplateSettingsPopover: FC<TemplateSettingsPopoverProps> = ({
   const pendingFieldsNode =
     pendingResolvedFields.length > 0 ? (
       <TemplateFieldsFormReady
-        key={pendingTemplateId ?? undefined}
+        key={pendingTemplateId ?? ''}
         resolvedFields={pendingResolvedFields}
         extendedFields={caseData.extendedFields ?? EMPTY_EXTENDED_FIELDS}
         applyDefaults
