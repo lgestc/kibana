@@ -28,6 +28,14 @@ jest.mock('../../../../case_view/use_change_applied_template', () => ({
   useChangeAppliedTemplate: () => ({ mutate: mockMutate, isLoading: false }),
 }));
 
+jest.mock('../../../../field_library/hooks/use_resolved_fields', () => ({
+  useResolvedFields: () => ({ resolvedFields: [], isLoading: false }),
+}));
+
+jest.mock('../../../../field_library/hooks/use_get_field_definitions', () => ({
+  useGetFieldDefinitions: () => ({ data: undefined }),
+}));
+
 const appliedTemplate = {
   templateId: 'template-1',
   name: 'Security Template',
@@ -171,9 +179,11 @@ describe('TemplateSettingsPopover', () => {
       await selectTemplateByName(otherTemplate.name);
 
       expect(mockMutate).not.toHaveBeenCalled();
-      expect(await screen.findByTestId('confirm-change-template-modal')).toBeInTheDocument();
-      expect(screen.getByText(appliedTemplate.name)).toBeInTheDocument();
-      expect(screen.getByText(otherTemplate.name)).toBeInTheDocument();
+      const modal = await screen.findByTestId('confirm-change-template-modal');
+      expect(modal).toBeInTheDocument();
+      // Scope to the modal to avoid false positives from the combobox options still in the DOM
+      expect(within(modal).getByText(appliedTemplate.name)).toBeInTheDocument();
+      expect(within(modal).getByText(otherTemplate.name)).toBeInTheDocument();
     });
 
     it('calls changeTemplate with the new template fields when the change is confirmed', async () => {
@@ -183,7 +193,7 @@ describe('TemplateSettingsPopover', () => {
 
       await selectTemplateByName(otherTemplate.name);
       await screen.findByTestId('confirm-change-template-modal');
-      await user.click(screen.getByTestId('confirmModalConfirmButton'));
+      await user.click(screen.getByTestId('confirm-change-template-modal-confirm'));
 
       expect(mockMutate).toHaveBeenCalledWith(
         {
@@ -205,7 +215,7 @@ describe('TemplateSettingsPopover', () => {
 
       await selectTemplateByName(otherTemplate.name);
       await screen.findByTestId('confirm-change-template-modal');
-      await user.click(screen.getByTestId('confirmModalCancelButton'));
+      await user.click(screen.getByTestId('confirm-change-template-modal-cancel'));
 
       expect(mockMutate).not.toHaveBeenCalled();
       await waitFor(() => {
@@ -224,7 +234,7 @@ describe('TemplateSettingsPopover', () => {
       expect(mockMutate).not.toHaveBeenCalled();
       expect(await screen.findByTestId('confirm-change-template-modal')).toBeInTheDocument();
 
-      await user.click(screen.getByTestId('confirmModalConfirmButton'));
+      await user.click(screen.getByTestId('confirm-change-template-modal-confirm'));
 
       expect(mockMutate).toHaveBeenCalledWith(
         { caseData: caseWithTemplate, newTemplate: null },

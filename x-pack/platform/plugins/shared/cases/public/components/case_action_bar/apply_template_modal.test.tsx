@@ -31,6 +31,14 @@ jest.mock('../templates_v2/hooks/use_get_template', () => ({
   useGetTemplate: (...args: unknown[]) => mockUseGetTemplate(...args),
 }));
 
+jest.mock('../field_library/hooks/use_resolved_fields', () => ({
+  useResolvedFields: () => ({ resolvedFields: [], isLoading: false }),
+}));
+
+jest.mock('../field_library/hooks/use_get_field_definitions', () => ({
+  useGetFieldDefinitions: () => ({ data: undefined }),
+}));
+
 const mockOnClose = jest.fn();
 
 const mockTemplatesData = {

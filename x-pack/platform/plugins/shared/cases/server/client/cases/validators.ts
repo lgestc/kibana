@@ -286,21 +286,6 @@ export const validateExtendedFieldsInRequest = async ({
 }): Promise<void> => {
   if (!updateReq.extended_fields) return;
 
-  // When switching from one template to a different template, skip validation of extended_fields.
-  // computeNewExtendedFields carries over old case values for fields that match the new template
-  // by name and type, but those values may no longer satisfy the new template's constraints
-  // (e.g. a SELECT option removed from the new template). The user can fix any required or
-  // invalid fields after the switch completes.
-  // Note: only skip when there was a prior template — setting one for the first time does not
-  // carry over stale values and should still be validated.
-  if (
-    updateReq.template != null &&
-    originalCase.attributes.template?.id != null &&
-    updateReq.template.id !== originalCase.attributes.template.id
-  ) {
-    return;
-  }
-
   // null means the template is being cleared; undefined means it is not changing.
   const templateId =
     updateReq.template === null
