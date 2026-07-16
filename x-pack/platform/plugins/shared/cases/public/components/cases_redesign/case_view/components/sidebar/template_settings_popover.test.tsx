@@ -110,12 +110,14 @@ describe('TemplateSettingsPopover', () => {
 
     mockFormApiTrigger.mockResolvedValue(true);
     mockFormApiGetValues.mockReturnValue({});
-    mockTemplateFieldsFormReady.mockImplementation(({ formApiRef }: TemplateFieldsFormReadyProps) => {
-      if (formApiRef) {
-        formApiRef.current = { trigger: mockFormApiTrigger, getValues: mockFormApiGetValues };
+    mockTemplateFieldsFormReady.mockImplementation(
+      ({ formApiRef }: TemplateFieldsFormReadyProps) => {
+        if (formApiRef) {
+          formApiRef.current = { trigger: mockFormApiTrigger, getValues: mockFormApiGetValues };
+        }
+        return <div data-test-subj="template-fields-form" />;
       }
-      return <div data-test-subj="template-fields-form" />;
-    });
+    );
   });
 
   const openSelector = async () => {
