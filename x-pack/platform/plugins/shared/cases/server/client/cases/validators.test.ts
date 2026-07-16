@@ -971,7 +971,9 @@ describe('validators', () => {
         })
       ).resolves.toBeUndefined();
 
-      expect(templatesService.getTemplate).toHaveBeenCalledWith('tpl-from-original');
+      expect(templatesService.getTemplate).toHaveBeenCalledWith('tpl-from-original', undefined, {
+        includeDeleted: true,
+      });
     });
 
     it('allows global field keys alongside template fields when template is set', async () => {
@@ -1331,7 +1333,9 @@ describe('validators', () => {
       });
       expect(fields.length).toBeGreaterThan(0);
       expect(fields[0].name).toBe('resolution');
-      expect(templatesService.getTemplate).toHaveBeenCalledWith('tpl-1', undefined);
+      expect(templatesService.getTemplate).toHaveBeenCalledWith('tpl-1', undefined, {
+        includeDeleted: true,
+      });
     });
 
     it('passes templateVersion as string to getTemplate when provided', async () => {
@@ -1341,7 +1345,9 @@ describe('validators', () => {
         templatesService: templatesService as unknown as TemplatesService,
         logger,
       });
-      expect(templatesService.getTemplate).toHaveBeenCalledWith('tpl-1', '3');
+      expect(templatesService.getTemplate).toHaveBeenCalledWith('tpl-1', '3', {
+        includeDeleted: true,
+      });
     });
 
     it('returns [] when template is not found', async () => {
