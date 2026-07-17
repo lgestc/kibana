@@ -25,7 +25,7 @@ export const useTemplateNonGlobalFields = (
   templateDefinitionFields: Field[],
   owner: string
 ): { resolvedFields: InlineField[]; isLoading: boolean } => {
-  const { data: globalFieldDefsData } = useGetFieldDefinitions({
+  const { data: globalFieldDefsData, isLoading: isLoadingGlobalFields } = useGetFieldDefinitions({
     owner,
     isGlobal: true,
     staleTime: Infinity,
@@ -40,5 +40,7 @@ export const useTemplateNonGlobalFields = (
     return templateDefinitionFields.filter((f) => !isInlineField(f) || !globalNames.has(f.name));
   }, [templateDefinitionFields, globalFieldDefsData]);
 
-  return useResolvedFields(nonGlobalFields, owner);
+  const { resolvedFields, isLoading: isResolving } = useResolvedFields(nonGlobalFields, owner);
+
+  return { resolvedFields, isLoading: isResolving || isLoadingGlobalFields };
 };
