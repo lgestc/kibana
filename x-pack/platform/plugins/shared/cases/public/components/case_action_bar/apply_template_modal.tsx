@@ -37,6 +37,17 @@ import {
 import type { TemplateFieldsFormApi } from '../case_view/components/template_fields_form_ready';
 import * as i18n from '../../common/translations';
 
+// Collect non-empty form values as a snake-keyed string record for submission.
+// Empty ('') and empty-array ('[]') values are dropped so absent fields fall back
+// to server-side defaults / required checks rather than being sent as blanks.
+const collectExtendedFieldValues = (rawValues: Record<string, unknown>): Record<string, string> =>
+  Object.entries(rawValues).reduce<Record<string, string>>((acc, [key, value]) => {
+    if (value !== '' && value !== '[]') {
+      acc[key] = String(value);
+    }
+    return acc;
+  }, {});
+
 interface ApplyTemplateModalProps {
   caseData: CaseUI;
   onClose: () => void;
@@ -110,11 +121,7 @@ export const ApplyTemplateModal: FC<ApplyTemplateModalProps> = ({ caseData, onCl
     let extendedFields: Record<string, string> | undefined;
     if (formApi) {
       const rawValues = formApi.getValues() as Record<string, unknown>;
-      extendedFields = Object.fromEntries(
-        Object.entries(rawValues)
-          .filter(([, v]) => v !== '' && v !== '[]')
-          .map(([k, v]) => [k, String(v)])
-      );
+      extendedFields = collectExtendedFieldValues(rawValues);
     }
 
     changeAppliedTemplate(

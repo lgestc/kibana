@@ -123,6 +123,42 @@ describe('TemplateFieldsFormReady — batch mode carry-over (applyDefaults)', ()
     });
   });
 
+  describe('TOGGLE', () => {
+    const field: InlineField = {
+      name: 'enabled',
+      type: 'keyword',
+      control: FieldType.TOGGLE,
+    };
+
+    it("carries over 'true' (string) unchanged", () => {
+      const values = getInitialValues([field], { enabledAsKeyword: 'true' });
+      expect(values.enabled_as_keyword).toBe('true');
+    });
+
+    it("carries over 'false' (string) unchanged", () => {
+      const values = getInitialValues([field], { enabledAsKeyword: 'false' });
+      expect(values.enabled_as_keyword).toBe('false');
+    });
+
+    it('carries over native boolean true unchanged', () => {
+      const values = getInitialValues([field], { enabledAsKeyword: true });
+      expect(values.enabled_as_keyword).toBe(true);
+    });
+
+    it('carries over native boolean false unchanged', () => {
+      const values = getInitialValues([field], { enabledAsKeyword: false });
+      expect(values.enabled_as_keyword).toBe(false);
+    });
+
+    it('drops a stale non-boolean value inherited from a different keyword control (e.g. SELECT)', () => {
+      // A field key collision across templates (same name, different control type, both keyword-typed)
+      // could carry over an arbitrary string like 'high' from a previous SELECT/RADIO_GROUP field.
+      // The server rejects non-boolean toggle values with a 400, so we sanitize it out here.
+      const values = getInitialValues([field], { enabledAsKeyword: 'high' });
+      expect(values.enabled_as_keyword).toBe('');
+    });
+  });
+
   describe('non-option controls', () => {
     it('INPUT_TEXT: carries over the existing value unchanged', () => {
       const field: InlineField = {

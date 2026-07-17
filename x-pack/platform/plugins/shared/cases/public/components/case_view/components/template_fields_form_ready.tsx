@@ -49,6 +49,17 @@ const parseCheckboxItems = (value: unknown): string[] => {
  * validation only checks non-empty, not option membership), but the server rejects it
  * with a 400. Returning `undefined` here lets the required-field check surface the gap
  * to the user so they can re-pick before confirming the template switch.
+ *
+ * TOGGLE is also validated here: all keyword-typed controls (SELECT_BASIC, RADIO_GROUP,
+ * INPUT_TEXT, TOGGLE, …) share a field-key namespace, so a value carried over from a
+ * different control type (e.g. `"high"` from a SELECT) into a TOGGLE field would pass
+ * client validation but be rejected by the server (`must be either true or false`).
+ * The toggle's valid domain — `true | false | 'true' | 'false'` — is template-independent,
+ * so legitimate toggle values are always preserved.
+ *
+ * Controls whose valid domain is template-independent and whose values cannot conflict
+ * across control types (INPUT_TEXT, TEXTAREA, INPUT_NUMBER, DATE_PICKER, USER_PICKER)
+ * are intentionally passed through unchanged.
  */
 const sanitizeExistingValue = (field: InlineField, existingValue: unknown): unknown => {
   if (existingValue === undefined || existingValue === '') return undefined;
@@ -64,6 +75,18 @@ const sanitizeExistingValue = (field: InlineField, existingValue: unknown): unkn
     const { options } = field.metadata;
     const validItems = parseCheckboxItems(existingValue).filter((item) => options.includes(item));
     return validItems.length > 0 ? JSON.stringify(validItems) : undefined;
+  }
+
+  if (field.control === FieldType.TOGGLE) {
+    // A toggle only ever stores 'true' | 'false'. A value inherited under the same
+    // field key from a different keyword-typed control (e.g. a SELECT storing 'high')
+    // would pass client validation but be rejected by the server with a 400.
+    return existingValue === true ||
+      existingValue === false ||
+      existingValue === 'true' ||
+      existingValue === 'false'
+      ? existingValue
+      : undefined;
   }
 
   return existingValue;
