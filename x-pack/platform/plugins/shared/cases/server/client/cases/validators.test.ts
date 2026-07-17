@@ -1096,6 +1096,7 @@ describe('validators', () => {
             }),
           },
         ],
+        total: 1,
       });
 
       await expect(
@@ -1131,6 +1132,7 @@ describe('validators', () => {
             }),
           },
         ],
+        total: 1,
       });
 
       await expect(
@@ -1517,6 +1519,7 @@ describe('validators', () => {
             }),
           },
         ],
+        total: 1,
       });
 
       const fields = await resolveTemplateFieldsForClose({
