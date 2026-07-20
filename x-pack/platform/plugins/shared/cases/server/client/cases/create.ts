@@ -27,6 +27,7 @@ import {
 } from './validators';
 import { emptyCaseAssigneesSanitizer } from './sanitizers';
 import { normalizeCreateCaseRequest } from './utils';
+import { mergeCustomFieldsIntoExtendedFields } from '../../../common/utils/template_fields';
 
 /**
  * Creates a new case.
@@ -112,6 +113,17 @@ export const create = async (
      */
 
     const normalizedCase = normalizeCreateCaseRequest(query, customFieldsConfiguration);
+
+    // Mirror customFields into extended_fields so that automations writing to the legacy API
+    // keep the v2 analytics / UI surface populated. Existing-wins semantics: a key already
+    // present in extended_fields (e.g. from a template default in the request) is preserved.
+    if (clientArgs.config.templates.enabled) {
+      normalizedCase.extended_fields =
+        mergeCustomFieldsIntoExtendedFields(
+          normalizedCase.customFields,
+          normalizedCase.extended_fields
+        ) ?? undefined;
+    }
 
     const newCase = await caseService.createCase({
       attributes: transformNewCase({

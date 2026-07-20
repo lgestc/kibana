@@ -8,6 +8,7 @@
 import { stringify as stringifyYaml } from 'yaml';
 import { CustomFieldTypes } from '../../../common/types/domain/custom_field/v1';
 import { FieldType } from '../../../common/types/domain/template/fields';
+import { getV2FieldType } from '../../../common/utils/template_fields';
 
 interface LegacyCustomField {
   key: string;
@@ -16,16 +17,6 @@ interface LegacyCustomField {
   required: boolean;
   defaultValue?: string | number | boolean | null;
 }
-
-/**
- * Maps a legacy custom-field type to the v2 field-definition `type`. Shared with the case
- * extended-fields backfill so the storage key it computes (`<name>_as_<type>`) always matches the
- * type this migration writes into the field definition.
- * - number → `integer` (v1 numbers are integer-only; matches v2's own number fields)
- * - text / toggle / unknown → `keyword`
- */
-export const getV2FieldType = (legacyType: string): 'integer' | 'keyword' =>
-  legacyType === CustomFieldTypes.NUMBER ? 'integer' : 'keyword';
 
 /**
  * Strictly coerces a legacy toggle default to a boolean. Legacy toggle values are booleans in

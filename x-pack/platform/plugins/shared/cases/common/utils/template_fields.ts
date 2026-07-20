@@ -15,6 +15,7 @@ import {
 } from '../types/domain/template/fields';
 import type { Field, InlineField, RefField } from '../types/domain/template/fields';
 import type { FieldDefinition } from '../types/domain/field_definition/latest';
+import { CustomFieldTypes } from '../types/domain/custom_field/v1';
 
 export const getFieldSnakeKey = (name: string, type: string): string => `${name}_as_${type}`;
 
@@ -150,4 +151,87 @@ export const buildExtendedFieldsDefaults = (
     }
   }
   return out;
+};
+
+// ---------------------------------------------------------------------------
+// customFields → extended_fields adapter utilities
+//
+// These helpers are used by:
+//   1. The one-shot Task Manager backfill
+//      (`server/tasks/templates_migration/run_case_backfill.ts`)
+//   2. The write-time adapter in the cases client
+//      (`server/client/cases/create.ts`, `bulk_create.ts`, `bulk_update.ts`,
+//       `replace_custom_field.ts`)
+// ---------------------------------------------------------------------------
+
+interface LegacyCaseCustomField {
+  key: string;
+  type: string;
+  value: unknown;
+}
+
+/**
+ * Maps a legacy `customFields` type string to the v2 field-definition `type` string used as the
+ * `_as_<type>` suffix in `extended_fields` storage keys.
+ *
+ * - `'number'` → `'integer'`  (v1 numbers are integer-only; matches the v2 integer field type)
+ * - everything else → `'keyword'`
+ *
+ * Shared between the one-shot migration and the write-time adapter so that the key each path
+ * derives for a given field is always identical.
+ */
+export const getV2FieldType = (legacyType: string): 'integer' | 'keyword' =>
+  legacyType === CustomFieldTypes.NUMBER ? 'integer' : 'keyword';
+
+/**
+ * Computes the `extended_fields` entries to add to a case from its legacy `customFields`.
+ *
+ * Semantics — **existing wins, nulls skipped**:
+ * - A key already present in `existingExtendedFields` is left as-is (a value set through the v2
+ *   system takes precedence over the legacy mirror).
+ * - A `customFields` entry whose value is `null` or `undefined` is skipped — the case left the
+ *   field empty; the v2 field then renders empty rather than being forced to a value.
+ *
+ * Returns only the *additions* (keys not yet present). Callers are responsible for spreading the
+ * result over the existing map; see {@link mergeCustomFieldsIntoExtendedFields} for the combined
+ * helper.
+ */
+export const buildExtendedFieldsBackfill = (
+  customFields: LegacyCaseCustomField[] | undefined,
+  existingExtendedFields: Record<string, unknown> | null | undefined
+): Record<string, string> => {
+  const existing = existingExtendedFields ?? {};
+  const additions: Record<string, string> = {};
+
+  for (const cf of customFields ?? []) {
+    const hasValue = cf.value !== null && cf.value !== undefined;
+    if (hasValue) {
+      const snakeKey = getFieldSnakeKey(cf.key, getV2FieldType(cf.type));
+      if (!(snakeKey in existing)) {
+        additions[snakeKey] = String(cf.value);
+      }
+    }
+  }
+
+  return additions;
+};
+
+/**
+ * Merges `customFields` values into an existing `extended_fields` map, respecting
+ * existing-wins semantics (see {@link buildExtendedFieldsBackfill}).
+ *
+ * Returns:
+ * - the merged map when at least one new key was added, or
+ * - `existingExtendedFields` unchanged when there is nothing to add (avoids spurious SO writes
+ *   and unnecessary `extended_fields` user-action entries).
+ */
+export const mergeCustomFieldsIntoExtendedFields = (
+  customFields: LegacyCaseCustomField[] | undefined,
+  existingExtendedFields: Record<string, unknown> | null | undefined
+): Record<string, string> | null | undefined => {
+  const additions = buildExtendedFieldsBackfill(customFields, existingExtendedFields);
+  if (Object.keys(additions).length === 0) {
+    return existingExtendedFields as Record<string, string> | null | undefined;
+  }
+  return { ...(existingExtendedFields ?? {}), ...additions } as Record<string, string>;
 };

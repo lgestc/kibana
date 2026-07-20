@@ -1010,4 +1010,91 @@ describe('create', () => {
       ).rejects.toThrow('Template tmpl-ext has an invalid definition');
     });
   });
+
+  describe('customFields → extended_fields adapter (write-time mirror)', () => {
+    const adapterCustomFieldsCfg = [
+      { key: 'priority', type: CustomFieldTypes.TEXT, label: 'Priority', required: false },
+      { key: 'count', type: CustomFieldTypes.NUMBER, label: 'Count', required: false },
+    ];
+
+    const customFields: CaseCustomFields = [
+      { key: 'priority', type: CustomFieldTypes.TEXT, value: 'high' },
+      { key: 'count', type: CustomFieldTypes.NUMBER, value: 5 },
+    ];
+
+    const adapterCasesClientMock = createCasesClientMock();
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      adapterCasesClientMock.configure.get = jest.fn().mockResolvedValue([
+        { owner: theCase.owner, customFields: adapterCustomFieldsCfg },
+      ]);
+    });
+
+    it('mirrors customFields into extended_fields when templates flag is enabled', async () => {
+      const clientArgs = createCasesClientMockArgs();
+      clientArgs.config = { ...clientArgs.config, templates: { enabled: true } };
+      clientArgs.services.caseService.createCase.mockResolvedValue(caseSO);
+
+      await create({ ...theCase, customFields }, clientArgs, adapterCasesClientMock);
+
+      const [[createArgs]] = clientArgs.services.caseService.createCase.mock.calls;
+      expect(createArgs.attributes.extended_fields).toMatchObject({
+        priority_as_keyword: 'high',
+        count_as_integer: '5',
+      });
+    });
+
+    it('does not mirror customFields into extended_fields when templates flag is disabled', async () => {
+      // FAILURE SCENARIO: adapter runs unconditionally — extended_fields written when flag is off.
+      const clientArgs = createCasesClientMockArgs();
+      // config.templates.enabled defaults to false in the mock
+      clientArgs.services.caseService.createCase.mockResolvedValue(caseSO);
+
+      await create({ ...theCase, customFields }, clientArgs, adapterCasesClientMock);
+
+      const [[createArgs]] = clientArgs.services.caseService.createCase.mock.calls;
+      expect(createArgs.attributes.extended_fields).toBeUndefined();
+    });
+
+    it('preserves explicit extended_fields values when flag is enabled (existing-wins)', async () => {
+      // FAILURE SCENARIO: adapter overwrites an extended_fields key that was explicitly set
+      // in the request (e.g. from a template default).
+      const clientArgs = createCasesClientMockArgs();
+      clientArgs.config = { ...clientArgs.config, templates: { enabled: true } };
+      clientArgs.services.fieldDefinitionsService.getFieldDefinitions.mockResolvedValue({
+        fieldDefinitions: [
+          {
+            fieldDefinitionId: 'fd-priority',
+            name: 'priority',
+            owner: SECURITY_SOLUTION_OWNER,
+            description: '',
+            isGlobal: true,
+            definition: yamlStringify({
+              name: 'priority',
+              type: 'keyword',
+              control: 'INPUT_TEXT',
+              label: 'Priority',
+            }),
+          },
+        ],
+        total: 1,
+      });
+      clientArgs.services.caseService.createCase.mockResolvedValue(caseSO);
+
+      await create(
+        {
+          ...theCase,
+          customFields: [{ key: 'priority', type: CustomFieldTypes.TEXT, value: 'low' }],
+          // Explicit v2 value for the same key — must not be overwritten.
+          extended_fields: { priority_as_keyword: 'critical' },
+        },
+        clientArgs,
+        adapterCasesClientMock
+      );
+
+      const [[createArgs]] = clientArgs.services.caseService.createCase.mock.calls;
+      expect(createArgs.attributes.extended_fields?.priority_as_keyword).toBe('critical');
+    });
+  });
 });

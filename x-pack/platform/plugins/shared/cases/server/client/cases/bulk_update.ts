@@ -83,6 +83,7 @@ import {
 } from './validators';
 import type { InlineField } from '../../../common/types/domain/template/fields';
 import { emptyCasesAssigneesSanitizer } from './sanitizers';
+import { mergeCustomFieldsIntoExtendedFields } from '../../../common/utils/template_fields';
 /**
  * Throws an error if any of the requests attempt to update the owner of a case.
  */
@@ -694,6 +695,7 @@ export const bulkUpdate = async (
       user,
       casesToUpdate,
       customFieldsConfigurationMap,
+      templatesEnabled: clientArgs.config.templates.enabled,
     });
 
     // Resolve names of newly-applied templates so the "applied template" user action records the
@@ -923,10 +925,12 @@ const createPatchCasesPayload = ({
   casesToUpdate,
   user,
   customFieldsConfigurationMap,
+  templatesEnabled,
 }: {
   casesToUpdate: UpdateRequestWithOriginalCase[];
   user: User;
   customFieldsConfigurationMap: Map<string, CustomFieldsConfiguration>;
+  templatesEnabled: boolean;
 }): PatchCasesArgs => {
   const updatedDt = new Date().toISOString();
 
@@ -966,6 +970,27 @@ const createPatchCasesPayload = ({
           ...(originalCase.attributes.extended_fields ?? {}),
           ...trimmedCaseAttributes.extended_fields,
         };
+      }
+
+      // Mirror customFields into extended_fields so that automations writing to the legacy API
+      // keep the v2 analytics / UI surface populated. Only run when the update includes
+      // customFields — an update that omits customFields must not change extended_fields.
+      //
+      // Existing-wins semantics: a key already present in extended_fields (including those
+      // just merged from the request above) is left as-is.
+      //
+      // mergeCustomFieldsIntoExtendedFields returns the *same reference* when nothing new is
+      // added — guard on reference inequality to avoid spurious writes/user-actions.
+      if (templatesEnabled && trimmedCaseAttributes.customFields) {
+        const currentExtendedFields =
+          trimmedCaseAttributes.extended_fields ?? originalCase.attributes.extended_fields;
+        const merged = mergeCustomFieldsIntoExtendedFields(
+          trimmedCaseAttributes.customFields,
+          currentExtendedFields
+        );
+        if (merged !== currentExtendedFields && merged != null) {
+          trimmedCaseAttributes.extended_fields = merged;
+        }
       }
 
       return {
