@@ -174,7 +174,7 @@ export default ({ getService }: FtrProviderContext): void => {
           'file',
           join(
             __dirname,
-            '../../../../../common/fixtures/saved_object_exports/case_with_template_and_field_defs.ndjson'
+            '../../../../common/fixtures/saved_object_exports/case_with_template_and_field_defs.ndjson'
           )
         )
         .set('kbn-xsrf', 'true')
