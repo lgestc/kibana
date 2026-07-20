@@ -59,7 +59,7 @@ const buildTemplateBody = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const ndjsonToObjects = (text: string): SavedObject[] =>
+const ndjsonToObjects = (text: string): Array<SavedObject<Record<string, unknown>>> =>
   text
     .split('\n')
     .filter(Boolean)
