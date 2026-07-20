@@ -201,6 +201,7 @@ export default ({ getService }: FtrProviderContext): void => {
       // The field definition should have been imported
       const { body: fieldDefsResponse } = await supertest
         .get(`${getSpaceUrlPrefix('default')}${FIELD_DEFINITIONS_URL}`)
+        .query({ owner: 'securitySolutionFixture' })
         .set('kbn-xsrf', 'true')
         .expect(200);
 
