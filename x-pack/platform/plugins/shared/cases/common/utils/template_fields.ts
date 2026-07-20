@@ -164,6 +164,9 @@ export const buildExtendedFieldsDefaults = (
 //       `replace_custom_field.ts`)
 // ---------------------------------------------------------------------------
 
+// Mirrors the persisted SO shape (`CasePersistedCustomFields` in server/common/types/case.ts).
+// `type` is intentionally `string` rather than `CustomFieldTypes` so the function is resilient
+// to unknown future types (they fall through to the `'keyword'` default in getV2FieldType).
 interface LegacyCaseCustomField {
   key: string;
   type: string;
@@ -222,8 +225,15 @@ export const buildExtendedFieldsBackfill = (
  *
  * Returns:
  * - the merged map when at least one new key was added, or
- * - `existingExtendedFields` unchanged when there is nothing to add (avoids spurious SO writes
- *   and unnecessary `extended_fields` user-action entries).
+ * - `existingExtendedFields` unchanged (same reference) when there is nothing to add —
+ *   callers use reference equality to detect a no-op and skip the SO write.
+ *
+ * **Design trade-off — keys only flow in once.**
+ * Once a key is present in `extended_fields` (placed there by this adapter or directly by
+ * the v2 system), subsequent legacy-API writes to the same `customFields` key are silently
+ * ignored. This is intentional: `extended_fields` is the v2 source of truth, and the adapter
+ * only backfills *missing* keys. Callers that need the mirror to stay in sync across updates
+ * must write directly to `extended_fields` via the v2 API.
  */
 export const mergeCustomFieldsIntoExtendedFields = (
   customFields: LegacyCaseCustomField[] | undefined,
