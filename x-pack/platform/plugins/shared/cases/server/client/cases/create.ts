@@ -122,7 +122,7 @@ export const create = async (
         mergeCustomFieldsIntoExtendedFields(
           normalizedCase.customFields,
           normalizedCase.extended_fields
-        ) ?? undefined;
+        ) ?? undefined; // return type includes null when input is null; CasePostRequest.extended_fields is never null
     }
 
     const newCase = await caseService.createCase({
