@@ -15,6 +15,7 @@ import {
   CASE_TEMPLATE_SAVED_OBJECT,
   CASE_USER_ACTION_SAVED_OBJECT,
   MAX_DOCS_PER_PAGE,
+  MAX_FIELD_DEFINITIONS_PER_OWNER,
 } from '../../../common/constants';
 import type { Template } from '../../../common/types/domain/template/latest';
 import type { FieldDefinition } from '../../../common/types/domain/field_definition/latest';
@@ -375,6 +376,42 @@ describe('import_export utils', () => {
       const fieldDefFindCall = find.mock.calls[1][0];
       expect(fieldDefFindCall.type).toBe(CASE_FIELD_DEFINITION_SAVED_OBJECT);
       expect(fieldDefFindCall.filter).toContain('securitySolution');
+    });
+
+    it('queries field definitions for all unique owners across exported cases', async () => {
+      const templateSOSecurity = makeTemplateSO('tmpl-so-sec', {
+        templateId: 'tmpl-sec',
+        templateVersion: 1,
+        owner: 'securitySolution',
+        name: 'Security Template',
+        deletedAt: null,
+      });
+      const templateSOObs = makeTemplateSO('tmpl-so-obs', {
+        templateId: 'tmpl-obs',
+        templateVersion: 1,
+        owner: 'observability',
+        name: 'Obs Template',
+        deletedAt: null,
+      });
+
+      const find = jest
+        .fn()
+        .mockResolvedValueOnce({ saved_objects: [templateSOSecurity, templateSOObs] })
+        .mockResolvedValueOnce({ saved_objects: [] });
+
+      const savedObjectsClient = { find } as unknown as SavedObjectsClientContract;
+      const cases = [
+        makeCaseSO('case-1', 'securitySolution', { id: 'tmpl-sec', version: 1 }),
+        makeCaseSO('case-2', 'observability', { id: 'tmpl-obs', version: 1 }),
+      ];
+
+      await getTemplatesAndFieldDefinitionsForCases(savedObjectsClient, cases, logger);
+
+      const fieldDefFindCall = find.mock.calls[1][0];
+      expect(fieldDefFindCall.type).toBe(CASE_FIELD_DEFINITION_SAVED_OBJECT);
+      expect(fieldDefFindCall.filter).toContain('securitySolution');
+      expect(fieldDefFindCall.filter).toContain('observability');
+      expect(fieldDefFindCall.perPage).toBe(MAX_FIELD_DEFINITIONS_PER_OWNER * 2);
     });
 
     it('caps the template find perPage at MAX_DOCS_PER_PAGE even when unique template refs exceed it', async () => {

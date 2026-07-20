@@ -99,7 +99,9 @@ async function getAssociatedObjects<T>({
  *  - Every field-definition (`cases-field-definition`) that the template's YAML definition
  *    references via a `$ref` field is included.
  *  - All `isGlobal` field definitions for the owners of the exported cases are included (global
- *    fields render on every case regardless of which template was applied).
+ *    fields render on every case regardless of which template was applied). This only applies
+ *    when at least one exported case references a template; if none do, the function returns
+ *    early and no field definitions are fetched.
  *
  * The links between cases, templates, and field definitions are purely logical (by attribute
  * value, not SO `references`), so SO import ID-remapping does not break them.
