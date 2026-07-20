@@ -264,7 +264,5 @@ export const mergeCustomFieldsIntoExtendedFields = (
     existingKeys.length === mergedKeys.length &&
     mergedKeys.every((k) => merged[k] === (existing as Record<string, string>)[k]);
 
-  return isNoOp
-    ? (existingExtendedFields as Record<string, string> | null | undefined)
-    : merged;
+  return isNoOp ? (existingExtendedFields as Record<string, string> | null | undefined) : merged;
 };
