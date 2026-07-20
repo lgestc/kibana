@@ -6,10 +6,10 @@
  */
 
 import { httpServerMock, loggingSystemMock, coreMock } from '@kbn/core/server/mocks';
-import type { SavedObjectsExportTransformContext } from '@kbn/core/server';
+import type { SavedObject, SavedObjectsExportTransformContext } from '@kbn/core/server';
 import { handleExport } from './export';
 import { mockCases } from '../../mocks';
-import type { CaseSavedObjectTransformed } from '../../common/types/case';
+import type { CasePersistedAttributes, CaseSavedObjectTransformed } from '../../common/types/case';
 import {
   CASE_ATTACHMENT_SAVED_OBJECT,
   CASE_FIELD_DEFINITION_SAVED_OBJECT,
@@ -46,8 +46,7 @@ describe('case export', () => {
     const exported = await handleExport({
       context: testContext,
       coreSetup: coreMock.createSetup(),
-      // @ts-ignore: mock objects are not matching persisted objects
-      objects: testCases,
+      objects: testCases as Array<SavedObject<CasePersistedAttributes>>,
       logger,
       config,
     });
@@ -148,8 +147,7 @@ describe('case export', () => {
     const exported = await handleExport({
       context: testContext,
       coreSetup,
-      // @ts-ignore: mock objects are not matching persisted objects
-      objects: testCases,
+      objects: testCases as Array<SavedObject<CasePersistedAttributes>>,
       logger,
       config,
     });
@@ -164,8 +162,7 @@ describe('case export', () => {
     await handleExport({
       context: testContext,
       coreSetup,
-      // @ts-ignore: mock objects are not matching persisted objects
-      objects: testCases,
+      objects: testCases as Array<SavedObject<CasePersistedAttributes>>,
       logger,
       config,
     });

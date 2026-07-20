@@ -159,8 +159,8 @@ export default ({ getService }: FtrProviderContext): void => {
       const objects = ndjsonToObjects(text);
 
       expect(objects.filter((so) => so.type === CASE_TEMPLATE_SAVED_OBJECT)).to.have.length(0);
-      // Non-global field def should not appear (no template ref); global ones would appear per the
-      // "always bundle global fields for owners" logic, but here we only have a non-global def.
+      // With no template reference, getTemplatesAndFieldDefinitionsForCases returns early with []
+      // — no field definitions are bundled regardless of isGlobal.
       expect(objects.filter((so) => so.type === CASE_FIELD_DEFINITION_SAVED_OBJECT)).to.have.length(
         0
       );

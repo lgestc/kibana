@@ -145,7 +145,7 @@ export async function getTemplatesAndFieldDefinitionsForCases(
   const templateFindResult = await savedObjectsClient.find<Template>({
     type: CASE_TEMPLATE_SAVED_OBJECT,
     filter: templateFilter,
-    perPage: templateRefs.length,
+    perPage: Math.min(templateRefs.length, MAX_DOCS_PER_PAGE),
   });
 
   const templateSOs = templateFindResult.saved_objects;

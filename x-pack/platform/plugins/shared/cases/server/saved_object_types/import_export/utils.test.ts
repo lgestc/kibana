@@ -14,6 +14,7 @@ import {
   CASE_FIELD_DEFINITION_SAVED_OBJECT,
   CASE_TEMPLATE_SAVED_OBJECT,
   CASE_USER_ACTION_SAVED_OBJECT,
+  MAX_DOCS_PER_PAGE,
 } from '../../../common/constants';
 import type { Template } from '../../../common/types/domain/template/latest';
 import type { FieldDefinition } from '../../../common/types/domain/field_definition/latest';
@@ -374,6 +375,20 @@ describe('import_export utils', () => {
       const fieldDefFindCall = find.mock.calls[1][0];
       expect(fieldDefFindCall.type).toBe(CASE_FIELD_DEFINITION_SAVED_OBJECT);
       expect(fieldDefFindCall.filter).toContain('securitySolution');
+    });
+
+    it('caps the template find perPage at MAX_DOCS_PER_PAGE even when unique template refs exceed it', async () => {
+      const cases = Array.from({ length: MAX_DOCS_PER_PAGE + 1 }, (_, i) =>
+        makeCaseSO(`case-${i}`, 'securitySolution', { id: `tmpl-${i}`, version: 1 })
+      );
+
+      const find = jest.fn().mockResolvedValue({ saved_objects: [] });
+      const savedObjectsClient = { find } as unknown as SavedObjectsClientContract;
+
+      await getTemplatesAndFieldDefinitionsForCases(savedObjectsClient, cases, logger);
+
+      const templateFindCall = find.mock.calls[0][0];
+      expect(templateFindCall.perPage).toBe(MAX_DOCS_PER_PAGE);
     });
   });
 });
