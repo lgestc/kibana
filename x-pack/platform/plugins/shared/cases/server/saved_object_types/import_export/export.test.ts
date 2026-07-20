@@ -46,7 +46,7 @@ describe('case export', () => {
     const exported = await handleExport({
       context: testContext,
       coreSetup: coreMock.createSetup(),
-      objects: testCases as Array<SavedObject<CasePersistedAttributes>>,
+      objects: testCases as unknown as Array<SavedObject<CasePersistedAttributes>>,
       logger,
       config,
     });
@@ -147,7 +147,7 @@ describe('case export', () => {
     const exported = await handleExport({
       context: testContext,
       coreSetup,
-      objects: testCases as Array<SavedObject<CasePersistedAttributes>>,
+      objects: testCases as unknown as Array<SavedObject<CasePersistedAttributes>>,
       logger,
       config,
     });
@@ -162,7 +162,7 @@ describe('case export', () => {
     await handleExport({
       context: testContext,
       coreSetup,
-      objects: testCases as Array<SavedObject<CasePersistedAttributes>>,
+      objects: testCases as unknown as Array<SavedObject<CasePersistedAttributes>>,
       logger,
       config,
     });
