@@ -240,8 +240,8 @@ describe('customFields → extended_fields adapter utilities', () => {
       expect(getV2FieldType('text')).toBe('keyword');
     });
 
-    it('maps toggle to keyword', () => {
-      expect(getV2FieldType('toggle')).toBe('keyword');
+    it('maps toggle to boolean', () => {
+      expect(getV2FieldType('toggle')).toBe('boolean');
     });
 
     it('maps unknown types to keyword', () => {
@@ -269,7 +269,7 @@ describe('customFields → extended_fields adapter utilities', () => {
       expect(result).toEqual({
         priority_as_keyword: 'high',
         count_as_integer: '42',
-        enabled_as_keyword: 'true',
+        enabled_as_boolean: 'true',
       });
     });
 
@@ -373,7 +373,7 @@ describe('customFields → extended_fields adapter utilities', () => {
         undefined
       );
 
-      expect(result).toEqual({ x_as_keyword: 'false' });
+      expect(result).toEqual({ x_as_boolean: 'false' });
     });
   });
 });

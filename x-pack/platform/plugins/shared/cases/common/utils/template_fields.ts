@@ -178,13 +178,17 @@ interface LegacyCaseCustomField {
  * `_as_<type>` suffix in `extended_fields` storage keys.
  *
  * - `'number'` → `'integer'`  (v1 numbers are integer-only; matches the v2 integer field type)
+ * - `'toggle'` → `'boolean'`  (matches the native v2 TOGGLE field's `type`)
  * - everything else → `'keyword'`
  *
  * Shared between the one-shot migration and the write-time adapter so that the key each path
  * derives for a given field is always identical.
  */
-export const getV2FieldType = (legacyType: string): 'integer' | 'keyword' =>
-  legacyType === CustomFieldTypes.NUMBER ? 'integer' : 'keyword';
+export const getV2FieldType = (legacyType: string): 'integer' | 'boolean' | 'keyword' => {
+  if (legacyType === CustomFieldTypes.NUMBER) return 'integer';
+  if (legacyType === CustomFieldTypes.TOGGLE) return 'boolean';
+  return 'keyword';
+};
 
 /**
  * Computes the `extended_fields` entries to add to a case from its legacy `customFields`.
