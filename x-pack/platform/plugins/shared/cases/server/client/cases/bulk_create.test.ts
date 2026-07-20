@@ -1491,9 +1491,7 @@ describe('bulkCreate', () => {
       expect(createdCase.extended_fields).toBeUndefined();
     });
 
-    it('preserves explicit extended_fields values when flag is enabled (existing-wins)', async () => {
-      // FAILURE SCENARIO: adapter overwrites an extended_fields key that was explicitly set
-      // in the request (e.g. from a template default).
+    it('overrides explicit extended_fields values when customField is also set (customFields-win)', async () => {
       const clientArgs = createCasesClientMockArgs();
       clientArgs.config = { ...clientArgs.config, templates: { enabled: true } };
       clientArgs.services.caseService.bulkCreateCases.mockResolvedValue({
@@ -1504,7 +1502,7 @@ describe('bulkCreate', () => {
         {
           cases: getCases({
             customFields: [{ key: 'priority', type: CustomFieldTypes.TEXT, value: 'low' }],
-            // Explicit v2 value for the same key — must not be overwritten by the adapter.
+            // Pre-set v2 value — customFields wins and overrides it.
             extended_fields: { priority_as_keyword: 'critical' },
           }),
         },
@@ -1513,7 +1511,7 @@ describe('bulkCreate', () => {
       );
 
       const createdCase = clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
-      expect(createdCase.extended_fields?.priority_as_keyword).toBe('critical');
+      expect(createdCase.extended_fields?.priority_as_keyword).toBe('low');
     });
   });
 });

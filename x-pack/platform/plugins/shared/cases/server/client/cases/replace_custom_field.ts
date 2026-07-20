@@ -115,12 +115,12 @@ export const replaceCustomField = async (
     const updatedAt = new Date().toISOString();
 
     // Mirror customFields into extended_fields so that automations writing to the legacy API
-    // keep the v2 analytics / UI surface populated. Existing-wins semantics: a key already
-    // present in extended_fields is left as-is.
+    // keep the v2 analytics / UI surface populated. CustomFields-win semantics: the incoming
+    // value always overrides the mirror; a null value clears the mirror key.
     //
-    // mergeCustomFieldsIntoExtendedFields returns the *same reference* when nothing new is
-    // added — that signals "no change needed" and we must not spread extended_fields into
-    // the patch payload (it would be a spurious write that also triggers an extra user action).
+    // mergeCustomFieldsIntoExtendedFields returns the *same reference* when the result is
+    // value-identical — that signals "no change needed" and we must not spread extended_fields
+    // into the patch payload (it would be a spurious write that also triggers an extra user action).
     const existingExtendedFields = caseToUpdate.attributes.extended_fields;
     const mergedExtendedFields = config.templates.enabled
       ? mergeCustomFieldsIntoExtendedFields(decodedCustomFields, existingExtendedFields)

@@ -224,28 +224,47 @@ export const buildExtendedFieldsBackfill = (
 };
 
 /**
- * Merges `customFields` values into an existing `extended_fields` map, respecting
- * existing-wins semantics (see {@link buildExtendedFieldsBackfill}).
+ * Mirrors `customFields` values into an existing `extended_fields` map with
+ * **customFields-win** semantics — the live write-time counterpart of {@link buildExtendedFieldsBackfill}.
+ *
+ * Rules applied for each customField entry:
+ * - non-null / non-undefined value → override (or add) the mirror key with `String(value)`.
+ * - null / undefined value → delete the mirror key so the v2 field renders empty rather than
+ *   retaining a stale value.
  *
  * Returns:
- * - the merged map when at least one new key was added, or
- * - `existingExtendedFields` unchanged (same reference) when there is nothing to add —
- *   callers use reference equality to detect a no-op and skip the SO write.
+ * - `existingExtendedFields` unchanged (same reference) when every key in the result would be
+ *   identical to the current map — callers use reference equality to detect a no-op and skip
+ *   the SO write.
+ * - a new merged map otherwise.
  *
- * **Design trade-off — keys only flow in once.**
- * Once a key is present in `extended_fields` (placed there by this adapter or directly by
- * the v2 system), subsequent legacy-API writes to the same `customFields` key are silently
- * ignored. This is intentional: `extended_fields` is the v2 source of truth, and the adapter
- * only backfills *missing* keys. Callers that need the mirror to stay in sync across updates
- * must write directly to `extended_fields` via the v2 API.
+ * Note: the one-shot migration backfill ({@link buildExtendedFieldsBackfill}) retains
+ * existing-wins semantics so it never clobbers values written through the v2 system.
  */
 export const mergeCustomFieldsIntoExtendedFields = (
   customFields: LegacyCaseCustomField[] | undefined,
   existingExtendedFields: Record<string, unknown> | null | undefined
 ): Record<string, string> | null | undefined => {
-  const additions = buildExtendedFieldsBackfill(customFields, existingExtendedFields);
-  if (Object.keys(additions).length === 0) {
-    return existingExtendedFields as Record<string, string> | null | undefined;
+  const existing = existingExtendedFields ?? {};
+  const merged: Record<string, string> = { ...existing } as Record<string, string>;
+
+  for (const cf of customFields ?? []) {
+    const snakeKey = getFieldSnakeKey(cf.key, getV2FieldType(cf.type));
+    if (cf.value !== null && cf.value !== undefined) {
+      merged[snakeKey] = String(cf.value);
+    } else {
+      delete merged[snakeKey];
+    }
   }
-  return { ...(existingExtendedFields ?? {}), ...additions } as Record<string, string>;
+
+  // Return the same reference when the result is value-identical — signals no-op to callers.
+  const existingKeys = Object.keys(existing);
+  const mergedKeys = Object.keys(merged);
+  const isNoOp =
+    existingKeys.length === mergedKeys.length &&
+    mergedKeys.every((k) => merged[k] === (existing as Record<string, string>)[k]);
+
+  return isNoOp
+    ? (existingExtendedFields as Record<string, string> | null | undefined)
+    : merged;
 };

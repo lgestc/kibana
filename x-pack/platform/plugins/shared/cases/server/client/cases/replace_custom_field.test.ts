@@ -464,8 +464,7 @@ describe('Replace custom field', () => {
       expect(patchArgs.updatedAttributes.extended_fields).toBeUndefined();
     });
 
-    it('preserves existing extended_fields entries when mirroring (existing-wins)', async () => {
-      // FAILURE SCENARIO: adapter overwrites a key already present in extended_fields.
+    it('overrides an existing extended_fields entry when the value changes (customFields-win)', async () => {
       const caseWithExtendedFields = {
         ...theCase,
         attributes: {
@@ -506,7 +505,53 @@ describe('Replace custom field', () => {
       );
 
       const [[patchArgs]] = clientArgsWithFlag.services.caseService.patchCase.mock.calls;
-      // The key was already in extended_fields — existing-wins means it stays unchanged.
+      // CustomFields-win: the incoming value overrides the stale mirror.
+      expect(patchArgs.updatedAttributes.extended_fields).toEqual({
+        first_key_as_keyword: 'updated_value',
+      });
+    });
+
+    it('is a no-op (extended_fields omitted) when the replaced value equals the existing mirror', async () => {
+      const caseWithExtendedFields = {
+        ...theCase,
+        attributes: {
+          ...theCase.attributes,
+          extended_fields: { first_key_as_keyword: 'same_value' },
+        },
+      };
+
+      const clientArgsWithFlag = createCasesClientMockArgs();
+      clientArgsWithFlag.config = { ...clientArgsWithFlag.config, templates: { enabled: true } };
+      clientArgsWithFlag.services.caseService.getCase.mockResolvedValue(caseWithExtendedFields);
+      clientArgsWithFlag.services.userActionService.getMultipleCasesUserActionsTotal.mockResolvedValue(
+        { [mockCases[0].id]: 1 }
+      );
+      clientArgsWithFlag.services.caseService.patchCase.mockResolvedValue({
+        ...caseWithExtendedFields,
+      });
+
+      const casesClientLocal = createCasesClientMock();
+      casesClientLocal.configure.get = jest.fn().mockResolvedValue([
+        {
+          owner: mockCases[0].attributes.owner,
+          customFields: [
+            { key: 'first_key', type: CustomFieldTypes.TEXT, label: 'First', required: true },
+          ],
+        },
+      ]);
+
+      await replaceCustomField(
+        {
+          caseId: mockCases[0].id,
+          customFieldId: 'first_key',
+          request: { caseVersion: mockCases[0].version ?? '', value: 'same_value' },
+        },
+        clientArgsWithFlag,
+        casesClientLocal
+      );
+
+      const [[patchArgs]] = clientArgsWithFlag.services.caseService.patchCase.mock.calls;
+      // Value is identical — no spurious write.
       expect(patchArgs.updatedAttributes.extended_fields).toBeUndefined();
     });
   });

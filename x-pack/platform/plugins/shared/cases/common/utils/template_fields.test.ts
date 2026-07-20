@@ -318,7 +318,7 @@ describe('customFields → extended_fields adapter utilities', () => {
   });
 
   describe('mergeCustomFieldsIntoExtendedFields', () => {
-    it('returns the merged map when new keys are added', () => {
+    it('adds a new key when no existing map is present', () => {
       const result = mergeCustomFieldsIntoExtendedFields(
         [{ key: 'priority', type: 'text', value: 'high' }],
         { existing_key_as_keyword: 'value' }
@@ -330,41 +330,80 @@ describe('customFields → extended_fields adapter utilities', () => {
       });
     });
 
-    it('returns existingExtendedFields unchanged when there is nothing to add', () => {
-      // FAILURE SCENARIO: adapter returns a new object reference on every call even when
-      // nothing changed — would trigger spurious SO writes and user-action entries.
-      const existing = { priority_as_keyword: 'high' };
+    it('overrides an existing key when the customField value changes', () => {
       const result = mergeCustomFieldsIntoExtendedFields(
-        [{ key: 'priority', type: 'text', value: 'low' }], // already present — no addition
-        existing
+        [{ key: 'priority', type: 'text', value: 'low' }],
+        { priority_as_keyword: 'high' }
       );
 
-      expect(result).toBe(existing); // same reference
+      expect(result).toEqual({ priority_as_keyword: 'low' });
     });
 
-    it('returns undefined unchanged when there is nothing to add and existing is undefined', () => {
-      const result = mergeCustomFieldsIntoExtendedFields(undefined, undefined);
-      expect(result).toBeUndefined();
-    });
-
-    it('returns null unchanged when there is nothing to add and existing is null', () => {
-      const result = mergeCustomFieldsIntoExtendedFields([], null);
-      expect(result).toBeNull();
-    });
-
-    it('preserves existing keys and adds new ones simultaneously', () => {
+    it('overrides existing keys and adds new ones simultaneously', () => {
       const result = mergeCustomFieldsIntoExtendedFields(
         [
-          { key: 'kept', type: 'text', value: 'old' }, // existing-wins — not overwritten
+          { key: 'kept', type: 'text', value: 'updated' }, // customFields-win — overrides
           { key: 'new', type: 'number', value: 7 }, // added
         ],
         { kept_as_keyword: 'original' }
       );
 
       expect(result).toEqual({
-        kept_as_keyword: 'original', // unchanged
+        kept_as_keyword: 'updated', // overridden
         new_as_integer: '7', // added
       });
+    });
+
+    it('returns existingExtendedFields unchanged (same reference) when every value is identical', () => {
+      // FAILURE SCENARIO: adapter returns a new object reference on every call even when
+      // nothing changed — would trigger spurious SO writes and user-action entries.
+      const existing = { priority_as_keyword: 'high' };
+      const result = mergeCustomFieldsIntoExtendedFields(
+        [{ key: 'priority', type: 'text', value: 'high' }], // same value — no-op
+        existing
+      );
+
+      expect(result).toBe(existing); // same reference
+    });
+
+    it('returns undefined unchanged when customFields is empty and existing is undefined', () => {
+      const result = mergeCustomFieldsIntoExtendedFields(undefined, undefined);
+      expect(result).toBeUndefined();
+    });
+
+    it('returns null unchanged when customFields is empty and existing is null', () => {
+      const result = mergeCustomFieldsIntoExtendedFields([], null);
+      expect(result).toBeNull();
+    });
+
+    it('clears a mirror key when the customField value is null', () => {
+      const result = mergeCustomFieldsIntoExtendedFields(
+        [{ key: 'priority', type: 'text', value: null }],
+        { priority_as_keyword: 'high', other_as_keyword: 'keep' }
+      );
+
+      expect(result).toEqual({ other_as_keyword: 'keep' });
+      expect(result).not.toHaveProperty('priority_as_keyword');
+    });
+
+    it('clears a mirror key when the customField value is undefined', () => {
+      const result = mergeCustomFieldsIntoExtendedFields(
+        [{ key: 'priority', type: 'text', value: undefined }],
+        { priority_as_keyword: 'high' }
+      );
+
+      expect(result).toEqual({});
+      expect(result).not.toHaveProperty('priority_as_keyword');
+    });
+
+    it('is a no-op (same reference) when a null customField key is not present in existing', () => {
+      const existing = { other_as_keyword: 'keep' };
+      const result = mergeCustomFieldsIntoExtendedFields(
+        [{ key: 'priority', type: 'text', value: null }], // key absent — nothing to delete
+        existing
+      );
+
+      expect(result).toBe(existing); // same reference — no spurious write
     });
 
     it('produces a new map from undefined existing when customFields have values', () => {

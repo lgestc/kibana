@@ -246,8 +246,8 @@ const createBulkCreateCaseRequest = ({
   const normalizedCase = normalizeCreateCaseRequest(caseWithoutId, customFieldsConfiguration);
 
   // Mirror customFields into extended_fields so that automations writing to the legacy API
-  // keep the v2 analytics / UI surface populated. Existing-wins semantics: a key already
-  // present in extended_fields (e.g. from a template default in the request) is preserved.
+  // keep the v2 analytics / UI surface populated. CustomFields-win semantics: the incoming
+  // value overrides any pre-set mirror key (e.g. a template default in the request).
   if (templatesEnabled) {
     normalizedCase.extended_fields =
       mergeCustomFieldsIntoExtendedFields(

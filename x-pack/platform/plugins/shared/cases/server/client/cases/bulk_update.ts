@@ -976,11 +976,11 @@ const createPatchCasesPayload = ({
       // keep the v2 analytics / UI surface populated. Only run when the update includes
       // customFields — an update that omits customFields must not change extended_fields.
       //
-      // Existing-wins semantics: a key already present in extended_fields (including those
-      // just merged from the request above) is left as-is.
+      // CustomFields-win semantics: the incoming value always overrides the mirror key; a null
+      // value clears the mirror key.
       //
-      // mergeCustomFieldsIntoExtendedFields returns the *same reference* when nothing new is
-      // added — guard on reference inequality to avoid spurious writes/user-actions.
+      // mergeCustomFieldsIntoExtendedFields returns the *same reference* when the result is
+      // value-identical — guard on reference inequality to avoid spurious writes/user-actions.
       if (templatesEnabled && trimmedCaseAttributes.customFields) {
         const currentExtendedFields =
           trimmedCaseAttributes.extended_fields ?? originalCase.attributes.extended_fields;

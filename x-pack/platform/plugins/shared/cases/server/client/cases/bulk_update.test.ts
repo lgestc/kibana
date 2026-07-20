@@ -2919,14 +2919,10 @@ describe('update', () => {
       expect(updatedAttributes.extended_fields).toBeUndefined();
     });
 
-    it('omits extended_fields from the patch payload when nothing new is added (existing-wins)', async () => {
-      // FAILURE SCENARIO: adapter sets extended_fields on every customFields update, even when
-      // all keys already exist — causing a spurious SO write and an unnecessary user action.
-      // When existing-wins applies to ALL keys, the adapter must leave extended_fields out of
-      // updatedAttributes entirely so the SO is not written unnecessarily.
+    it('overrides an existing mirror key when the customField value changes (customFields-win)', async () => {
       const clientArgs = createCasesClientMockArgs();
       clientArgs.config = { ...clientArgs.config, templates: { enabled: true } };
-      // original case has priority_as_keyword already set — mirroring should be a no-op
+      // original case has priority_as_keyword: 'critical' — customFields-win must override it
       setupMocks(clientArgs, { priority_as_keyword: 'critical' });
 
       await bulkUpdate(
@@ -2947,7 +2943,37 @@ describe('update', () => {
 
       const updatedAttributes =
         clientArgs.services.caseService.patchCases.mock.calls[0][0].cases[0].updatedAttributes;
-      // Nothing was added — extended_fields must not appear in the patch payload.
+      // Value changed — extended_fields must appear in the patch payload with the new value.
+      expect(updatedAttributes.extended_fields).toEqual({ priority_as_keyword: 'low' });
+    });
+
+    it('omits extended_fields from the patch payload when the customField value is unchanged', async () => {
+      // FAILURE SCENARIO: adapter sets extended_fields on every customFields update, even when
+      // the value is identical — causing a spurious SO write and an unnecessary user action.
+      const clientArgs = createCasesClientMockArgs();
+      clientArgs.config = { ...clientArgs.config, templates: { enabled: true } };
+      // original case has priority_as_keyword: 'low' — same as the incoming value
+      setupMocks(clientArgs, { priority_as_keyword: 'low' });
+
+      await bulkUpdate(
+        {
+          cases: [
+            {
+              id: mockCases[0].id,
+              version: mockCases[0].version ?? '',
+              customFields: [
+                { key: 'priority', type: CustomFieldTypes.TEXT as const, value: 'low' },
+              ],
+            },
+          ],
+        },
+        clientArgs,
+        casesClientMock2
+      );
+
+      const updatedAttributes =
+        clientArgs.services.caseService.patchCases.mock.calls[0][0].cases[0].updatedAttributes;
+      // Value is identical — no spurious write.
       expect(updatedAttributes.extended_fields).toBeUndefined();
     });
   });
