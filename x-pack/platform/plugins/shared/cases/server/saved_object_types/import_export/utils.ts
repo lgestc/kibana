@@ -5,20 +5,30 @@
  * 2.0.
  */
 
-import type { SavedObject, SavedObjectsClientContract } from '@kbn/core/server';
+import { parse as yamlParse } from 'yaml';
+import { escapeKuery } from '@kbn/es-query';
+import type { Logger, SavedObject, SavedObjectsClientContract } from '@kbn/core/server';
 import type {
   CaseUserActionWithoutReferenceIds,
   AttachmentAttributesWithoutRefs,
 } from '../../../common/types/domain';
 import type { AttachmentAttributesV2 } from '../../../common/types/domain/attachment/v2';
+import type { Template } from '../../../common/types/domain/template/latest';
+import type { FieldDefinition } from '../../../common/types/domain/field_definition/latest';
+import { ParsedTemplateDefinitionSchema } from '../../../common/types/domain/template/v1';
+import { isRefField } from '../../../common/types/domain/template/fields';
 import {
   CASE_ATTACHMENT_SAVED_OBJECT,
   CASE_COMMENT_SAVED_OBJECT,
+  CASE_FIELD_DEFINITION_SAVED_OBJECT,
   CASE_SAVED_OBJECT,
+  CASE_TEMPLATE_SAVED_OBJECT,
   CASE_USER_ACTION_SAVED_OBJECT,
   MAX_DOCS_PER_PAGE,
+  MAX_FIELD_DEFINITIONS_PER_OWNER,
 } from '../../../common/constants';
 import { defaultSortField } from '../../common/utils';
+import type { CasePersistedAttributes } from '../../common/types/case';
 
 export async function getAttachmentsAndUserActionsForCases(
   savedObjectsClient: SavedObjectsClientContract,
@@ -77,4 +87,140 @@ async function getAssociatedObjects<T>({
   }
 
   return result;
+}
+
+/**
+ * Gathers the `cases-templates` and `cases-field-definition` saved objects needed to make a
+ * case export self-contained with respect to Templates v2.
+ *
+ * For each case that references a template (via `attributes.template.{ id, version }`):
+ *  - The matching `cases-templates` SO is included (soft-deleted ones too, since cases may still
+ *    reference a template that was later removed).
+ *  - Every field-definition (`cases-field-definition`) that the template's YAML definition
+ *    references via a `$ref` field is included.
+ *  - All `isGlobal` field definitions for the owners of the exported cases are included (global
+ *    fields render on every case regardless of which template was applied).
+ *
+ * The links between cases, templates, and field definitions are purely logical (by attribute
+ * value, not SO `references`), so SO import ID-remapping does not break them.
+ *
+ * NOTE: template default connectors (`definition.connector`) are NOT bundled — connectors are
+ * external action SOs, and per the existing import/export behavior the connector is reset to
+ * "none" on import when the target does not have the referenced connector.
+ */
+export async function getTemplatesAndFieldDefinitionsForCases(
+  savedObjectsClient: SavedObjectsClientContract,
+  cases: Array<SavedObject<CasePersistedAttributes>>,
+  logger: Logger
+): Promise<Array<SavedObject<Template | FieldDefinition>>> {
+  // 1. Collect unique (templateId, version) pairs referenced by the exported cases.
+  const seenTemplateRefs = new Set<string>();
+  const templateRefs: Array<{ templateId: string; version: number }> = [];
+
+  for (const caseObj of cases) {
+    const t = caseObj.attributes.template;
+    if (t) {
+      const key = `${t.id}:${t.version}`;
+      if (!seenTemplateRefs.has(key)) {
+        seenTemplateRefs.add(key);
+        templateRefs.push({ templateId: t.id, version: t.version });
+      }
+    }
+  }
+
+  if (templateRefs.length === 0) {
+    return [];
+  }
+
+  // 2. Fetch all referenced template SOs in one query.
+  //    Do NOT filter on `deletedAt` — cases may still reference a soft-deleted template.
+  const templateFilter = templateRefs
+    .map(
+      ({ templateId, version }) =>
+        `(${CASE_TEMPLATE_SAVED_OBJECT}.attributes.templateId: "${escapeKuery(templateId)}" AND ` +
+        `${CASE_TEMPLATE_SAVED_OBJECT}.attributes.templateVersion: ${version})`
+    )
+    .join(' OR ');
+
+  const templateFindResult = await savedObjectsClient.find<Template>({
+    type: CASE_TEMPLATE_SAVED_OBJECT,
+    filter: templateFilter,
+    perPage: templateRefs.length,
+  });
+
+  const templateSOs = templateFindResult.saved_objects;
+
+  // 3. Collect owners from the exported cases for field-definition queries.
+  const owners = [...new Set(cases.map((c) => c.attributes.owner).filter((o): o is string => !!o))];
+
+  if (owners.length === 0) {
+    return templateSOs;
+  }
+
+  // 4. Fetch ALL field definitions for the owners of the exported cases.
+  //    `isGlobal` filtering is done in application code rather than via KQL because the boolean
+  //    may not be reliably indexed for all documents (see FieldDefinitionsService comment).
+  const ownerFilter = owners
+    .map((o) => `${CASE_FIELD_DEFINITION_SAVED_OBJECT}.attributes.owner: "${escapeKuery(o)}"`)
+    .join(' OR ');
+
+  const fieldDefFindResult = await savedObjectsClient.find<FieldDefinition>({
+    type: CASE_FIELD_DEFINITION_SAVED_OBJECT,
+    filter: ownerFilter,
+    perPage: MAX_FIELD_DEFINITIONS_PER_OWNER * owners.length,
+  });
+
+  const allFieldDefSOs = fieldDefFindResult.saved_objects;
+
+  // 5. Select field defs to include:
+  //    a. Global field definitions (rendered on every case regardless of template).
+  const globalFieldDefs = allFieldDefSOs.filter((fd) => fd.attributes.isGlobal === true);
+
+  //    b. Field definitions $ref'd by the bundled templates.
+  const referencedNames = collectRefFieldNamesByOwner(templateSOs, logger);
+  const referencedFieldDefs = allFieldDefSOs.filter((fd) =>
+    referencedNames.has(`${fd.attributes.owner}:${fd.attributes.name}`)
+  );
+
+  // 6. Dedupe field defs by SO id (a def could be both global and $ref'd).
+  const fieldDefById = new Map<string, SavedObject<FieldDefinition>>();
+  for (const fd of [...globalFieldDefs, ...referencedFieldDefs]) {
+    fieldDefById.set(fd.id, fd);
+  }
+
+  return [...templateSOs, ...fieldDefById.values()];
+}
+
+/**
+ * Parses each template's YAML definition and collects the `$ref` field names as
+ * `"owner:name"` keys for fast membership testing.
+ *
+ * Errors are logged and skipped — a malformed definition should not abort the export.
+ */
+function collectRefFieldNamesByOwner(
+  templateSOs: Array<SavedObject<Template>>,
+  logger: Logger
+): Set<string> {
+  const names = new Set<string>();
+
+  for (const so of templateSOs) {
+    const { definition, templateId, owner } = so.attributes;
+    if (definition) {
+      try {
+        const parsed = ParsedTemplateDefinitionSchema.parse(yamlParse(definition));
+        for (const field of parsed.fields) {
+          if (isRefField(field)) {
+            names.add(`${owner}:${field.$ref}`);
+          }
+        }
+      } catch (err) {
+        logger.warn(
+          `Failed to parse template definition for templateId "${templateId}" during export; ` +
+            `$ref field definitions will not be included: ${err}`
+        );
+      }
+    }
+  }
+
+  return names;
 }
