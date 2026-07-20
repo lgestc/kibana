@@ -2822,9 +2822,7 @@ describe('update', () => {
         ...mockCases[0],
         attributes: {
           ...mockCases[0].attributes,
-          ...(originalExtendedFields != null
-            ? { extended_fields: originalExtendedFields }
-            : {}),
+          ...(originalExtendedFields != null ? { extended_fields: originalExtendedFields } : {}),
         },
       };
       clientArgs.services.caseService.getCases.mockResolvedValue({
@@ -2842,9 +2840,11 @@ describe('update', () => {
       clientArgs.services.attachmentService.getter.getCaseAttatchmentStats.mockResolvedValue(
         new Map()
       );
-      casesClientMock2.configure.get = jest.fn().mockResolvedValue([
-        { owner: mockCases[0].attributes.owner, customFields: customFieldsCfg },
-      ]);
+      casesClientMock2.configure.get = jest
+        .fn()
+        .mockResolvedValue([
+          { owner: mockCases[0].attributes.owner, customFields: customFieldsCfg },
+        ]);
     };
 
     it('mirrors customFields into extended_fields when templates flag is enabled', async () => {
@@ -2853,7 +2853,15 @@ describe('update', () => {
       setupMocks(clientArgs);
 
       await bulkUpdate(
-        { cases: [{ id: mockCases[0].id, version: mockCases[0].version ?? '', customFields: patchPayload }] },
+        {
+          cases: [
+            {
+              id: mockCases[0].id,
+              version: mockCases[0].version ?? '',
+              customFields: patchPayload,
+            },
+          ],
+        },
         clientArgs,
         casesClientMock2
       );
@@ -2873,7 +2881,15 @@ describe('update', () => {
       setupMocks(clientArgs);
 
       await bulkUpdate(
-        { cases: [{ id: mockCases[0].id, version: mockCases[0].version ?? '', customFields: patchPayload }] },
+        {
+          cases: [
+            {
+              id: mockCases[0].id,
+              version: mockCases[0].version ?? '',
+              customFields: patchPayload,
+            },
+          ],
+        },
         clientArgs,
         casesClientMock2
       );
@@ -2891,7 +2907,9 @@ describe('update', () => {
       setupMocks(clientArgs, { existing_key_as_keyword: 'v2value' });
 
       await bulkUpdate(
-        { cases: [{ id: mockCases[0].id, version: mockCases[0].version ?? '', title: 'New Title' }] },
+        {
+          cases: [{ id: mockCases[0].id, version: mockCases[0].version ?? '', title: 'New Title' }],
+        },
         clientArgs,
         casesClientMock2
       );
@@ -2912,7 +2930,17 @@ describe('update', () => {
       setupMocks(clientArgs, { priority_as_keyword: 'critical' });
 
       await bulkUpdate(
-        { cases: [{ id: mockCases[0].id, version: mockCases[0].version ?? '', customFields: [{ key: 'priority', type: CustomFieldTypes.TEXT as const, value: 'low' }] }] },
+        {
+          cases: [
+            {
+              id: mockCases[0].id,
+              version: mockCases[0].version ?? '',
+              customFields: [
+                { key: 'priority', type: CustomFieldTypes.TEXT as const, value: 'low' },
+              ],
+            },
+          ],
+        },
         clientArgs,
         casesClientMock2
       );

@@ -311,10 +311,7 @@ describe('customFields → extended_fields adapter utilities', () => {
     });
 
     it('treats null existingExtendedFields as empty', () => {
-      const result = buildExtendedFieldsBackfill(
-        [{ key: 'x', type: 'text', value: 'v' }],
-        null
-      );
+      const result = buildExtendedFieldsBackfill([{ key: 'x', type: 'text', value: 'v' }], null);
 
       expect(result).toEqual({ x_as_keyword: 'v' });
     });

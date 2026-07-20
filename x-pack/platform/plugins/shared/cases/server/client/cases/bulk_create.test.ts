@@ -1446,9 +1446,11 @@ describe('bulkCreate', () => {
 
     beforeEach(() => {
       jest.clearAllMocks();
-      adapterCasesClient.configure.get = jest.fn().mockResolvedValue([
-        { owner: SECURITY_SOLUTION_OWNER, customFields: adapterCustomFieldsCfg },
-      ]);
+      adapterCasesClient.configure.get = jest
+        .fn()
+        .mockResolvedValue([
+          { owner: SECURITY_SOLUTION_OWNER, customFields: adapterCustomFieldsCfg },
+        ]);
     });
 
     it('mirrors customFields into extended_fields when templates flag is enabled', async () => {
@@ -1464,8 +1466,7 @@ describe('bulkCreate', () => {
         adapterCasesClient
       );
 
-      const createdCase =
-        clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
+      const createdCase = clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
       expect(createdCase.extended_fields).toMatchObject({
         priority_as_keyword: 'high',
         count_as_integer: '3',
@@ -1486,8 +1487,7 @@ describe('bulkCreate', () => {
         adapterCasesClient
       );
 
-      const createdCase =
-        clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
+      const createdCase = clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
       expect(createdCase.extended_fields).toBeUndefined();
     });
 
@@ -1512,8 +1512,7 @@ describe('bulkCreate', () => {
         adapterCasesClient
       );
 
-      const createdCase =
-        clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
+      const createdCase = clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
       expect(createdCase.extended_fields?.priority_as_keyword).toBe('critical');
     });
   });

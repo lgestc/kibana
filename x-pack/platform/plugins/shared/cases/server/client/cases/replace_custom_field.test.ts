@@ -468,7 +468,10 @@ describe('Replace custom field', () => {
       // FAILURE SCENARIO: adapter overwrites a key already present in extended_fields.
       const caseWithExtendedFields = {
         ...theCase,
-        attributes: { ...theCase.attributes, extended_fields: { first_key_as_keyword: 'original' } },
+        attributes: {
+          ...theCase.attributes,
+          extended_fields: { first_key_as_keyword: 'original' },
+        },
       };
 
       const clientArgsWithFlag = createCasesClientMockArgs();

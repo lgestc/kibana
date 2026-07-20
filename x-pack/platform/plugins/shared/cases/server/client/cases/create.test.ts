@@ -1026,9 +1026,9 @@ describe('create', () => {
 
     beforeEach(() => {
       jest.clearAllMocks();
-      adapterCasesClientMock.configure.get = jest.fn().mockResolvedValue([
-        { owner: theCase.owner, customFields: adapterCustomFieldsCfg },
-      ]);
+      adapterCasesClientMock.configure.get = jest
+        .fn()
+        .mockResolvedValue([{ owner: theCase.owner, customFields: adapterCustomFieldsCfg }]);
     });
 
     it('mirrors customFields into extended_fields when templates flag is enabled', async () => {
