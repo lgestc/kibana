@@ -5,6 +5,9 @@
  * 2.0.
  */
 
+import { writeFileSync, unlinkSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 import { stringify as yamlStringify } from 'yaml';
 import expect from '@kbn/expect';
 import type { SavedObject } from '@kbn/core/server';
@@ -218,16 +221,39 @@ export default ({ getService }: FtrProviderContext): void => {
       // Wipe all case data so we can test clean import
       await deleteAllCaseItems(es);
 
-      // Re-import the exported NDJSON
-      await supertest
-        .post('/api/saved_objects/_import')
-        .query({ overwrite: true })
-        .attach('file', Buffer.from(exportedNdjson), {
-          filename: 'export.ndjson',
-          contentType: 'application/ndjson',
-        })
-        .set('kbn-xsrf', 'true')
-        .expect(200);
+      // Write exported NDJSON to a temp file so the import uses the same file-path
+      // attachment mechanism as all other passing import tests in this suite.
+      const tmpFile = join(tmpdir(), `kibana-cases-export-${Date.now()}.ndjson`);
+      writeFileSync(tmpFile, exportedNdjson, 'utf-8');
+
+      let importBody: Record<string, unknown>;
+      try {
+        // Re-import the exported NDJSON
+        const importResponse = await supertest
+          .post('/api/saved_objects/_import')
+          .query({ overwrite: true })
+          .attach('file', tmpFile)
+          .set('kbn-xsrf', 'true');
+
+        expect(importResponse.status).to.eql(
+          200,
+          `Import returned ${importResponse.status}: ${JSON.stringify(importResponse.body)}`
+        );
+
+        importBody = importResponse.body;
+      } finally {
+        try {
+          unlinkSync(tmpFile);
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+
+      const importErrors = (importBody?.errors as unknown[]) ?? [];
+      expect(importErrors).to.have.length(
+        0,
+        `Import had SO-level errors: ${JSON.stringify(importErrors)}`
+      );
 
       // The case should be findable after import
       const { body: findResponse } = await supertest
