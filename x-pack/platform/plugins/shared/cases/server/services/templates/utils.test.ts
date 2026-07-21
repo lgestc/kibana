@@ -26,7 +26,10 @@ describe('toFieldDefinitions', () => {
   });
 
   it('defaults type to keyword for MARKDOWN fields that omit type in YAML', () => {
-    const fields = [{ name: 'notes', control: 'MARKDOWN' as const, metadata: { content: '# hi' } }];
+    // Raw YAML parse results may omit `type` for MARKDOWN fields; the cast reflects that reality.
+    const fields = [
+      { name: 'notes', control: 'MARKDOWN' as const, metadata: { content: '# hi' } },
+    ] as Parameters<typeof toFieldDefinitions>[0];
     expect(toFieldDefinitions(fields)).toEqual([
       { name: 'notes', label: 'notes', type: 'keyword', control: 'MARKDOWN' },
     ]);
