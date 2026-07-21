@@ -3023,7 +3023,9 @@ describe('update', () => {
               id: mockCases[0].id,
               version: mockCases[0].version ?? '',
               // User explicitly clears priority by submitting null.
-              customFields: [{ key: 'priority', type: CustomFieldTypes.TEXT as const, value: null }],
+              customFields: [
+                { key: 'priority', type: CustomFieldTypes.TEXT as const, value: null },
+              ],
             },
           ],
         },
