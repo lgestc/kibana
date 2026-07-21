@@ -292,7 +292,7 @@ export default ({ getService }: FtrProviderContext): void => {
       const { body: findResponse } = await supertest
         .get(`${getSpaceUrlPrefix('default')}/api/cases/_find`)
         .set('kbn-xsrf', 'true')
-        .expect(200, `GET /api/cases/_find returned non-200`);
+        .expect(200);
 
       expect(findResponse.total).to.eql(
         1,
