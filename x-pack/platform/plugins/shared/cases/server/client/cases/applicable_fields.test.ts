@@ -126,7 +126,7 @@ describe('applicable_fields', () => {
     beforeEach(() => {
       templatesService = { getTemplate: jest.fn() };
       fieldDefinitionsService = {
-        getFieldDefinitions: jest.fn().mockResolvedValue({ fieldDefinitions: [] }),
+        getFieldDefinitions: jest.fn().mockResolvedValue({ fieldDefinitions: [], total: 0 }),
       };
     });
 
@@ -135,6 +135,7 @@ describe('applicable_fields', () => {
         fieldDefinitions: [
           makeFieldDef('priority', { label: 'Priority', type: 'keyword', control: 'INPUT_TEXT' }),
         ],
+        total: 1,
       });
 
       const result = await resolveApplicableFields({
@@ -155,6 +156,7 @@ describe('applicable_fields', () => {
         fieldDefinitions: [
           makeFieldDef('priority', { label: 'Priority', type: 'keyword', control: 'INPUT_TEXT' }),
         ],
+        total: 1,
       });
       templatesService.getTemplate.mockResolvedValue(
         makeTemplateSO([
