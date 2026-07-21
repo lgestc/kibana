@@ -13,10 +13,19 @@ import { registerCasesTriggerDefinitions } from './triggers';
 export function registerCasesSteps(
   workflowsExtensions: CasesPublicSetupDependencies['workflowsExtensions'],
   unifiedAttachmentTypeRegistry: UnifiedAttachmentTypeRegistry,
-  isCasesAttachmentsEnabled: boolean
+  isCasesAttachmentsEnabled: boolean,
+  isTemplatesEnabled: boolean
 ) {
   if (!workflowsExtensions) {
     return;
+  }
+
+  // Gate the `cases.setExtendedField` editor step on the templates / field-library feature so it
+  // only appears when the extended-fields system is available (matches server-side registration).
+  if (isTemplatesEnabled) {
+    workflowsExtensions.registerStepDefinition(() =>
+      import('./set_extended_field').then((m) => m.setExtendedFieldStepDefinition)
+    );
   }
 
   // Attachment types are registered during `start` (and by other solutions'

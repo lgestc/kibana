@@ -17,6 +17,7 @@ export function registerCaseWorkflowSteps(
   getCasesClient: (request: KibanaRequest) => Promise<CasesClient>,
   unifiedAttachmentTypeRegistry: UnifiedAttachmentTypeRegistry,
   isCasesAttachmentsEnabled: boolean,
+  isTemplatesEnabled: boolean,
   /**
    * Resolves once cases's own `start()` has been called by core. Used by the
    * `cases.addAttachments` loader so the discriminated union sees
@@ -30,6 +31,16 @@ export function registerCaseWorkflowSteps(
 
   for (const factory of casesStepRegistry) {
     workflowsExtensions.registerStepDefinition(factory(getCasesClient));
+  }
+
+  // `cases.setExtendedField` writes to a case's `extended_fields`, which are only meaningful when the
+  // templates / field-library feature is enabled (its keys come from field definitions). Gate its
+  // registration on the flag so the step isn't offered-but-always-failing in default deployments.
+  if (isTemplatesEnabled) {
+    workflowsExtensions.registerStepDefinition(async () => {
+      const { setExtendedFieldStepDefinition } = await import('./steps/set_extended_field');
+      return setExtendedFieldStepDefinition(getCasesClient);
+    });
   }
 
   // `cases.addAttachments` is registered separately from the uniform registry:

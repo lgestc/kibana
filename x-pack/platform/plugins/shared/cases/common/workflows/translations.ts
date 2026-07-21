@@ -112,6 +112,28 @@ export const SET_CUSTOM_FIELD_STEP_DOCUMENTATION_DETAILS = i18n.translate(
   }
 );
 
+export const SET_EXTENDED_FIELD_STEP_LABEL = i18n.translate(
+  'xpack.cases.workflowSteps.setExtendedField.label',
+  {
+    defaultMessage: 'Cases - Set extended field',
+  }
+);
+
+export const SET_EXTENDED_FIELD_STEP_DESCRIPTION = i18n.translate(
+  'xpack.cases.workflowSteps.setExtendedField.description',
+  {
+    defaultMessage: 'Sets a single extended field value on an existing case',
+  }
+);
+
+export const SET_EXTENDED_FIELD_STEP_DOCUMENTATION_DETAILS = i18n.translate(
+  'xpack.cases.workflowSteps.setExtendedField.documentation.details',
+  {
+    defaultMessage:
+      'This step updates one extended field on a case. Use `field_key` for the field storage key (for example `priority_as_keyword`) and `value` for the new value. Valid keys are the owner global fields plus any applied template fields; use the "Get fields applicable to a case" API to discover them. The extended fields system supersedes custom fields.',
+  }
+);
+
 export const ADD_COMMENT_STEP_LABEL = i18n.translate('xpack.cases.workflowSteps.addComment.label', {
   defaultMessage: 'Cases - Add comment',
 });
@@ -583,6 +605,19 @@ export const CUSTOM_FIELD_NOT_FOUND_MESSAGE = (fieldName: string) =>
   i18n.translate('xpack.cases.workflowSteps.shared.customFieldNotFoundMessage', {
     defaultMessage: 'Custom field "{fieldName}" was not found in case configuration.',
     values: { fieldName },
+  });
+
+export const EXTENDED_FIELD_CAN_BE_USED_MESSAGE = (fieldKey: string) =>
+  i18n.translate('xpack.cases.workflowSteps.shared.extendedFieldCanBeUsedMessage', {
+    defaultMessage: 'Extended field "{fieldKey}" can be updated by this step.',
+    values: { fieldKey },
+  });
+
+export const EXTENDED_FIELD_NOT_FOUND_MESSAGE = (fieldKey: string) =>
+  i18n.translate('xpack.cases.workflowSteps.shared.extendedFieldNotFoundMessage', {
+    defaultMessage:
+      'Extended field "{fieldKey}" was not found among the owner global fields. If it belongs to a template, it is still valid at runtime.',
+    values: { fieldKey },
   });
 
 export const GET_CASES_BY_ALERT_ID_STEP_LABEL = i18n.translate(

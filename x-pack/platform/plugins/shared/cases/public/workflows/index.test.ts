@@ -24,13 +24,17 @@ const buildRegistryWithComment = () => {
 };
 
 describe('registerCasesSteps', () => {
-  const registerWithFlag = (isCasesAttachmentsEnabled: boolean) => {
+  const registerWithFlag = (
+    isCasesAttachmentsEnabled: boolean,
+    isTemplatesEnabled: boolean = false
+  ) => {
     const workflowsExtensions = { registerStepDefinition: jest.fn() };
 
     registerCasesSteps(
       workflowsExtensions as never,
       new UnifiedAttachmentTypeRegistry(),
-      isCasesAttachmentsEnabled
+      isCasesAttachmentsEnabled,
+      isTemplatesEnabled
     );
 
     return workflowsExtensions.registerStepDefinition;
@@ -43,6 +47,13 @@ describe('registerCasesSteps', () => {
   it('registers the generic attachments step loader only when unified attachments are enabled', () => {
     const disabled = registerWithFlag(false);
     const enabled = registerWithFlag(true);
+
+    expect(enabled).toHaveBeenCalledTimes(disabled.mock.calls.length + 1);
+  });
+
+  it('registers the setExtendedField step only when templates are enabled', () => {
+    const disabled = registerWithFlag(false, false);
+    const enabled = registerWithFlag(false, true);
 
     expect(enabled).toHaveBeenCalledTimes(disabled.mock.calls.length + 1);
   });

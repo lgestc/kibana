@@ -11,7 +11,8 @@ import { registerCaseWorkflowSteps } from '.';
 describe('registerCaseWorkflowSteps', () => {
   const registerWithFlag = (
     isCasesAttachmentsEnabled: boolean,
-    registry: UnifiedAttachmentTypeRegistry = new UnifiedAttachmentTypeRegistry()
+    registry: UnifiedAttachmentTypeRegistry = new UnifiedAttachmentTypeRegistry(),
+    isTemplatesEnabled: boolean = false
   ) => {
     const workflowsExtensions = { registerStepDefinition: jest.fn() };
     const getCasesClient = jest.fn();
@@ -22,6 +23,7 @@ describe('registerCaseWorkflowSteps', () => {
       getCasesClient as never,
       registry,
       isCasesAttachmentsEnabled,
+      isTemplatesEnabled,
       waitForStartServices
     );
 
@@ -36,6 +38,14 @@ describe('registerCaseWorkflowSteps', () => {
   it('registers the generic attachments step loader only when unified attachments are enabled', () => {
     const disabled = registerWithFlag(false).register;
     const enabled = registerWithFlag(true).register;
+
+    expect(enabled).toHaveBeenCalledTimes(disabled.mock.calls.length + 1);
+  });
+
+  it('registers the setExtendedField step loader only when templates are enabled', () => {
+    const registry = new UnifiedAttachmentTypeRegistry();
+    const disabled = registerWithFlag(false, registry, false).register;
+    const enabled = registerWithFlag(false, registry, true).register;
 
     expect(enabled).toHaveBeenCalledTimes(disabled.mock.calls.length + 1);
   });

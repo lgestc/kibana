@@ -5,6 +5,7 @@
  * 2.0.
  */
 
+import { stringify as yamlStringify } from 'yaml';
 import { createCaseResponseFixture } from '../../../common/fixtures/create_case';
 import { createCaseFromTemplateStepDefinition } from './create_case_from_template';
 import { createStepHandlerContext } from './test_utils';
@@ -254,6 +255,98 @@ describe('createCaseFromTemplateStepDefinition', () => {
       caseId: createCaseResponseFixture.id,
       connectorId: createCaseResponseFixture.connector.id,
       pushType: 'automatic',
+    });
+  });
+
+  describe('v2 templates (enable_v2)', () => {
+    const makeTemplateSO = (definition: Record<string, unknown>) => ({
+      attributes: {
+        templateId: 'tpl-v2-1',
+        templateVersion: 3,
+        owner: 'securitySolution',
+        name: 'V2 Triage',
+        definition: yamlStringify(definition),
+      },
+    });
+
+    const v2Definition = {
+      name: 'V2 Triage',
+      description: 'From v2 template',
+      severity: 'high',
+      tags: ['v2'],
+      fields: [
+        {
+          name: 'priority',
+          control: 'SELECT_BASIC',
+          type: 'keyword',
+          metadata: { options: ['low', 'high'], default: 'high' },
+        },
+      ],
+    };
+
+    it('resolves the v2 template, applies its fields, and creates the case with extended_fields', async () => {
+      const create = jest.fn().mockResolvedValue(createCaseResponseFixture);
+      const getTemplate = jest.fn().mockResolvedValue(makeTemplateSO(v2Definition));
+      const getFieldDefinitions = jest.fn().mockResolvedValue({ fieldDefinitions: [] });
+      const configureGet = jest.fn();
+      const getCasesClient = jest.fn().mockResolvedValue({
+        configure: { get: configureGet },
+        templates: { getTemplate },
+        fieldDefinitions: { getFieldDefinitions },
+        cases: { create },
+      } as unknown as CasesClient);
+      const definition = createCaseFromTemplateStepDefinition(getCasesClient);
+
+      await definition.handler(
+        createContext({
+          owner: 'securitySolution',
+          case_template_id: 'tpl-v2-1',
+          enable_v2: true,
+        })
+      );
+
+      // v2 path must not touch the v1 configuration path.
+      expect(configureGet).not.toHaveBeenCalled();
+      expect(getTemplate).toHaveBeenCalledWith('tpl-v2-1');
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'V2 Triage',
+          description: 'From v2 template',
+          severity: 'high',
+          tags: ['v2'],
+          template: { id: 'tpl-v2-1', version: 3 },
+          extended_fields: { priority_as_keyword: 'high' },
+        })
+      );
+    });
+
+    it('errors when the v2 template belongs to a different owner', async () => {
+      const create = jest.fn();
+      const getTemplate = jest.fn().mockResolvedValue({
+        attributes: {
+          templateId: 'tpl-v2-1',
+          templateVersion: 1,
+          owner: 'observability',
+          name: 'Other owner',
+          definition: yamlStringify({ name: 'Other owner', fields: [] }),
+        },
+      });
+      const getCasesClient = jest.fn().mockResolvedValue({
+        templates: { getTemplate },
+        cases: { create },
+      } as unknown as CasesClient);
+      const definition = createCaseFromTemplateStepDefinition(getCasesClient);
+
+      const result = await definition.handler(
+        createContext({
+          owner: 'securitySolution',
+          case_template_id: 'tpl-v2-1',
+          enable_v2: true,
+        })
+      );
+
+      expect(create).not.toHaveBeenCalled();
+      expect(result.error?.message).toContain('Case template not found');
     });
   });
 });
