@@ -248,10 +248,15 @@ const createBulkCreateCaseRequest = ({
   // Mirror customFields into extended_fields so that automations writing to the legacy API
   // keep the v2 analytics / UI surface populated. CustomFields-win semantics: the incoming
   // value overrides any pre-set mirror key (e.g. a template default in the request).
+  //
+  // Pass the RAW request customFields (caseWithoutId.customFields), not the post-fill array
+  // (normalizedCase.customFields). fillMissingCustomFields pads absent optional-no-default
+  // fields with { key, value: null }; those synthetic nulls would otherwise hit the merge's
+  // delete branch and wipe mirror keys the request never intended to clear.
   if (templatesEnabled) {
     normalizedCase.extended_fields =
       mergeCustomFieldsIntoExtendedFields(
-        normalizedCase.customFields,
+        caseWithoutId.customFields,
         normalizedCase.extended_fields
       ) ?? undefined;
   }

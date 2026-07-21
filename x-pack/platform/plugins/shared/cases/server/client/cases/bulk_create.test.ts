@@ -1513,5 +1513,35 @@ describe('bulkCreate', () => {
       const createdCase = clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
       expect(createdCase.extended_fields?.priority_as_keyword).toBe('low');
     });
+
+    it('preserves a mirror key for a customField absent from the request (synthetic-null regression)', async () => {
+      // FAILURE SCENARIO (before fix): fillMissingCustomFields pads { key: 'priority', value: null }
+      // for the absent 'priority' field; the merge then deletes priority_as_keyword — even though
+      // the request never submitted priority. Fix: mirror only request-provided customFields.
+      const clientArgs = createCasesClientMockArgs();
+      clientArgs.config = { ...clientArgs.config, templates: { enabled: true } };
+      clientArgs.services.caseService.bulkCreateCases.mockResolvedValue({
+        saved_objects: [caseSO],
+      });
+
+      await bulkCreate(
+        {
+          cases: getCases({
+            // Only count is provided — priority is absent from the request.
+            customFields: [{ key: 'count', type: CustomFieldTypes.NUMBER, value: 3 }],
+            // priority_as_keyword pre-set by a template default in extended_fields.
+            extended_fields: { priority_as_keyword: 'crit' },
+          }),
+        },
+        clientArgs,
+        adapterCasesClient
+      );
+
+      const createdCase = clientArgs.services.caseService.bulkCreateCases.mock.calls[0][0].cases[0];
+      // priority was not submitted — its mirror key must be preserved.
+      expect(createdCase.extended_fields?.priority_as_keyword).toBe('crit');
+      // count was submitted — it must still be mirrored.
+      expect(createdCase.extended_fields?.count_as_integer).toBe('3');
+    });
   });
 });

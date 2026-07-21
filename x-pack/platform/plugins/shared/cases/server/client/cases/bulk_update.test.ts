@@ -2976,5 +2976,65 @@ describe('update', () => {
       // Value is identical — no spurious write.
       expect(updatedAttributes.extended_fields).toBeUndefined();
     });
+
+    it('preserves an unrelated mirror key when the update omits that customField (synthetic-null regression)', async () => {
+      // FAILURE SCENARIO (before fix): fillMissingCustomFields pads { key: 'priority', value: null }
+      // for the absent 'priority' field; the merge then deletes priority_as_keyword — silently
+      // wiping a value stored via the v2 UI that this update never intended to clear.
+      // Fix: mirror only request-provided customFields (updateCaseAttributes.customFields).
+      const clientArgs = createCasesClientMockArgs();
+      clientArgs.config = { ...clientArgs.config, templates: { enabled: true } };
+      // Original case has priority_as_keyword set via the v2 UI; priority is optional-no-default.
+      setupMocks(clientArgs, { priority_as_keyword: 'crit' });
+
+      await bulkUpdate(
+        {
+          cases: [
+            {
+              id: mockCases[0].id,
+              version: mockCases[0].version ?? '',
+              // Only count is being updated — priority is intentionally absent.
+              customFields: [{ key: 'count', type: CustomFieldTypes.NUMBER as const, value: 3 }],
+            },
+          ],
+        },
+        clientArgs,
+        casesClientMock2
+      );
+
+      const updatedAttributes =
+        clientArgs.services.caseService.patchCases.mock.calls[0][0].cases[0].updatedAttributes;
+      // priority was not submitted — its mirror key must be preserved.
+      expect(updatedAttributes.extended_fields?.priority_as_keyword).toBe('crit');
+    });
+
+    it('clears the mirror key when the user explicitly submits null for a customField', async () => {
+      // Guard: confirms that an *intentional* null (user cleared the field) still deletes the
+      // mirror key — the synthetic-null fix must not prevent deliberate clears.
+      const clientArgs = createCasesClientMockArgs();
+      clientArgs.config = { ...clientArgs.config, templates: { enabled: true } };
+      // Original case has priority_as_keyword set.
+      setupMocks(clientArgs, { priority_as_keyword: 'crit' });
+
+      await bulkUpdate(
+        {
+          cases: [
+            {
+              id: mockCases[0].id,
+              version: mockCases[0].version ?? '',
+              // User explicitly clears priority by submitting null.
+              customFields: [{ key: 'priority', type: CustomFieldTypes.TEXT as const, value: null }],
+            },
+          ],
+        },
+        clientArgs,
+        casesClientMock2
+      );
+
+      const updatedAttributes =
+        clientArgs.services.caseService.patchCases.mock.calls[0][0].cases[0].updatedAttributes;
+      // Explicit null — the mirror key must be deleted.
+      expect(updatedAttributes.extended_fields).not.toHaveProperty('priority_as_keyword');
+    });
   });
 });
