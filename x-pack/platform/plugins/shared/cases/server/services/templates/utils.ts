@@ -15,7 +15,8 @@ export const toFieldDefinitions = (fields: ParsedField[]) =>
   fields.filter(isInlineField).map((f) => ({
     name: f.name,
     label: f.label ?? f.name,
-    type: f.type,
+    // MARKDOWN fields omit `type` in YAML; default to 'keyword' to match the Zod schema default
+    type: f.type ?? 'keyword',
     control: f.control,
   }));
 

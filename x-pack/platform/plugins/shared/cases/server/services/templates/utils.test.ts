@@ -25,6 +25,13 @@ describe('toFieldDefinitions', () => {
     ]);
   });
 
+  it('defaults type to keyword for MARKDOWN fields that omit type in YAML', () => {
+    const fields = [{ name: 'notes', control: 'MARKDOWN' as const, metadata: { content: '# hi' } }];
+    expect(toFieldDefinitions(fields)).toEqual([
+      { name: 'notes', label: 'notes', type: 'keyword', control: 'MARKDOWN' },
+    ]);
+  });
+
   it('returns an empty array when given no fields', () => {
     expect(toFieldDefinitions([])).toEqual([]);
   });
