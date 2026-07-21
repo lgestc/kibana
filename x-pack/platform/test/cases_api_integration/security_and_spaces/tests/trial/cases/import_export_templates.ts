@@ -5,7 +5,6 @@
  * 2.0.
  */
 
-import { join } from 'path';
 import { stringify as yamlStringify } from 'yaml';
 import expect from '@kbn/expect';
 import type { SavedObject } from '@kbn/core/server';
@@ -166,21 +165,71 @@ export default ({ getService }: FtrProviderContext): void => {
       );
     });
 
-    it('imports a case with a template and field definitions from a fixture', async () => {
+    it('roundtrip: export then re-import a case with template and field definitions', async () => {
+      // Create a field definition used by the template
       await supertest
-        .post('/api/saved_objects/_import')
-        .query({ overwrite: true })
-        .attach(
-          'file',
-          join(
-            __dirname,
-            '../../../../common/fixtures/saved_object_exports/case_with_template_and_field_defs.ndjson'
-          )
+        .post(`${getSpaceUrlPrefix('default')}${FIELD_DEFINITIONS_URL}`)
+        .set('kbn-xsrf', 'true')
+        .send(
+          buildFieldDefinitionBody({
+            name: 'priority',
+            definition: yamlStringify({
+              name: 'priority',
+              control: 'SELECT_BASIC',
+              label: 'Priority',
+              type: 'keyword',
+              metadata: { options: ['low', 'medium', 'high'] },
+            }),
+          })
         )
+        .expect(200);
+
+      // Create a template that $refs the field definition
+      const { body: template } = await supertest
+        .post(`${getSpaceUrlPrefix('default')}${TEMPLATES_URL}`)
+        .set('kbn-xsrf', 'true')
+        .send(
+          buildTemplateBody({
+            name: 'Roundtrip Template',
+            definition: yamlStringify({
+              name: 'Roundtrip Template',
+              fields: [{ $ref: 'priority' }],
+            }),
+          })
+        )
+        .expect(200);
+
+      // Create a case referencing the template
+      await createCase(supertest, {
+        ...getPostCaseRequest({
+          owner: 'securitySolutionFixture',
+          title: 'A case with a template',
+        }),
+        template: { id: template.templateId, version: template.templateVersion },
+      });
+
+      // Export cases (includes referenced templates and field definitions)
+      const { text: exportedNdjson } = await supertest
+        .post('/api/saved_objects/_export')
+        .send({ type: ['cases'], excludeExportDetails: true, includeReferencesDeep: true })
         .set('kbn-xsrf', 'true')
         .expect(200);
 
-      // The case should be importable and findable
+      // Wipe all case data so we can test clean import
+      await deleteAllCaseItems(es);
+
+      // Re-import the exported NDJSON
+      await supertest
+        .post('/api/saved_objects/_import')
+        .query({ overwrite: true })
+        .attach('file', Buffer.from(exportedNdjson), {
+          filename: 'export.ndjson',
+          contentType: 'application/ndjson',
+        })
+        .set('kbn-xsrf', 'true')
+        .expect(200);
+
+      // The case should be findable after import
       const { body: findResponse } = await supertest
         .get('/api/cases/_find')
         .set('kbn-xsrf', 'true')
@@ -189,16 +238,16 @@ export default ({ getService }: FtrProviderContext): void => {
       expect(findResponse.total).to.eql(1);
       expect(findResponse.cases[0].title).to.eql('A case with a template');
 
-      // The template should have been imported
+      // The template should have been re-imported
       const { body: templatesResponse } = await supertest
         .get(`${getSpaceUrlPrefix('default')}${TEMPLATES_URL}`)
         .set('kbn-xsrf', 'true')
         .expect(200);
 
       expect(templatesResponse.templates).to.have.length(1);
-      expect(templatesResponse.templates[0].name).to.eql('Imported Template');
+      expect(templatesResponse.templates[0].name).to.eql('Roundtrip Template');
 
-      // The field definition should have been imported
+      // The field definition should have been re-imported
       const { body: fieldDefsResponse } = await supertest
         .get(`${getSpaceUrlPrefix('default')}${FIELD_DEFINITIONS_URL}`)
         .query({ owner: 'securitySolutionFixture' })
