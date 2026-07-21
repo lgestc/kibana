@@ -93,15 +93,20 @@ async function getAssociatedObjects<T>({
  * Gathers the `cases-templates` and `cases-field-definition` saved objects needed to make a
  * case export self-contained with respect to Templates v2.
  *
- * For each case that references a template (via `attributes.template.{ id, version }`):
- *  - The matching `cases-templates` SO is included (soft-deleted ones too, since cases may still
- *    reference a template that was later removed).
- *  - Every field-definition (`cases-field-definition`) that the template's YAML definition
+ * For each exported case:
+ *  - If the case references a template (via `attributes.template.{ id, version }`), the matching
+ *    `cases-templates` SO is included (soft-deleted ones too, since cases may still reference a
+ *    template that was later removed).
+ *  - Every field-definition (`cases-field-definition`) that a bundled template's YAML definition
  *    references via a `$ref` field is included.
- *  - All `isGlobal` field definitions for the owners of the exported cases are included (global
- *    fields render on every case regardless of which template was applied). This only applies
- *    when at least one exported case references a template; if none do, the function returns
- *    early and no field definitions are fetched.
+ *  - All `isGlobal` field definitions for the owners of the exported cases are always included —
+ *    global fields render on every case regardless of whether a template was applied, so a
+ *    template-less case with `extended_fields` keyed by global definitions must bundle them to
+ *    remain self-contained.
+ *
+ * When no exported case has an owner, the function returns `[]` immediately.
+ * The template query is skipped when no case references a template (no `cases-templates` SOs are
+ * fetched), but the field-definition query still runs for global fields.
  *
  * The links between cases, templates, and field definitions are purely logical (by attribute
  * value, not SO `references`), so SO import ID-remapping does not break them.
@@ -115,7 +120,8 @@ export async function getTemplatesAndFieldDefinitionsForCases(
   cases: Array<SavedObject<CasePersistedAttributes>>,
   logger: Logger
 ): Promise<Array<SavedObject<Template | FieldDefinition>>> {
-  // 1. Collect unique (templateId, version) pairs referenced by the exported cases.
+  // 1. Collect unique (templateId, version) pairs referenced by the exported cases,
+  //    and unique non-empty owners for the field-definition query.
   const seenTemplateRefs = new Set<string>();
   const templateRefs: Array<{ templateId: string; version: number }> = [];
 
@@ -130,36 +136,37 @@ export async function getTemplatesAndFieldDefinitionsForCases(
     }
   }
 
-  if (templateRefs.length === 0) {
+  const owners = [...new Set(cases.map((c) => c.attributes.owner).filter((o): o is string => !!o))];
+
+  // Nothing to fetch — no owners means no field definitions can exist, and without
+  // owners we cannot form a useful query.
+  if (owners.length === 0) {
     return [];
   }
 
-  // 2. Fetch all referenced template SOs in one query.
+  // 2. Fetch all referenced template SOs in one query (only when needed).
   //    Do NOT filter on `deletedAt` — cases may still reference a soft-deleted template.
-  const templateFilter = templateRefs
-    .map(
-      ({ templateId, version }) =>
-        `(${CASE_TEMPLATE_SAVED_OBJECT}.attributes.templateId: "${escapeKuery(templateId)}" AND ` +
-        `${CASE_TEMPLATE_SAVED_OBJECT}.attributes.templateVersion: ${version})`
-    )
-    .join(' OR ');
+  let templateSOs: Array<SavedObject<Template>> = [];
+  if (templateRefs.length > 0) {
+    const templateFilter = templateRefs
+      .map(
+        ({ templateId, version }) =>
+          `(${CASE_TEMPLATE_SAVED_OBJECT}.attributes.templateId: "${escapeKuery(
+            templateId
+          )}" AND ${CASE_TEMPLATE_SAVED_OBJECT}.attributes.templateVersion: ${version})`
+      )
+      .join(' OR ');
 
-  const templateFindResult = await savedObjectsClient.find<Template>({
-    type: CASE_TEMPLATE_SAVED_OBJECT,
-    filter: templateFilter,
-    perPage: Math.min(templateRefs.length, MAX_DOCS_PER_PAGE),
-  });
+    const templateFindResult = await savedObjectsClient.find<Template>({
+      type: CASE_TEMPLATE_SAVED_OBJECT,
+      filter: templateFilter,
+      perPage: Math.min(templateRefs.length, MAX_DOCS_PER_PAGE),
+    });
 
-  const templateSOs = templateFindResult.saved_objects;
-
-  // 3. Collect owners from the exported cases for field-definition queries.
-  const owners = [...new Set(cases.map((c) => c.attributes.owner).filter((o): o is string => !!o))];
-
-  if (owners.length === 0) {
-    return templateSOs;
+    templateSOs = templateFindResult.saved_objects;
   }
 
-  // 4. Fetch ALL field definitions for the owners of the exported cases.
+  // 3. Fetch ALL field definitions for the owners of the exported cases.
   //    `isGlobal` filtering is done in application code rather than via KQL because the boolean
   //    may not be reliably indexed for all documents (see FieldDefinitionsService comment).
   const ownerFilter = owners
@@ -174,17 +181,19 @@ export async function getTemplatesAndFieldDefinitionsForCases(
 
   const allFieldDefSOs = fieldDefFindResult.saved_objects;
 
-  // 5. Select field defs to include:
+  // 4. Select field defs to include:
   //    a. Global field definitions (rendered on every case regardless of template).
   const globalFieldDefs = allFieldDefSOs.filter((fd) => fd.attributes.isGlobal === true);
 
   //    b. Field definitions $ref'd by the bundled templates.
+  //       When templateSOs is empty, collectRefFieldNamesByOwner returns an empty set so
+  //       no additional defs are selected via this path.
   const referencedNames = collectRefFieldNamesByOwner(templateSOs, logger);
   const referencedFieldDefs = allFieldDefSOs.filter((fd) =>
     referencedNames.has(`${fd.attributes.owner}:${fd.attributes.name}`)
   );
 
-  // 6. Dedupe field defs by SO id (a def could be both global and $ref'd).
+  // 5. Dedupe field defs by SO id (a def could be both global and $ref'd).
   const fieldDefById = new Map<string, SavedObject<FieldDefinition>>();
   for (const fd of [...globalFieldDefs, ...referencedFieldDefs]) {
     fieldDefById.set(fd.id, fd);

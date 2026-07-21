@@ -133,21 +133,32 @@ export default ({ getService }: FtrProviderContext): void => {
       expect(fieldDefNames).to.contain('environment');
     });
 
-    it('exports a case without a template reference without including template SOs', async () => {
-      // Create a template and field def that should NOT be bundled (case does not reference them)
+    it('exports a template-less case without template SOs but with global field definitions', async () => {
+      // Create a global field definition — should be bundled even without a template reference,
+      // because a template-less case may carry extended_fields keyed by global defs.
       await supertest
-        .post(`${getSpaceUrlPrefix('default')}${TEMPLATES_URL}`)
+        .post(`${getSpaceUrlPrefix('default')}${FIELD_DEFINITIONS_URL}`)
         .set('kbn-xsrf', 'true')
-        .send(buildTemplateBody())
+        .send(buildGlobalFieldDefinitionBody())
         .expect(200);
+
+      // Create a non-global field definition — should NOT be bundled (not global, not $ref'd).
       await supertest
         .post(`${getSpaceUrlPrefix('default')}${FIELD_DEFINITIONS_URL}`)
         .set('kbn-xsrf', 'true')
         .send(buildFieldDefinitionBody())
         .expect(200);
 
+      // Create a template that references the non-global field — should NOT be bundled either,
+      // since no exported case references this template.
+      await supertest
+        .post(`${getSpaceUrlPrefix('default')}${TEMPLATES_URL}`)
+        .set('kbn-xsrf', 'true')
+        .send(buildTemplateBody())
+        .expect(200);
+
       // Case has no template reference
-      await createCase(supertest, getPostCaseRequest());
+      await createCase(supertest, getPostCaseRequest({ owner: 'securitySolutionFixture' }));
 
       const { text } = await supertest
         .post(`/api/saved_objects/_export`)
@@ -160,12 +171,13 @@ export default ({ getService }: FtrProviderContext): void => {
 
       const objects = ndjsonToObjects(text);
 
+      // No template SOs — no case referenced a template.
       expect(objects.filter((so) => so.type === CASE_TEMPLATE_SAVED_OBJECT)).to.have.length(0);
-      // With no template reference, getTemplatesAndFieldDefinitionsForCases returns early with []
-      // — no field definitions are bundled regardless of isGlobal.
-      expect(objects.filter((so) => so.type === CASE_FIELD_DEFINITION_SAVED_OBJECT)).to.have.length(
-        0
-      );
+
+      // The global field definition must be bundled; the non-global must not.
+      const fieldDefSOs = objects.filter((so) => so.type === CASE_FIELD_DEFINITION_SAVED_OBJECT);
+      expect(fieldDefSOs).to.have.length(1);
+      expect(fieldDefSOs[0].attributes.name).to.eql('environment');
     });
 
     it('roundtrip: export then re-import a case with template and field definitions', async () => {

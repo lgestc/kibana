@@ -105,8 +105,34 @@ describe('import_export utils', () => {
   });
 
   describe('getTemplatesAndFieldDefinitionsForCases', () => {
-    it('returns empty array when no cases reference a template', async () => {
+    it('returns empty array when there are no cases with an owner', async () => {
+      // Empty cases input — nothing to fetch.
       const savedObjectsClient = {} as unknown as SavedObjectsClientContract;
+      const result = await getTemplatesAndFieldDefinitionsForCases(savedObjectsClient, [], logger);
+      expect(result).toEqual([]);
+    });
+
+    it('bundles global field definitions even when no case references a template', async () => {
+      // A template-less case may carry extended_fields keyed by isGlobal definitions.
+      // Those definitions must be bundled so the export is self-contained on import.
+      const globalFieldDef = makeFieldDefSO('fd-global', {
+        name: 'environment',
+        owner: 'securitySolution',
+        isGlobal: true,
+      });
+      const nonGlobalFieldDef = makeFieldDefSO('fd-non-global', {
+        name: 'incident_type',
+        owner: 'securitySolution',
+        isGlobal: false,
+      });
+
+      // Only one find call expected — the field-def query. No template query should fire.
+      const find = jest
+        .fn()
+        .mockResolvedValueOnce({ saved_objects: [globalFieldDef, nonGlobalFieldDef] });
+
+      const savedObjectsClient = { find } as unknown as SavedObjectsClientContract;
+      // Template-less case (no template property)
       const cases = [makeCaseSO('case-1', 'securitySolution')];
 
       const result = await getTemplatesAndFieldDefinitionsForCases(
@@ -115,7 +141,19 @@ describe('import_export utils', () => {
         logger
       );
 
-      expect(result).toEqual([]);
+      // The global def must be bundled; the non-global must not.
+      const resultIds = result.map((so) => so.id);
+      expect(resultIds).toContain('fd-global');
+      expect(resultIds).not.toContain('fd-non-global');
+
+      // No template SO should appear (no template query was needed).
+      expect(result.filter((so) => so.type === CASE_TEMPLATE_SAVED_OBJECT)).toHaveLength(0);
+
+      // Exactly one find call — the field-def query only.
+      expect(find).toHaveBeenCalledTimes(1);
+      expect(find).toHaveBeenCalledWith(
+        expect.objectContaining({ type: CASE_FIELD_DEFINITION_SAVED_OBJECT })
+      );
     });
 
     it('fetches the template SO matching the case template reference', async () => {
