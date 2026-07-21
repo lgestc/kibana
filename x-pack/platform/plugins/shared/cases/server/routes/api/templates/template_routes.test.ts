@@ -1163,7 +1163,7 @@ describe('Template Routes', () => {
         typeof getPublicTemplateRoutes
       >[0];
       const routes = getPublicTemplateRoutes(config);
-      expect(routes).toHaveLength(2);
+      expect(routes).toHaveLength(4);
     });
 
     it('returns empty array when templates.enabled is false', () => {
