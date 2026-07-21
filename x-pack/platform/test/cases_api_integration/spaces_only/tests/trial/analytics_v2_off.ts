@@ -18,8 +18,10 @@ import {
 /**
  * Regression guard for the "v1 unaffected when v2 is off" guarantee.
  *
- * This suite runs under the main `spaces_only/config.ts`, where the v2
- * feature flag is at its default (`xpack.cases.analyticsV2.enabled: false`).
+ * This suite runs under `config_analytics_v2_off.ts`, which sets
+ * `xpack.cases.analyticsV2.enabled=false` explicitly. (The plugin default is
+ * now `true`, so the plain `spaces_only/config.ts` boots v2 ON and cannot host
+ * this flag-off guard — hence the dedicated config.)
  * The proxy / noop-writer wiring in `cases_analytics_v2/service.ts` already
  * makes this correct in code — every writer call funnels through a stable
  * proxy that delegates to `V2_NOOP_WRITER` when the flag is off, and SO

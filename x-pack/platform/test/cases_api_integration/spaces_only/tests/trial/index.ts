@@ -23,6 +23,9 @@ export default ({ loadTestFile, getService }: FtrProviderContext): void => {
 
     loadTestFile(require.resolve('./cases/push_case'));
     loadTestFile(require.resolve('./configure'));
-    loadTestFile(require.resolve('./analytics_v2_off'));
+    // NOTE: `./analytics_v2_off` is intentionally NOT loaded here. The plugin
+    // default for `xpack.cases.analyticsV2.enabled` is now `true`, so this
+    // config boots Kibana with v2 ON. The flag-off regression guard runs under
+    // its own `config_analytics_v2_off.ts`, which forces the flag to `false`.
   });
 };
