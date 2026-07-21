@@ -79,6 +79,10 @@ export const CASE_REPORTERS_URL = `${CASES_URL}/reporters` as const;
 export const CASE_TAGS_URL = `${CASES_URL}/tags` as const;
 export const CASE_TEMPLATES_URL = `${CASES_URL}/templates` as const;
 export const CASE_TEMPLATE_DETAILS_URL = `${CASE_TEMPLATES_URL}/{template_id}` as const;
+// Public discovery of the `extended_fields` a caller may apply. `fields` is a static segment,
+// so — like `templates`/`reporters`/`tags` — it resolves ahead of the `{case_id}` param route.
+export const CASE_FIELDS_URL = `${CASES_URL}/fields` as const;
+export const CASE_APPLICABLE_FIELDS_URL = `${CASE_DETAILS_URL}/fields` as const;
 export const CASE_USER_ACTIONS_URL = `${CASE_DETAILS_URL}/user_actions` as const;
 export const CASE_FIND_USER_ACTIONS_URL = `${CASE_USER_ACTIONS_URL}/_find` as const;
 
