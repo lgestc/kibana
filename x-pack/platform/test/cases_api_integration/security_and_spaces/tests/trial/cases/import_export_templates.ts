@@ -211,24 +211,51 @@ export default ({ getService }: FtrProviderContext): void => {
         template: { id: template.templateId, version: template.templateVersion },
       });
 
-      // Export cases (includes referenced templates and field definitions)
-      const { text: exportedNdjson } = await supertest
+      // Export cases (includes referenced templates and field definitions via onExport hook)
+      const exportResponse = await supertest
         .post('/api/saved_objects/_export')
         .send({ type: ['cases'], excludeExportDetails: true, includeReferencesDeep: true })
-        .set('kbn-xsrf', 'true')
-        .expect(200);
+        .set('kbn-xsrf', 'true');
+
+      expect(exportResponse.status).to.eql(
+        200,
+        `Export returned ${exportResponse.status}: ${JSON.stringify(exportResponse.body)}`
+      );
+
+      const exportedNdjson: string = exportResponse.text;
+      const exportedObjects = ndjsonToObjects(exportedNdjson);
+      const exportedCases = exportedObjects.filter((o) => o.type === CASE_SAVED_OBJECT);
+      const exportedTemplates = exportedObjects.filter(
+        (o) => o.type === CASE_TEMPLATE_SAVED_OBJECT
+      );
+      const exportedFieldDefs = exportedObjects.filter(
+        (o) => o.type === CASE_FIELD_DEFINITION_SAVED_OBJECT
+      );
+
+      expect(exportedCases).to.have.length(
+        1,
+        `Export contained ${exportedCases.length} case(s), types: ${exportedObjects
+          .map((o) => o.type)
+          .join(', ')}`
+      );
+      expect(exportedTemplates).to.have.length(
+        1,
+        `Export contained ${exportedTemplates.length} template(s) — onExport hook may have not fired`
+      );
+      expect(exportedFieldDefs).to.have.length(
+        1,
+        `Export contained ${exportedFieldDefs.length} field definition(s)`
+      );
 
       // Wipe all case data so we can test clean import
       await deleteAllCaseItems(es);
 
-      // Write exported NDJSON to a temp file so the import uses the same file-path
-      // attachment mechanism as all other passing import tests in this suite.
+      // Write exported NDJSON to a temp file (same mechanism as all other passing import tests)
       const tmpFile = join(tmpdir(), `kibana-cases-export-${Date.now()}.ndjson`);
       writeFileSync(tmpFile, exportedNdjson, 'utf-8');
 
-      let importBody: Record<string, unknown>;
+      let importBody: Record<string, unknown> = {};
       try {
-        // Re-import the exported NDJSON
         const importResponse = await supertest
           .post('/api/saved_objects/_import')
           .query({ overwrite: true })
@@ -240,7 +267,7 @@ export default ({ getService }: FtrProviderContext): void => {
           `Import returned ${importResponse.status}: ${JSON.stringify(importResponse.body)}`
         );
 
-        importBody = importResponse.body;
+        importBody = importResponse.body as Record<string, unknown>;
       } finally {
         try {
           unlinkSync(tmpFile);
@@ -249,19 +276,28 @@ export default ({ getService }: FtrProviderContext): void => {
         }
       }
 
-      const importErrors = (importBody?.errors as unknown[]) ?? [];
+      const importErrors = (importBody.errors as unknown[]) ?? [];
       expect(importErrors).to.have.length(
         0,
         `Import had SO-level errors: ${JSON.stringify(importErrors)}`
       );
+      expect(importBody.successCount).to.eql(
+        exportedObjects.length,
+        `Import successCount ${importBody.successCount} ≠ exported ${
+          exportedObjects.length
+        }: ${JSON.stringify(importBody)}`
+      );
 
       // The case should be findable after import
       const { body: findResponse } = await supertest
-        .get('/api/cases/_find')
+        .get(`${getSpaceUrlPrefix('default')}/api/cases/_find`)
         .set('kbn-xsrf', 'true')
-        .expect(200);
+        .expect(200, `GET /api/cases/_find returned non-200`);
 
-      expect(findResponse.total).to.eql(1);
+      expect(findResponse.total).to.eql(
+        1,
+        `Expected 1 case after import but got ${findResponse.total}`
+      );
       expect(findResponse.cases[0].title).to.eql('A case with a template');
 
       // The template should have been re-imported
@@ -270,7 +306,14 @@ export default ({ getService }: FtrProviderContext): void => {
         .set('kbn-xsrf', 'true')
         .expect(200);
 
-      expect(templatesResponse.templates).to.have.length(1);
+      expect(templatesResponse.templates).to.have.length(
+        1,
+        `Expected 1 template after import but got ${
+          templatesResponse.templates?.length
+        }: ${JSON.stringify(
+          templatesResponse.templates?.map((t: Record<string, unknown>) => t.name)
+        )}`
+      );
       expect(templatesResponse.templates[0].name).to.eql('Roundtrip Template');
 
       // The field definition should have been re-imported
@@ -280,7 +323,14 @@ export default ({ getService }: FtrProviderContext): void => {
         .set('kbn-xsrf', 'true')
         .expect(200);
 
-      expect(fieldDefsResponse.fieldDefinitions).to.have.length(1);
+      expect(fieldDefsResponse.fieldDefinitions).to.have.length(
+        1,
+        `Expected 1 field def after import but got ${
+          fieldDefsResponse.fieldDefinitions?.length
+        }: ${JSON.stringify(
+          fieldDefsResponse.fieldDefinitions?.map((f: Record<string, unknown>) => f.name)
+        )}`
+      );
       expect(fieldDefsResponse.fieldDefinitions[0].name).to.eql('priority');
     });
   });
