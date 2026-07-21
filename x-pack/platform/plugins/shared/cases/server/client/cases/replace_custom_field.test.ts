@@ -554,5 +554,55 @@ describe('Replace custom field', () => {
       // Value is identical — no spurious write.
       expect(patchArgs.updatedAttributes.extended_fields).toBeUndefined();
     });
+
+    it('does not wipe unrelated mirror keys for stored-null optional fields (regression: stored-null delete)', async () => {
+      // theCase has second_key: { value: null }. A v2 UI write may have set second_key_as_boolean
+      // in extended_fields. Replacing only first_key must not delete second_key_as_boolean.
+      const caseWithExtendedFields = {
+        ...theCase,
+        attributes: {
+          ...theCase.attributes,
+          extended_fields: { second_key_as_boolean: 'true' },
+        },
+      };
+
+      const clientArgsWithFlag = createCasesClientMockArgs();
+      clientArgsWithFlag.config = { ...clientArgsWithFlag.config, templates: { enabled: true } };
+      clientArgsWithFlag.services.caseService.getCase.mockResolvedValue(caseWithExtendedFields);
+      clientArgsWithFlag.services.userActionService.getMultipleCasesUserActionsTotal.mockResolvedValue(
+        { [mockCases[0].id]: 1 }
+      );
+      clientArgsWithFlag.services.caseService.patchCase.mockResolvedValue({
+        ...caseWithExtendedFields,
+      });
+
+      const casesClientLocal = createCasesClientMock();
+      casesClientLocal.configure.get = jest.fn().mockResolvedValue([
+        {
+          owner: mockCases[0].attributes.owner,
+          customFields: [
+            { key: 'first_key', type: CustomFieldTypes.TEXT, label: 'First', required: true },
+            { key: 'second_key', type: CustomFieldTypes.TOGGLE, label: 'Second', required: false },
+          ],
+        },
+      ]);
+
+      await replaceCustomField(
+        {
+          caseId: mockCases[0].id,
+          customFieldId: 'first_key',
+          request: { caseVersion: mockCases[0].version ?? '', value: 'new_value' },
+        },
+        clientArgsWithFlag,
+        casesClientLocal
+      );
+
+      const [[patchArgs]] = clientArgsWithFlag.services.caseService.patchCase.mock.calls;
+      // first_key mirror is set; second_key_as_boolean must be preserved (not wiped by stored null).
+      expect(patchArgs.updatedAttributes.extended_fields).toEqual({
+        first_key_as_keyword: 'new_value',
+        second_key_as_boolean: 'true',
+      });
+    });
   });
 });

@@ -122,8 +122,14 @@ export const replaceCustomField = async (
     // value-identical — that signals "no change needed" and we must not spread extended_fields
     // into the patch payload (it would be a spurious write that also triggers an extra user action).
     const existingExtendedFields = caseToUpdate.attributes.extended_fields;
+    // Pass only the single field being replaced, not the full reconstructed decodedCustomFields.
+    // The reconstructed array includes all stored customFields from the case, and stored-null
+    // optional fields would hit the merge's delete branch and wipe unrelated mirror keys.
     const mergedExtendedFields = config.templates.enabled
-      ? mergeCustomFieldsIntoExtendedFields(decodedCustomFields, existingExtendedFields)
+      ? mergeCustomFieldsIntoExtendedFields(
+          [{ key: customFieldId, type: foundCustomField.type, value }],
+          existingExtendedFields
+        )
       : undefined;
     const extendedFieldsChanged = mergedExtendedFields !== existingExtendedFields;
 
