@@ -282,6 +282,37 @@ describe('CasesAnalyticsV2DataViewService', () => {
       expect(dvService.createSavedObject).not.toHaveBeenCalled();
     });
 
+    /**
+     * The same cross-node race can surface as the data-views plugin's
+     * `DuplicateDataViewError` rather than an ES 409: `createSavedObject`
+     * runs a `findByName` dupe check before writing, so if the other node's
+     * SO already landed, the loser throws `DuplicateDataViewError` (a plain
+     * `Error`, no `statusCode`, message `Duplicate data view: Case Analytics`)
+     * before ever reaching ES. `isVersionConflictError` matches it by `name`
+     * so it lands on the benign DEBUG path, not the "ensure failed" WARN.
+     */
+    it('treats a DuplicateDataViewError on createSavedObject as a benign bootstrap success', async () => {
+      const { service, dvService, deps, logger } = setup([]);
+      stubMissingDataView(dvService);
+      // Reproduce the plugin's error shape: `name` is the only discriminator
+      // (no statusCode, and the message doesn't match the 409 regex).
+      const dupeErr = Object.assign(new Error('Duplicate data view: Case Analytics'), {
+        name: 'DuplicateDataViewError',
+      });
+      dvService.createSavedObject.mockRejectedValueOnce(dupeErr);
+
+      await expect(service.ensureForSpace(deps)).resolves.toBeUndefined();
+
+      // Benign race — no WARN, and the cache slot is populated so the next
+      // ensure short-circuits without re-hitting create.
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('Duplicate data view'));
+      dvService.get.mockClear();
+      dvService.createSavedObject.mockClear();
+      await service.ensureForSpace(deps);
+      expect(dvService.get).not.toHaveBeenCalled();
+      expect(dvService.createSavedObject).not.toHaveBeenCalled();
+    });
+
     it('still surfaces non-conflict createAndSave failures via the WARN path', async () => {
       // Negative case for the conflict-tolerance path: a 503 / 500
       // from ES must not be swallowed; the administrator needs to see

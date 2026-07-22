@@ -47,16 +47,28 @@ const FIELD_DEFINITIONS_PAGE_SIZE = 100;
 const BOOTSTRAP_CACHE_TTL_MS = 5 * 60 * 1000;
 
 /**
- * Detects the data-views plugin's "id already exists" conflict surface,
- * which surfaces as ES's `version_conflict_engine_exception`. The plugin's
- * `statusCode` coverage varies by the saved-objects code path the conflict
- * crossed, so both message and statusCode are checked.
+ * Detects the "another node already created this data view" outcome of the
+ * bootstrap create, across the two shapes it can take on the
+ * `create` + `createSavedObject` call site:
  *
- * Used only on the `createAndSave` call site so real version conflicts
+ *   1. ES's `version_conflict_engine_exception` — the SO create itself
+ *      lost the race on the deterministic id. The plugin's `statusCode`
+ *      coverage varies by the saved-objects code path the conflict crossed,
+ *      so both message and statusCode are checked.
+ *   2. The data-views plugin's `DuplicateDataViewError` — `createSavedObject`
+ *      runs a `findByName` dupe check before the create, and when the other
+ *      node's SO has already landed it throws this instead of reaching ES.
+ *      It's a plain `Error` with no `statusCode` and message
+ *      `Duplicate data view: Case Analytics`, so it's matched by `name`.
+ *
+ * Both mean the same thing here (the space's view exists), so both are
+ * treated as a benign, self-healing bootstrap race and logged at DEBUG.
+ * Scoped to the bootstrap create call site so real version conflicts
  * elsewhere (e.g. a stale `updateSavedObject` payload) still surface.
  */
 function isVersionConflictError(err: unknown): boolean {
   if (err == null) return false;
+  if ((err as { name?: string })?.name === 'DuplicateDataViewError') return true;
   const status =
     (err as { statusCode?: number })?.statusCode ??
     (err as { meta?: { statusCode?: number } })?.meta?.statusCode;
@@ -370,8 +382,13 @@ export class CasesAnalyticsV2DataViewService {
         // `overwrite: false` so a concurrent create from another node
         // surfaces a conflict instead of clobbering. Per-process concurrency
         // is already collapsed by `dedupedEnsure`, so the only remaining
-        // source of a 409 is a cross-Kibana-node race: another node
+        // source of a conflict is a cross-Kibana-node race: another node
         // ensured the same space at the same time and won the SO create.
+        // Depending on which node's write lands first the loser sees either
+        // an ES `version_conflict_engine_exception` (the SO create raced) or
+        // the data-views plugin's `DuplicateDataViewError` (the loser's
+        // `createSavedObject` name check saw the winner's doc first);
+        // `isVersionConflictError` treats both as the same benign outcome.
         // Both nodes computed the desired map from the same `find` against
         // the persisted templates, so the winning doc carries the runtime
         // fields this call would have written. Treat as a benign success
