@@ -294,6 +294,102 @@ describe('getCompletionItemProvider', () => {
       });
     });
 
+    it('should preserve both v2 and v1 property-value suggestions that share a display label but insert different values', async () => {
+      // Regression: keying property-value suggestions by label alone collapsed two templates that
+      // share a display name — last-write-wins caused the v2 entry to be overwritten by v1.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getSuggestions } = require('./suggestions/get_suggestions');
+
+      const makeTemplateSuggestion = (
+        id: string,
+        label: string,
+        deprecated = false
+      ): monaco.languages.CompletionItem => {
+        const filterText = `${id} ${label} "${label}" '${label}'`;
+        if (deprecated) {
+          return {
+            label: { label, description: 'Deprecated' },
+            kind: monaco.languages.CompletionItemKind.Value,
+            tags: [monaco.languages.CompletionItemTag.Deprecated],
+            insertText: id,
+            range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 } as any,
+            filterText,
+            sortText: `1_${label}`,
+          };
+        }
+        return {
+          label,
+          kind: monaco.languages.CompletionItemKind.Value,
+          insertText: id,
+          range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 } as any,
+          filterText,
+          sortText: `0_${label}`,
+        };
+      };
+
+      // v2 template first, then same-named v1 (deprecated) — mirrors getMergedTemplates order
+      getSuggestions.mockReturnValueOnce([
+        makeTemplateSuggestion('v2-uuid-1234', 'Triage template', false),
+        makeTemplateSuggestion('v1-legacy-key', 'Triage template', true),
+      ]);
+
+      const provider = getCompletionItemProvider(getState);
+      const result = await provider.provideCompletionItems!(
+        mockModel,
+        mockPosition,
+        mockCompletionContext,
+        {} as monaco.CancellationToken
+      );
+
+      // Both suggestions must survive deduplication
+      expect(result?.suggestions).toHaveLength(2);
+      const insertTexts = result?.suggestions?.map((s) => s.insertText);
+      expect(insertTexts).toContain('v2-uuid-1234');
+      expect(insertTexts).toContain('v1-legacy-key');
+    });
+
+    it('should deduplicate property-value suggestions when YAML provider and workflow return the same label and insertText', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getSuggestions } = require('./suggestions/get_suggestions');
+
+      const filterText = 'my-template-id My Template "My Template" \'My Template\'';
+      getSuggestions.mockReturnValueOnce([
+        {
+          label: 'My Template',
+          insertText: 'my-template-id',
+          filterText,
+          kind: monaco.languages.CompletionItemKind.Value,
+        },
+      ]);
+
+      const yamlProvider: monaco.languages.CompletionItemProvider = {
+        provideCompletionItems: jest.fn().mockResolvedValue({
+          suggestions: [
+            {
+              label: 'My Template',
+              insertText: 'my-template-id',
+              filterText,
+            },
+          ],
+          incomplete: false,
+        }),
+      };
+
+      monaco.languages.registerCompletionItemProvider(YAML_LANG_ID, yamlProvider);
+
+      const provider = getCompletionItemProvider(getState);
+      const result = await provider.provideCompletionItems!(
+        mockModel,
+        mockPosition,
+        mockCompletionContext,
+        {} as monaco.CancellationToken
+      );
+
+      // Identical label+insertText from both sources → only one entry, workflow wins
+      expect(result?.suggestions).toHaveLength(1);
+      expect(result?.suggestions?.[0].insertText).toBe('my-template-id');
+    });
+
     it('should deduplicate duplicate keys across YAML providers, preferring snippets', async () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { getSuggestions } = require('./suggestions/get_suggestions');

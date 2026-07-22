@@ -108,15 +108,32 @@ function quoteKibanaBuiltinRefSuggestion(
  *
  * Property-value suggestions (template ids, connector ids from selection
  * handlers) carry a multi-token search filterText (e.g. 'key Label "Label"
- * \'Label\'') that is NOT a stable identity key. Use the display label
- * instead so the workflow suggestion deduplicates against whatever the YAML
- * language provider may return for the same visible label.
+ * \'Label\'') that is NOT a stable identity key. Key them by label + insertText
+ * so two options that share a display name but insert different values (e.g. a
+ * v2 library template and a same-named legacy v1 template) are preserved as
+ * distinct entries. When insertText is absent fall back to label alone, which
+ * still deduplicates the YAML provider suggestion against ours when they carry
+ * identical visible text with no inserted value.
  */
 function getDeduplicationKey(suggestion: monaco.languages.CompletionItem): string {
   if (suggestion.filterText && !suggestion.filterText.includes(' ')) {
+    // Single-token filterText: step types, connector IDs — deduplicate by technical ID.
     return suggestion.filterText;
   }
-  return typeof suggestion.label === 'string' ? suggestion.label : suggestion.label.label;
+  const label = typeof suggestion.label === 'string' ? suggestion.label : suggestion.label.label;
+  if (suggestion.filterText?.includes(' ')) {
+    // Multi-token filterText: property-value suggestions (template IDs, connector IDs from
+    // selection handlers). Two options may share a display label but insert different values
+    // (e.g. a v2 library template and a same-named legacy v1 template), so key by
+    // label + insertText to preserve both as distinct entries. Falls back to label-only when
+    // insertText is absent so the YAML provider's entry is still deduped against ours when
+    // they carry identical visible text with no inserted value.
+    const insertText = typeof suggestion.insertText === 'string' ? suggestion.insertText : '';
+    return insertText ? `${label}\0${insertText}` : label;
+  }
+  // No filterText (plain step / schema suggestions from YAML provider): deduplicate by label
+  // so the workflow suggestion overwrites a same-named YAML entry.
+  return label;
 }
 
 /**
