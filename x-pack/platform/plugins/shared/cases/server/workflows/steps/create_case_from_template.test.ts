@@ -258,12 +258,12 @@ describe('createCaseFromTemplateStepDefinition', () => {
     });
   });
 
-  describe('v2 templates (enable_v2)', () => {
-    const makeTemplateSO = (definition: Record<string, unknown>) => ({
+  describe('auto-resolution — v2 library tried first, v1 config as fallback', () => {
+    const makeTemplateSO = (definition: Record<string, unknown>, owner = 'securitySolution') => ({
       attributes: {
         templateId: 'tpl-v2-1',
         templateVersion: 3,
-        owner: 'securitySolution',
+        owner,
         name: 'V2 Triage',
         definition: yamlStringify(definition),
       },
@@ -284,7 +284,7 @@ describe('createCaseFromTemplateStepDefinition', () => {
       ],
     };
 
-    it('resolves the v2 template, applies its fields, and creates the case with extended_fields', async () => {
+    it('resolves the v2 template when the library returns a matching-owner SO', async () => {
       const create = jest.fn().mockResolvedValue(createCaseResponseFixture);
       const getTemplate = jest.fn().mockResolvedValue(makeTemplateSO(v2Definition));
       const getFieldDefinitions = jest.fn().mockResolvedValue({ fieldDefinitions: [] });
@@ -301,7 +301,6 @@ describe('createCaseFromTemplateStepDefinition', () => {
         createContext({
           owner: 'securitySolution',
           case_template_id: 'tpl-v2-1',
-          enable_v2: true,
         })
       );
 
@@ -320,17 +319,61 @@ describe('createCaseFromTemplateStepDefinition', () => {
       );
     });
 
-    it('errors when the v2 template belongs to a different owner', async () => {
-      const create = jest.fn();
-      const getTemplate = jest.fn().mockResolvedValue({
-        attributes: {
-          templateId: 'tpl-v2-1',
-          templateVersion: 1,
-          owner: 'observability',
-          name: 'Other owner',
-          definition: yamlStringify({ name: 'Other owner', fields: [] }),
+    it('falls back to v1 config when getTemplate returns undefined', async () => {
+      const create = jest.fn().mockResolvedValue(createCaseResponseFixture);
+      // v2 library has no match — getTemplate returns undefined
+      const getTemplate = jest.fn().mockResolvedValue(undefined);
+      const get = jest.fn().mockResolvedValue([
+        {
+          owner: 'securitySolution',
+          templates: [{ key: 'v1_triage', name: 'V1 Triage', caseFields: { title: 'V1 title' } }],
         },
-      });
+      ]);
+      const getCasesClient = jest.fn().mockResolvedValue({
+        configure: { get },
+        templates: { getTemplate },
+        cases: { create },
+      } as unknown as CasesClient);
+      const definition = createCaseFromTemplateStepDefinition(getCasesClient);
+
+      await definition.handler(
+        createContext({ owner: 'securitySolution', case_template_id: 'v1_triage' })
+      );
+
+      expect(getTemplate).toHaveBeenCalledWith('v1_triage');
+      expect(get).toHaveBeenCalledWith({ owner: 'securitySolution' });
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({ title: 'V1 title' }));
+    });
+
+    it('falls back to v1 when the templates sub-client is unavailable (feature disabled)', async () => {
+      const create = jest.fn().mockResolvedValue(createCaseResponseFixture);
+      const get = jest.fn().mockResolvedValue([
+        {
+          owner: 'securitySolution',
+          templates: [{ key: 'v1_triage', name: 'V1 Triage', caseFields: { title: 'V1 title' } }],
+        },
+      ]);
+      // casesClient.templates is undefined (templates feature disabled)
+      const getCasesClient = jest.fn().mockResolvedValue({
+        configure: { get },
+        templates: undefined,
+        cases: { create },
+      } as unknown as CasesClient);
+      const definition = createCaseFromTemplateStepDefinition(getCasesClient);
+
+      await definition.handler(
+        createContext({ owner: 'securitySolution', case_template_id: 'v1_triage' })
+      );
+
+      expect(get).toHaveBeenCalledWith({ owner: 'securitySolution' });
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({ title: 'V1 title' }));
+    });
+
+    it('errors when the matched v2 template belongs to a different owner', async () => {
+      const create = jest.fn();
+      const getTemplate = jest
+        .fn()
+        .mockResolvedValue(makeTemplateSO(v2Definition, 'observability'));
       const getCasesClient = jest.fn().mockResolvedValue({
         templates: { getTemplate },
         cases: { create },
@@ -338,11 +381,26 @@ describe('createCaseFromTemplateStepDefinition', () => {
       const definition = createCaseFromTemplateStepDefinition(getCasesClient);
 
       const result = await definition.handler(
-        createContext({
-          owner: 'securitySolution',
-          case_template_id: 'tpl-v2-1',
-          enable_v2: true,
-        })
+        createContext({ owner: 'securitySolution', case_template_id: 'tpl-v2-1' })
+      );
+
+      expect(create).not.toHaveBeenCalled();
+      expect(result.error?.message).toContain('Case template not found');
+    });
+
+    it('errors when neither v2 library nor v1 config has the template', async () => {
+      const create = jest.fn();
+      const getTemplate = jest.fn().mockResolvedValue(undefined);
+      const get = jest.fn().mockResolvedValue([{ owner: 'securitySolution', templates: [] }]);
+      const getCasesClient = jest.fn().mockResolvedValue({
+        configure: { get },
+        templates: { getTemplate },
+        cases: { create },
+      } as unknown as CasesClient);
+      const definition = createCaseFromTemplateStepDefinition(getCasesClient);
+
+      const result = await definition.handler(
+        createContext({ owner: 'securitySolution', case_template_id: 'missing_template' })
       );
 
       expect(create).not.toHaveBeenCalled();

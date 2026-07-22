@@ -783,6 +783,12 @@ export interface SelectionOption<T = unknown> {
   description?: string;
   /** Extended documentation shown in side panel (optional) */
   documentation?: string;
+  /**
+   * When `true` the editor renders the option with a deprecated marker — a strikethrough on the
+   * label and a dimmed "Deprecated" badge — and sorts it after non-deprecated options. The inserted
+   * value is unchanged; only the visual presentation differs.
+   */
+  deprecated?: boolean;
 }
 
 export interface SelectionDetails {

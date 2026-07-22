@@ -23,13 +23,6 @@ const InputSchema = z.object({
   owner: Owner,
   case_template_id: z.string().min(1, 'case_template_id is required'),
   overwrites: OverwritesSchema.optional(),
-  /**
-   * Opt in to the v2 (YAML) templates system. When `false` (default) the step resolves the legacy
-   * v1 template from the case configuration exactly as before — existing workflows are unchanged.
-   * When `true`, `case_template_id` is resolved against the v2 templates library and the case is
-   * created with the template applied and its fields written to `extended_fields`.
-   */
-  enable_v2: z.boolean().optional().default(false),
 });
 
 const OutputSchema = CasesStepSingleCaseOutputSchema;
@@ -80,8 +73,7 @@ export const createCaseFromTemplateStepCommonDefinition: CommonStepDefinition<
   type: ${CreateCaseFromTemplateStepTypeId}
   with:
     owner: securitySolution
-    case_template_id: "8f3c1e20-..." # v2 template id
-    enable_v2: true
+    case_template_id: "8f3c1e20-..." # v2 template id — resolved automatically
 \`\`\``,
     ],
   },

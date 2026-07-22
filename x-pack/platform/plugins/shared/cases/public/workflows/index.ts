@@ -153,7 +153,9 @@ export function registerCasesSteps(
   );
 
   workflowsExtensions.registerStepDefinition(() =>
-    import('./create_case_from_template').then((m) => m.createCreateCaseFromTemplateStepDefinition)
+    import('./create_case_from_template').then((m) =>
+      m.createCreateCaseFromTemplateStepDefinition(isTemplatesEnabled)
+    )
   );
 }
 

@@ -7,6 +7,7 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
+import { i18n } from '@kbn/i18n';
 import { monaco } from '@kbn/monaco';
 import {
   isBuiltInStepProperty,
@@ -16,6 +17,11 @@ import {
   type StepPropertyHandler,
   type StepSelectionValues,
 } from '@kbn/workflows';
+
+const DEPRECATED_BADGE_LABEL = i18n.translate(
+  'workflows.editor.autocomplete.selectionOption.deprecated',
+  { defaultMessage: 'Deprecated' }
+);
 import type { StepInfo } from '../../../../../../entities/workflows/store/workflow_detail/utils/build_workflow_lookup';
 import {
   buildStepSelectionValues,
@@ -98,18 +104,38 @@ export async function getStepPropertySuggestions(
 
   cacheSearchOptions(focusedStepInfo.stepType, context.scope, handlerKey, options, values);
 
-  return options.map(
-    (option): monaco.languages.CompletionItem => ({
-      label: option.label ?? String(option.value),
+  return options.map((option): monaco.languages.CompletionItem => {
+    const baseLabel = option.label ?? String(option.value);
+    const filterText = `${option.value} ${baseLabel} "${baseLabel}" '${baseLabel}'`;
+    // Sort deprecated options after non-deprecated ones, then alphabetically within each group.
+    const sortText = `${option.deprecated ? '1' : '0'}_${baseLabel}`;
+
+    if (option.deprecated) {
+      return {
+        // Use the structured label form so the editor renders a dimmed "Deprecated" badge inline.
+        label: { label: baseLabel, description: DEPRECATED_BADGE_LABEL },
+        kind: monaco.languages.CompletionItemKind.Value,
+        tags: [monaco.languages.CompletionItemTag.Deprecated],
+        insertText: String(option.value),
+        range: replaceRange,
+        detail: option.description,
+        documentation: option.documentation,
+        filterText,
+        sortText,
+      };
+    }
+
+    return {
+      label: baseLabel,
       kind: monaco.languages.CompletionItemKind.Value,
       insertText: String(option.value),
       range: replaceRange,
       detail: option.description,
       documentation: option.documentation,
-      filterText: `${option.value} ${option.label} "${option.label}" '${option.label}'`,
-      sortText: option.label,
-    })
-  );
+      filterText,
+      sortText,
+    };
+  });
 }
 
 /**

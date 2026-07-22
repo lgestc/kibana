@@ -540,6 +540,84 @@ describe('getStepPropertySuggestions', () => {
     });
   });
 
+  describe('deprecated option rendering', () => {
+    it('applies CompletionItemTag.Deprecated and label detail for deprecated options', async () => {
+      const context = createMockContext();
+      const getPropertyHandler = createMockGetPropertyHandler(
+        jest.fn().mockResolvedValue([{ label: 'Old Option', value: 'old-val', deprecated: true }])
+      );
+
+      const suggestions = await getStepPropertySuggestions(context, getPropertyHandler);
+
+      expect(suggestions).toHaveLength(1);
+      const [s] = suggestions;
+      // Tags must include Deprecated (value = 1).
+      expect(s.tags).toEqual([monaco.languages.CompletionItemTag.Deprecated]);
+      // Label should use structured form with a 'description' badge.
+      expect(typeof s.label).toBe('object');
+      const labelObj = s.label as { label: string; description: string };
+      expect(labelObj.label).toBe('Old Option');
+      expect(typeof labelObj.description).toBe('string');
+      expect(labelObj.description.length).toBeGreaterThan(0);
+      // insertText is unchanged.
+      expect(s.insertText).toBe('old-val');
+    });
+
+    it('does not apply deprecated rendering for non-deprecated options', async () => {
+      const context = createMockContext();
+      const getPropertyHandler = createMockGetPropertyHandler(
+        jest
+          .fn()
+          .mockResolvedValue([{ label: 'Current Option', value: 'cur-val', deprecated: false }])
+      );
+
+      const suggestions = await getStepPropertySuggestions(context, getPropertyHandler);
+
+      expect(suggestions[0].tags).toBeUndefined();
+      expect(typeof suggestions[0].label).toBe('string');
+      expect(suggestions[0].label).toBe('Current Option');
+    });
+
+    it('sorts deprecated options after non-deprecated options in the same label group', async () => {
+      const context = createMockContext();
+      const getPropertyHandler = createMockGetPropertyHandler(
+        jest.fn().mockResolvedValue([
+          // Deliberately interleaved — sorting should group them.
+          { label: 'Beta', value: 'beta', deprecated: false },
+          { label: 'Alpha (old)', value: 'alpha-old', deprecated: true },
+          { label: 'Alpha', value: 'alpha', deprecated: false },
+          { label: 'Zebra (old)', value: 'zebra-old', deprecated: true },
+        ])
+      );
+
+      const suggestions = await getStepPropertySuggestions(context, getPropertyHandler);
+
+      // Sort by sortText to assert group ordering.
+      const sorted = [...suggestions].sort((a, b) =>
+        (a.sortText as string).localeCompare(b.sortText as string)
+      );
+
+      // Non-deprecated options sort before deprecated ones.
+      const labels = sorted.map((s) =>
+        typeof s.label === 'string' ? s.label : (s.label as { label: string }).label
+      );
+      expect(labels.indexOf('Alpha')).toBeLessThan(labels.indexOf('Alpha (old)'));
+      expect(labels.indexOf('Beta')).toBeLessThan(labels.indexOf('Zebra (old)'));
+    });
+
+    it('filterText uses plain label text regardless of deprecated status', async () => {
+      const context = createMockContext();
+      const getPropertyHandler = createMockGetPropertyHandler(
+        jest.fn().mockResolvedValue([{ label: 'My Template', value: 'my-key', deprecated: true }])
+      );
+
+      const suggestions = await getStepPropertySuggestions(context, getPropertyHandler);
+
+      expect(suggestions[0].filterText).toContain('My Template');
+      expect(suggestions[0].filterText).toContain('my-key');
+    });
+  });
+
   describe('multiple completions', () => {
     it('should handle large number of completions', async () => {
       const manyCompletions = Array.from({ length: 100 }, (_, i) => ({

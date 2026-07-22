@@ -44,24 +44,18 @@ const findTemplateById = (
 };
 
 /**
- * v2 path: resolve the YAML template from the templates library, apply its case-level fields and
- * write its resolved field defaults to `extended_fields`. Mirrors how the Cases connector applies a
- * v2 template. Opt-in only (`enable_v2: true`); the default path is untouched.
+ * v2 path: apply the already-fetched YAML template SO's case-level fields and write its resolved
+ * field defaults to `extended_fields`. Mirrors how the Cases connector applies a v2 template.
  */
 const createCaseFromV2Template = async (
   casesClient: CasesClient,
   owner: string,
-  templateId: string,
+  so: Awaited<ReturnType<CasesClient['templates']['getTemplate']>> & object,
   normalizedOverwrites: Record<string, unknown>
 ) => {
-  const so = await casesClient.templates.getTemplate(templateId);
-  if (!so || so.attributes.owner !== owner) {
-    throw new Error(`Case template not found for owner "${owner}": ${templateId}`);
-  }
-
   const definition = parseTemplateDefinition(so.attributes.definition);
   if (!definition) {
-    throw new Error(`Case template "${templateId}" has an invalid definition`);
+    throw new Error(`Case template "${so.attributes.templateId}" has an invalid definition`);
   }
 
   const extendedFields = await buildExtendedFieldsFromTemplate(casesClient, definition, owner);
@@ -96,17 +90,24 @@ export const createCaseFromTemplateStepDefinition = (
       CreateCaseFromTemplateStepConfig,
       CreateCaseFromTemplateStepOutput['case']
     >(getCasesClient, async (casesClient, input) => {
-      const { case_template_id, owner, overwrites, enable_v2: enableV2 } = input;
+      const { case_template_id, owner, overwrites } = input;
 
       const normalizedOverwrites = overwrites
         ? normalizeCaseStepUpdatesForBulkPatch(overwrites)
         : {};
 
-      if (enableV2) {
+      // Try the v2 (YAML library) templates first — getTemplate returns undefined for an unknown id,
+      // so the fallback to v1 is clean. Guard with optional access in case the templates feature is
+      // disabled, in which case casesClient.templates is unavailable.
+      const v2So = await casesClient.templates?.getTemplate(case_template_id);
+      if (v2So != null) {
+        if (v2So.attributes.owner !== owner) {
+          throw new Error(`Case template not found for owner "${owner}": ${case_template_id}`);
+        }
         const createdFromV2 = await createCaseFromV2Template(
           casesClient,
           owner,
-          case_template_id,
+          v2So,
           normalizedOverwrites
         );
         return safeParseCaseForWorkflowOutput(
@@ -115,6 +116,7 @@ export const createCaseFromTemplateStepDefinition = (
         );
       }
 
+      // Fall back to v1 (configuration-level) templates.
       const configurations = await casesClient.configure.get({ owner });
       const template = findTemplateById(configurations, case_template_id);
 
