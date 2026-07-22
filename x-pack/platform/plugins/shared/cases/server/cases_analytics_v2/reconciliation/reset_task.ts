@@ -192,7 +192,7 @@ export function registerResetTask({
       // is the opposite of what a failure (often caused by ES pressure)
       // calls for.
       maxAttempts: 1,
-      createTaskRunner: ({ abortController }) => ({
+      createTaskRunner: () => ({
         run: async () => {
           // Throws on total failure, returns on success or partial
           // success. Task Manager auto-deletes one-shot tasks (no
@@ -272,10 +272,6 @@ export function registerResetTask({
               taskManager: deps.taskManager,
               intervalMinutes: reconciliationIntervalMinutes,
               pageDelayMs,
-              // Task Manager aborts this controller on timeout / shutdown;
-              // threaded into each surface walk so a cancelled reset bails
-              // at the next page boundary instead of running to completion.
-              signal: abortController.signal,
               logger,
               onProgress: ({ phase, processed }) => {
                 // The three surfaces walk concurrently, so `phase` here is
@@ -345,13 +341,14 @@ export function registerResetTask({
           }
         },
         cancel: async () => {
-          // No long-lived resources to release beyond the abort signal
-          // Task Manager already trips (threaded into every surface walk
-          // via `runFullReset`, checked at each page boundary). The
-          // in-flight page completes, then the walk throws and unwinds;
-          // bulk dispatches are idempotent on `_id`, so a second `/reset`
-          // rescheduling a fresh task while this one is still finishing
-          // only causes extra ES traffic, no correctness impact.
+          // No long-lived resources to release. The runners are SO
+          // walks + writer dispatches; cancelling on the TM side just
+          // removes the SO and stops claiming the task on the next
+          // polling cycle. The currently-running iteration completes
+          // naturally; bulk dispatches are idempotent on `_id`, so a
+          // second `/reset` rescheduling a fresh task while this one is
+          // still finishing only causes extra ES traffic, no
+          // correctness impact.
         },
       }),
     },
