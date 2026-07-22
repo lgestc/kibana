@@ -101,13 +101,19 @@ function quoteKibanaBuiltinRefSuggestion(
 
 /**
  * Get the deduplication key for a suggestion.
- * Uses filterText if available (contains the actual connector type),
- * otherwise falls back to the label.
+ *
+ * Step type / connector suggestions carry a single-token filterText (e.g.
+ * 'kibana.createCaseDefaultSpace') that differs from the display label — use
+ * it verbatim so two suggestions for the same technical type are merged.
+ *
+ * Property-value suggestions (template ids, connector ids from selection
+ * handlers) carry a multi-token search filterText (e.g. 'key Label "Label"
+ * \'Label\'') that is NOT a stable identity key. Use the display label
+ * instead so the workflow suggestion deduplicates against whatever the YAML
+ * language provider may return for the same visible label.
  */
 function getDeduplicationKey(suggestion: monaco.languages.CompletionItem): string {
-  // Prefer filterText as it contains the actual technical name (e.g., 'kibana.createCaseDefaultSpace')
-  // even when the label shows a cleaner display name (e.g., 'kibana.createCase')
-  if (suggestion.filterText) {
+  if (suggestion.filterText && !suggestion.filterText.includes(' ')) {
     return suggestion.filterText;
   }
   return typeof suggestion.label === 'string' ? suggestion.label : suggestion.label.label;
