@@ -194,5 +194,18 @@ describe('applicable_fields', () => {
         })
       ).rejects.toThrow('Template missing not found');
     });
+
+    it('throws when the template belongs to a different owner', async () => {
+      templatesService.getTemplate.mockResolvedValue(makeTemplateSO([]) as never);
+
+      await expect(
+        resolveApplicableFields({
+          owner: 'observability',
+          templateId: 'tpl-1',
+          templatesService: templatesService as unknown as TemplatesService,
+          fieldDefinitionsService: fieldDefinitionsService as unknown as FieldDefinitionsService,
+        })
+      ).rejects.toThrow('Template tpl-1 not found');
+    });
   });
 });

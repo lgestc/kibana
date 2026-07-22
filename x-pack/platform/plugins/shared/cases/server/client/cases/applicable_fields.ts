@@ -93,6 +93,9 @@ export const resolveApplicableFields = async ({
     if (!templateSO) {
       throw Boom.badRequest(`Template ${templateId} not found`);
     }
+    if (templateSO.attributes.owner !== owner) {
+      throw Boom.badRequest(`Template ${templateId} not found`);
+    }
 
     let parsedTemplate;
     try {
