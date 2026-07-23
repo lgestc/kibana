@@ -372,6 +372,34 @@ export default ({ getService }: FtrProviderContext): void => {
         expect(body.message).to.contain('"Incident Template"');
       });
 
+      it('returns 409 when a template references the field via $ref with a local name alias', async () => {
+        // FAILURE SCENARIO: The template uses { $ref: 'priority', name: 'Custom Label' }.
+        // The `fieldDefinitions` keyword cache stores "Custom Label" as the resolved name.
+        // A query against the cache would miss this ref. The hybrid approach (match_phrase
+        // pre-filter + YAML parse) finds the $ref: priority value correctly regardless.
+        await supertest
+          .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .set('kbn-xsrf', 'true')
+          .send({
+            name: 'Aliased Ref Template',
+            owner: 'securitySolutionFixture',
+            definition: stringify({
+              name: 'Aliased Ref Template',
+              fields: [{ $ref: 'priority', name: 'Custom Priority Label' }],
+            }),
+            isEnabled: true,
+          })
+          .expect(200);
+
+        const { body } = await supertestWithoutAuth
+          .delete(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
+          .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
+          .set('kbn-xsrf', 'true')
+          .expect(409);
+
+        expect(body.message).to.contain('"Aliased Ref Template"');
+      });
+
       it('succeeds when the only referencing template has been deleted', async () => {
         // Create a template that references the field, then soft-delete it
         const { body: templateBody } = await supertest
