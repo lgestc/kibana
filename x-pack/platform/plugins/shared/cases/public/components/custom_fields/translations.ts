@@ -103,7 +103,8 @@ export const DELETE_FIELD_TITLE = (name: string) =>
 export const DELETE_FIELD_DESCRIPTION = (name: string) =>
   i18n.translate('xpack.cases.customFields.deleteFieldDescription', {
     values: { name },
-    defaultMessage: '"{name}" will no longer appear in new cases. Existing cases keep their current values.',
+    defaultMessage:
+      '"{name}" will no longer appear in new cases. Existing cases keep their current values.',
   });
 
 export const DELETE = i18n.translate('xpack.cases.customFields.fieldOptions.Delete', {
