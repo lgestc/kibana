@@ -417,8 +417,9 @@ export default ({ getService }: FtrProviderContext): void => {
           .expect(200);
 
         await supertest
-          .delete(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}/${templateBody.templateId}`)
+          .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}/_bulk_delete`)
           .set('kbn-xsrf', 'true')
+          .send({ ids: [templateBody.templateId] })
           .expect(204);
 
         // Field definition can now be deleted because the only referencing template is gone
