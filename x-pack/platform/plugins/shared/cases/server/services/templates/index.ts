@@ -595,6 +595,57 @@ export class TemplatesService {
    * writes are used on create/update), so the practical collision window is small. Enforcing true
    * atomicity would require a dedicated uniqueness SO or an alias/lock, which is out of scope here.
    */
+
+  /**
+   * Returns the names of active (non-deleted, latest-version) templates for the given owner
+   * that contain a `$ref: <fieldName>` reference in their YAML definition.
+   *
+   * Used by the field-definitions client to block deleting a library field that is still
+   * referenced by at least one template.
+   */
+  async getActiveTemplatesReferencingField(
+    owner: string,
+    fieldName: string
+  ): Promise<Array<{ name: string }>> {
+    const escapedOwner = escapeKuery(owner);
+    const soType = CASE_TEMPLATE_SAVED_OBJECT;
+
+    const result = await this.dependencies.unsecuredSavedObjectsClient.find<Template>({
+      type: soType,
+      namespaces: [this.dependencies.namespace],
+      page: 1,
+      perPage: 10000,
+      fields: ['name', 'definition'],
+      filter: fromKueryExpression(
+        `${soType}.attributes.owner: "${escapedOwner}" AND ` +
+          `${soType}.attributes.isLatest: true AND NOT ${soType}.attributes.deletedAt: *`
+      ),
+    });
+
+    const referencing: Array<{ name: string }> = [];
+
+    for (const so of result.saved_objects) {
+      try {
+        const parsed = parseYaml(so.attributes.definition ?? '');
+        const fields: unknown[] = Array.isArray(parsed?.fields) ? parsed.fields : [];
+        const hasRef = fields.some(
+          (f) =>
+            typeof f === 'object' &&
+            f !== null &&
+            '$ref' in f &&
+            (f as Record<string, unknown>).$ref === fieldName
+        );
+        if (hasRef) {
+          referencing.push({ name: so.attributes.name });
+        }
+      } catch {
+        // Unparseable YAML — skip; do not block the delete for a corrupt template
+      }
+    }
+
+    return referencing;
+  }
+
   private async assertTemplateNameIsUnique({
     name,
     owner,

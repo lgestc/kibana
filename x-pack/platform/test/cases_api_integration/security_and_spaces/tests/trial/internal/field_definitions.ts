@@ -6,6 +6,7 @@
  */
 
 import expect from '@kbn/expect';
+import { stringify } from 'yaml';
 import type { FtrProviderContext } from '../../../../common/ftr_provider_context';
 import { deleteAllCaseItems, getSpaceUrlPrefix } from '../../../../common/lib/api';
 import {
@@ -17,6 +18,7 @@ import {
 } from '../../../../common/lib/authentication/users';
 
 const FIELD_DEFINITIONS_URL = '/internal/cases/field_definitions';
+const TEMPLATES_URL = '/internal/cases/templates';
 
 const buildCreateBody = (overrides: Record<string, unknown> = {}) => ({
   name: 'priority',
@@ -343,6 +345,62 @@ export default ({ getService }: FtrProviderContext): void => {
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .set('kbn-xsrf', 'true')
           .expect(404);
+      });
+
+      it('returns 409 when an active template references the field via $ref', async () => {
+        // FAILURE SCENARIO: deleting "priority" while "Incident Template" has $ref: priority in its definition
+        await supertest
+          .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .set('kbn-xsrf', 'true')
+          .send({
+            name: 'Incident Template',
+            owner: 'securitySolutionFixture',
+            definition: stringify({
+              name: 'Incident Template',
+              fields: [{ $ref: 'priority' }],
+            }),
+            isEnabled: true,
+          })
+          .expect(200);
+
+        const { body } = await supertestWithoutAuth
+          .delete(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
+          .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
+          .set('kbn-xsrf', 'true')
+          .expect(409);
+
+        expect(body.message).to.contain('"Incident Template"');
+      });
+
+      it('succeeds when the only referencing template has been deleted', async () => {
+        // Create a template that references the field, then soft-delete it
+        const { body: templateBody } = await supertest
+          .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .set('kbn-xsrf', 'true')
+          .send({
+            name: 'Deleted Template',
+            owner: 'securitySolutionFixture',
+            definition: stringify({
+              name: 'Deleted Template',
+              fields: [{ $ref: 'priority' }],
+            }),
+            isEnabled: true,
+          })
+          .expect(200);
+
+        await supertest
+          .delete(
+            `${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}/${templateBody.templateId}`
+          )
+          .set('kbn-xsrf', 'true')
+          .expect(204);
+
+        // Field definition can now be deleted because the only referencing template is gone
+        await supertestWithoutAuth
+          .delete(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
+          .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
+          .set('kbn-xsrf', 'true')
+          .expect(204);
       });
     });
   });
