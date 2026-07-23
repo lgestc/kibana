@@ -122,6 +122,25 @@ export const createFieldDefinitionsSubClient = (
         );
       }
 
+      // Guard rename: if the name is changing, block it while any active template still
+      // references the old name via $ref.  Case-sensitive comparison is intentional —
+      // $ref matching is exact, so even a case-only change would orphan existing references.
+      const isRename = input.name !== fieldDef.attributes.name;
+      if (isRename) {
+        const { templatesService } = services;
+        const referencingTemplates = await templatesService.getActiveTemplatesReferencingField(
+          fieldDef.attributes.owner,
+          fieldDef.attributes.name
+        );
+
+        if (referencingTemplates.length > 0) {
+          const names = referencingTemplates.map(({ name }) => `"${name}"`).join(', ');
+          throw Boom.conflict(
+            `Cannot rename field definition "${fieldDef.attributes.name}": it is referenced by ${referencingTemplates.length} active template(s): ${names}`
+          );
+        }
+      }
+
       return fieldDefinitionsService.updateFieldDefinition(id, input);
     },
 

@@ -301,6 +301,91 @@ export default ({ getService }: FtrProviderContext): void => {
           .send(buildCreateBody())
           .expect(404);
       });
+
+      it('returns 409 when renaming a field that an active template references via $ref', async () => {
+        // FAILURE SCENARIO: renaming "priority" to "urgency" while "Incident Template" has $ref: priority
+        await supertest
+          .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .set('kbn-xsrf', 'true')
+          .send({
+            name: 'Incident Template',
+            owner: 'securitySolutionFixture',
+            definition: stringify({
+              name: 'Incident Template',
+              fields: [{ $ref: 'priority' }],
+            }),
+            isEnabled: true,
+          })
+          .expect(200);
+
+        const { body } = await supertestWithoutAuth
+          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
+          .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
+          .set('kbn-xsrf', 'true')
+          .send(buildCreateBody({ name: 'urgency' }))
+          .expect(409);
+
+        expect(body.message).to.contain('"Incident Template"');
+        expect(body.message).to.contain('priority');
+      });
+
+      it('allows updating a field definition without changing its name while a template references it', async () => {
+        // Non-rename updates (definition text, description, isGlobal) must not be blocked
+        await supertest
+          .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .set('kbn-xsrf', 'true')
+          .send({
+            name: 'Blocking Template',
+            owner: 'securitySolutionFixture',
+            definition: stringify({
+              name: 'Blocking Template',
+              fields: [{ $ref: 'priority' }],
+            }),
+            isEnabled: true,
+          })
+          .expect(200);
+
+        // Same name, different definition text → must succeed
+        await supertestWithoutAuth
+          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
+          .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
+          .set('kbn-xsrf', 'true')
+          .send(
+            buildCreateBody({
+              definition: 'name: priority\ncontrol: SELECT_BASIC\ntype: keyword\nlabel: Priority\n',
+            })
+          )
+          .expect(200);
+      });
+
+      it('allows renaming a field once the only referencing template has been deleted', async () => {
+        const { body: templateBody } = await supertest
+          .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
+          .set('kbn-xsrf', 'true')
+          .send({
+            name: 'To Be Deleted',
+            owner: 'securitySolutionFixture',
+            definition: stringify({
+              name: 'To Be Deleted',
+              fields: [{ $ref: 'priority' }],
+            }),
+            isEnabled: true,
+          })
+          .expect(200);
+
+        await supertest
+          .delete(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}/${templateBody.templateId}`)
+          .set('kbn-xsrf', 'true')
+          .expect(204);
+
+        // Template is soft-deleted — rename is now unblocked
+        await supertestWithoutAuth
+          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
+          .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
+          .set('kbn-xsrf', 'true')
+          .send(buildCreateBody({ name: 'urgency' }))
+          .expect(200);
+      });
     });
 
     describe('DELETE /internal/cases/field_definitions/{field_definition_id}', () => {
@@ -417,9 +502,7 @@ export default ({ getService }: FtrProviderContext): void => {
           .expect(200);
 
         await supertest
-          .delete(
-            `${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}/${templateBody.templateId}`
-          )
+          .delete(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}/${templateBody.templateId}`)
           .set('kbn-xsrf', 'true')
           .expect(204);
 

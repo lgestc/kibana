@@ -203,6 +203,112 @@ describe('createFieldDefinitionsSubClient', () => {
         'A field definition with name "Other_Field" already exists for this owner.'
       );
     });
+
+    it('throws 409 when renaming a field that a single active template references', async () => {
+      const so = makeFieldDefinitionSO({ id: 'fd-1', name: 'my_field' });
+      clientArgs.services.fieldDefinitionsService.getFieldDefinition.mockResolvedValue(so);
+      clientArgs.services.fieldDefinitionsService.getFieldDefinitions.mockResolvedValue({
+        fieldDefinitions: [so.attributes],
+        total: 1,
+      });
+      clientArgs.services.templatesService.getActiveTemplatesReferencingField.mockResolvedValue([
+        { name: 'Incident Template' },
+      ]);
+
+      await expect(
+        client.updateFieldDefinition('fd-1', { ...input, name: 'renamed_field' })
+      ).rejects.toThrow(
+        'Cannot rename field definition "my_field": it is referenced by 1 active template(s): "Incident Template"'
+      );
+      expect(
+        clientArgs.services.fieldDefinitionsService.updateFieldDefinition
+      ).not.toHaveBeenCalled();
+    });
+
+    it('throws 409 listing all referencing templates when renaming a field referenced by multiple templates', async () => {
+      const so = makeFieldDefinitionSO({ id: 'fd-1', name: 'my_field' });
+      clientArgs.services.fieldDefinitionsService.getFieldDefinition.mockResolvedValue(so);
+      clientArgs.services.fieldDefinitionsService.getFieldDefinitions.mockResolvedValue({
+        fieldDefinitions: [so.attributes],
+        total: 1,
+      });
+      clientArgs.services.templatesService.getActiveTemplatesReferencingField.mockResolvedValue([
+        { name: 'Template A' },
+        { name: 'Template B' },
+      ]);
+
+      await expect(
+        client.updateFieldDefinition('fd-1', { ...input, name: 'renamed_field' })
+      ).rejects.toThrow(
+        'Cannot rename field definition "my_field": it is referenced by 2 active template(s): "Template A", "Template B"'
+      );
+      expect(
+        clientArgs.services.fieldDefinitionsService.updateFieldDefinition
+      ).not.toHaveBeenCalled();
+    });
+
+    it('allows renaming a field when no active templates reference the old name', async () => {
+      const so = makeFieldDefinitionSO({ id: 'fd-1', name: 'my_field' });
+      const renamed = makeFieldDefinitionSO({ id: 'fd-1', name: 'renamed_field' });
+      clientArgs.services.fieldDefinitionsService.getFieldDefinition.mockResolvedValue(so);
+      clientArgs.services.fieldDefinitionsService.getFieldDefinitions.mockResolvedValue({
+        fieldDefinitions: [so.attributes],
+        total: 1,
+      });
+      clientArgs.services.templatesService.getActiveTemplatesReferencingField.mockResolvedValue([]);
+      clientArgs.services.fieldDefinitionsService.updateFieldDefinition.mockResolvedValue(renamed);
+
+      const result = await client.updateFieldDefinition('fd-1', {
+        ...input,
+        name: 'renamed_field',
+      });
+
+      expect(result).toBe(renamed);
+      expect(
+        clientArgs.services.fieldDefinitionsService.updateFieldDefinition
+      ).toHaveBeenCalledWith('fd-1', { ...input, name: 'renamed_field' });
+    });
+
+    it('does not check template references when the name is unchanged', async () => {
+      const so = makeFieldDefinitionSO({ id: 'fd-1', name: 'my_field' });
+      clientArgs.services.fieldDefinitionsService.getFieldDefinition.mockResolvedValue(so);
+      clientArgs.services.fieldDefinitionsService.getFieldDefinitions.mockResolvedValue({
+        fieldDefinitions: [so.attributes],
+        total: 1,
+      });
+      clientArgs.services.fieldDefinitionsService.updateFieldDefinition.mockResolvedValue(so);
+
+      // Update only the definition, keep the name the same
+      await client.updateFieldDefinition('fd-1', {
+        ...input,
+        definition: 'name: my_field\ncontrol: INPUT_TEXT\ntype: text\n',
+      });
+
+      expect(
+        clientArgs.services.templatesService.getActiveTemplatesReferencingField
+      ).not.toHaveBeenCalled();
+    });
+
+    it('passes the old name and owner to the template reference check when renaming', async () => {
+      const so = makeFieldDefinitionSO({ id: 'fd-1', name: 'priority', owner: 'securitySolution' });
+      clientArgs.services.fieldDefinitionsService.getFieldDefinition.mockResolvedValue(so);
+      clientArgs.services.fieldDefinitionsService.getFieldDefinitions.mockResolvedValue({
+        fieldDefinitions: [so.attributes],
+        total: 1,
+      });
+      clientArgs.services.templatesService.getActiveTemplatesReferencingField.mockResolvedValue([]);
+      clientArgs.services.fieldDefinitionsService.updateFieldDefinition.mockResolvedValue(so);
+
+      await client.updateFieldDefinition('fd-1', {
+        ...input,
+        name: 'renamed',
+        owner: 'securitySolution',
+      });
+
+      expect(
+        clientArgs.services.templatesService.getActiveTemplatesReferencingField
+      ).toHaveBeenCalledWith('securitySolution', 'priority');
+    });
   });
 
   describe('deleteFieldDefinition', () => {
