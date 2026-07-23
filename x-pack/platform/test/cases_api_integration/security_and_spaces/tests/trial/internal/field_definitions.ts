@@ -389,9 +389,7 @@ export default ({ getService }: FtrProviderContext): void => {
           .expect(200);
 
         await supertest
-          .delete(
-            `${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}/${templateBody.templateId}`
-          )
+          .delete(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}/${templateBody.templateId}`)
           .set('kbn-xsrf', 'true')
           .expect(204);
 
