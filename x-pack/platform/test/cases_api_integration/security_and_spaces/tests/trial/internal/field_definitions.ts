@@ -359,6 +359,19 @@ export default ({ getService }: FtrProviderContext): void => {
       });
 
       it('allows renaming a field once the only referencing template has been deleted', async () => {
+        // Use a field name distinct from 'priority' so that stale templates created by
+        // earlier tests in this describe block (which reference 'priority') cannot
+        // interfere with the getActiveTemplatesReferencingField search here.
+        const { body: tempField } = await supertest
+          .post(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}`)
+          .set('kbn-xsrf', 'true')
+          .send({
+            name: 'rename_after_delete_field',
+            owner: 'securitySolutionFixture',
+            definition: 'name: rename_after_delete_field\ncontrol: SELECT_BASIC\ntype: keyword\n',
+          })
+          .expect(200);
+
         const { body: templateBody } = await supertest
           .post(`${getSpaceUrlPrefix('space1')}${TEMPLATES_URL}`)
           .set('kbn-xsrf', 'true')
@@ -367,7 +380,7 @@ export default ({ getService }: FtrProviderContext): void => {
             owner: 'securitySolutionFixture',
             definition: stringify({
               name: 'To Be Deleted',
-              fields: [{ $ref: 'priority' }],
+              fields: [{ $ref: 'rename_after_delete_field' }],
             }),
             isEnabled: true,
           })
@@ -380,10 +393,16 @@ export default ({ getService }: FtrProviderContext): void => {
 
         // Template is soft-deleted — rename is now unblocked
         await supertestWithoutAuth
-          .put(`${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${fieldDefinitionId}`)
+          .put(
+            `${getSpaceUrlPrefix('space1')}${FIELD_DEFINITIONS_URL}/${tempField.fieldDefinitionId}`
+          )
           .auth(secOnlyManageTemplates.username, secOnlyManageTemplates.password)
           .set('kbn-xsrf', 'true')
-          .send(buildCreateBody({ name: 'urgency' }))
+          .send({
+            name: 'rename_after_delete_renamed',
+            owner: 'securitySolutionFixture',
+            definition: 'name: rename_after_delete_renamed\ncontrol: SELECT_BASIC\ntype: keyword\n',
+          })
           .expect(200);
       });
     });

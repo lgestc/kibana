@@ -1712,7 +1712,7 @@ describe('TemplatesService', () => {
                   bool: expect.objectContaining({
                     should: expect.arrayContaining([
                       expect.objectContaining({
-                        match: expect.objectContaining({
+                        match_phrase: expect.objectContaining({
                           [`${SO}.owner`]: 'securitySolution',
                         }),
                       }),
