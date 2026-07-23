@@ -1689,18 +1689,12 @@ describe('TemplatesService', () => {
 
     const makeHit = (id: string) => ({ _id: id, _index: '.kibana_cases' });
 
-    const makeSO = (
-      id: string,
-      definition: string,
-      name = 'Template'
-    ): SavedObject<Template> =>
+    const makeSO = (id: string, definition: string, name = 'Template'): SavedObject<Template> =>
       createTemplateSO(id, { templateId: id, name, definition });
 
     it('sends a search call with a match_phrase pre-filter on definition and the owner/isLatest/deletedAt filters', async () => {
       const service = createService();
-      unsecuredSavedObjectsClient.search.mockResolvedValue(
-        createMockSearchResponse([])
-      );
+      unsecuredSavedObjectsClient.search.mockResolvedValue(createMockSearchResponse([]));
 
       await service.getActiveTemplatesReferencingField('securitySolution', 'priority');
 
@@ -1847,9 +1841,7 @@ describe('TemplatesService', () => {
         },
       } as unknown as ReturnType<typeof createMockSearchResponse>);
 
-      savedObjectsSerializer.rawToSavedObject
-        .mockReturnValueOnce(soA)
-        .mockReturnValueOnce(soB);
+      savedObjectsSerializer.rawToSavedObject.mockReturnValueOnce(soA).mockReturnValueOnce(soB);
 
       const result = await service.getActiveTemplatesReferencingField(
         'securitySolution',
