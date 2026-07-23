@@ -607,24 +607,52 @@ export class TemplatesService {
     owner: string,
     fieldName: string
   ): Promise<Array<{ name: string }>> {
-    const escapedOwner = escapeKuery(owner);
-    const soType = CASE_TEMPLATE_SAVED_OBJECT;
+    interface SearchResult {
+      hits: {
+        hits: SavedObjectsRawDoc[];
+        total: { value: number };
+      };
+    }
 
-    const result = await this.dependencies.unsecuredSavedObjectsClient.find<Template>({
-      type: soType,
+    const escapedOwner = escapeKuery(owner);
+    const SO = CASE_TEMPLATE_SAVED_OBJECT;
+
+    // Push the $ref lookup down to ES: only fetch candidate templates whose
+    // `definition` text contains the token sequence `ref <fieldName>` (the
+    // standard analyzer strips `$` and `:`, leaving adjacent tokens).
+    // match_phrase requires the tokens to be adjacent and in order, so this
+    // is a tight pre-filter that virtually eliminates false positives.
+    // The exact YAML parse below is the correctness gate — it handles any
+    // residual analyzer edge-cases and alias-overridden ref fields.
+    const filters = [
+      toElasticsearchQuery(fromKueryExpression(`${SO}.owner: "${escapedOwner}"`)),
+      toElasticsearchQuery(fromKueryExpression(`${SO}.isLatest: true`)),
+      toElasticsearchQuery(fromKueryExpression(`NOT ${SO}.deletedAt: *`)),
+    ];
+
+    const findResult = (await this.dependencies.unsecuredSavedObjectsClient.search({
+      type: SO,
       namespaces: [this.dependencies.namespace],
-      page: 1,
-      perPage: 10000,
-      fields: ['name', 'definition'],
-      filter: fromKueryExpression(
-        `${soType}.attributes.owner: "${escapedOwner}" AND ` +
-          `${soType}.attributes.isLatest: true AND NOT ${soType}.attributes.deletedAt: *`
-      ),
-    });
+      from: 0,
+      size: 10000,
+      query: {
+        bool: {
+          filter: filters,
+          must: [
+            {
+              match_phrase: {
+                [`${SO}.definition`]: `$ref: ${fieldName}`,
+              },
+            },
+          ],
+        },
+      },
+    })) as SearchResult;
 
     const referencing: Array<{ name: string }> = [];
 
-    for (const so of result.saved_objects) {
+    for (const hit of findResult.hits.hits) {
+      const so = this.dependencies.savedObjectsSerializer.rawToSavedObject<Template>(hit);
       try {
         const parsed = parseYaml(so.attributes.definition ?? '');
         const fields: unknown[] = Array.isArray(parsed?.fields) ? parsed.fields : [];
